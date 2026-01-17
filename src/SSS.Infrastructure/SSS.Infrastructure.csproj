@@ -34,8 +34,8 @@
 		<PackageReference Include="MailKit" Version="4.13.0" />
 
 		<!-- API Framework -->
-		<PackageReference Include="FastEndpoints" Version="5.24.0" />
-		<PackageReference Include="FastEndpoints.Swagger" Version="5.24.0" />
+		<PackageReference Include="FastEndpoints" Version="7.2.0" />
+		<PackageReference Include="FastEndpoints.Swagger" Version="7.2.0" />
 
 		<!-- Mapping -->
 		<PackageReference Include="AutoMapper" Version="15.0.1" />
@@ -46,6 +46,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\SSS.Application\SSS.Application.csproj" />
 	  <ProjectReference Include="..\SSS.Domain\SSS.Domain.csproj" />
 	</ItemGroup>
 	

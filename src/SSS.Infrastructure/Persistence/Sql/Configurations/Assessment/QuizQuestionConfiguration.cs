@@ -1,0 +1,55 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SSS.Domain.Entities.Assessment;
+
+namespace SSS.Infrastructure.Persistence.Sql.Configurations.Assessment;
+
+public class QuizQuestionConfiguration : IEntityTypeConfiguration<QuizQuestion>
+{
+    public void Configure(EntityTypeBuilder<QuizQuestion> builder)
+    {
+        builder.ToTable("QuizQuestions");
+
+        builder.HasKey(e => e.Id);
+
+        builder.Property(e => e.Id)
+            .HasColumnType("bigint")
+            .ValueGeneratedOnAdd();
+
+        builder.Property(e => e.QuizId)
+            .HasColumnType("bigint")
+            .IsRequired();
+
+        builder.Property(e => e.QuestionKey)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(e => e.Prompt)
+            .HasColumnType("text")
+            .IsRequired();
+
+        builder.Property(e => e.Type)
+            .HasMaxLength(30)
+            .IsRequired();
+
+        builder.Property(e => e.ScoreWeight)
+            .HasColumnType("decimal(5,2)")
+            .HasDefaultValue(1.0m)
+            .IsRequired();
+
+        builder.Property(e => e.OrderNo)
+            .HasColumnType("int")
+            .IsRequired();
+
+        builder.Property(e => e.IsRequired)
+            .HasColumnType("tinyint(1)")
+            .IsRequired();
+
+        builder.HasOne(e => e.Quiz)
+            .WithMany(q => q.Questions)
+            .HasForeignKey(e => e.QuizId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.QuizId, e.QuestionKey }).IsUnique();
+    }
+}
