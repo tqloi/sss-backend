@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>LecX - Confirm Your Email</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f8f9fb;
+        color: #222;
+        line-height: 1.6;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #cfd8e0;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(26, 84, 144, 0.15);
+      }
+
+      .header {
+        background: #1a5490; /* solid LecX blue */
+        text-align: center;
+        padding: 24px 16px;
+        font-size: 26px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .content {
+        padding: 32px 24px;
+        text-align: center;
+      }
+
+      .sub {
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        color: #666;
+        margin-bottom: 6px;
+      }
+
+      .welcome-text {
+        font-size: 22px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        color: #1a5490;
+      }
+
+      .description {
+        font-size: 15px;
+        color: #444;
+        margin-bottom: 24px;
+      }
+
+      .divider {
+        height: 1px;
+        background: #1a5490;
+        margin: 24px 0;
+      }
+
+      .confirm-button {
+        display: inline-block;
+        background: #1a5490 !important;
+        color: #fff !important;
+        text-decoration: none !important;
+        padding: 14px 30px;
+        border-radius: 30px;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.25s ease;
+      }
+
+      .confirm-button:hover {
+        background: #5b9fd8;
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(26, 84, 144, 0.4);
+      }
+
+      .footer {
+        background: #f3f5f8;
+        text-align: center;
+        padding: 20px;
+        font-size: 13px;
+        color: #555;
+        border-top: 1px solid #d6dce2;
+      }
+
+      .footer a {
+        color: #1a5490;
+        text-decoration: none;
+        margin: 0 8px;
+        font-weight: 500;
+      }
+
+      .footer a:hover {
+        color: #5b9fd8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <!-- Header -->
+      <div class="header">LecX</div>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="sub">Welcome to LecX</div>
+        <h1 class="welcome-text">You're Almost There!</h1>
+        <p class="description">
+          Thank you for joining <strong>LecX</strong>.<br />
+          Please confirm your email address to activate your account and start your learning journey.
+        </p>
+
+        <div class="divider"></div>
+
+        <a href="{{ .ConfirmationURL }}" class="confirm-button">
+          Confirm Now
+        </a>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          This email was sent to:
+          <strong style="color: #1a5490">{{ .Email }}</strong>
+        </p>
+        <p>
+          <a href="#">App</a> | <a href="#">Website</a> |
+          <a href="#">Support</a>
+        </p>
+        <p>
+          © 2025 LecX. All rights reserved.<br />
+          If you didn’t create this account, please ignore this email.
+        </p>
+        <p style="font-size: 12px; color: #777">
+          LecX — Learn Anywhere, Anytime
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

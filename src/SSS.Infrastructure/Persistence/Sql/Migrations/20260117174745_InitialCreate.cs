@@ -67,8 +67,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false),
-                    FirstName = table.Column<string>(type: "longtext", nullable: true),
-                    LastName = table.Column<string>(type: "longtext", nullable: false),
+                    FirstName = table.Column<string>(type: "longtext", nullable: false),
+                    LastName = table.Column<string>(type: "longtext", nullable: true),
                     AvatarUrl = table.Column<string>(type: "varchar(512)", nullable: true),
                     Address = table.Column<string>(type: "longtext", nullable: true),
                     Dob = table.Column<DateTime>(type: "date", nullable: true),

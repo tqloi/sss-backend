@@ -1,7 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using FastEndpoints;
+using FastEndpoints.Swagger;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SSS.Infrastructure.External.Communication.Email;
+using SSS.Infrastructure.External.Identity.Google;
 using SSS.Infrastructure.Persistence.Sql;
+using SSS.Infrastructure.Sercurity.Jwt;
 using System.Reflection;
 
 namespace SSS.Infrastructure
@@ -15,9 +20,9 @@ namespace SSS.Infrastructure
         )
         {
             services.AddDatabase(config);
-            //services.AddJwtAuthentication(config);
-            //services.AddMailService(config);
-            //services.AddGoogleAuthService(config);
+            services.AddJwtAuthentication(config);
+            services.AddMailService(config);
+            services.AddGoogleAuthService(config);
             //services.AddGoogleStorage(config);
             //services.AddPayOSService(config);
             //services.AddSwaggerWithAuth();
@@ -36,6 +41,20 @@ namespace SSS.Infrastructure
             //services.AddHostedService<CertificateIssueWorker>();
             //services.AddHttpClient<IFirebaseDbService, FirebaseDbService>();
             //services.AddODataSupport();
+
+            // FastEndpoints
+            services.AddFastEndpoints();
+            services.SwaggerDocument(o =>
+            {
+                o.AutoTagPathSegmentIndex = 2;
+                o.DocumentSettings = s =>
+                {
+                    s.Title = "sss-backend";
+                    s.Version = "v1"; // -> /swagger/v1/swagger.json
+                };
+
+                // (tuỳ version, có thể có o.EnableJWTBearerAuth = true; nhưng v5.24 dùng AddAuth như trên là chắc)
+            });
 
             return services;
         }

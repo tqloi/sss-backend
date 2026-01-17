@@ -5,8 +5,8 @@ namespace SSS.Domain.Entities.Identity;
 
 public class User : IdentityUser
 {
-        public string? FirstName { get; set; } // họ, nullable 
-        public string LastName { get; set; }
+        public string FirstName { get; set; }
+        public string? LastName { get; set; }
         public string? AvatarUrl { get; set; }
         public string? Address { get; set; }
         public DateTime? Dob { get; set; }
