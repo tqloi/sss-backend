@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SSS.Domain.Entities.AI;
 
 namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
 {
-    internal class IAiChatMessageRepository
+    public interface IAiChatMessageRepository
+        : IMongoRepository<AiChatMessage>
     {
+        Task<IEnumerable<AiChatMessage>> GetByConversationIdAsync(string conversationId);
     }
 }

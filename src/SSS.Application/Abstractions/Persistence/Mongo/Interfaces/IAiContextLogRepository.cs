@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SSS.Domain.Entities.AI;
+using SSS.Domain.Enums;
 
 namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
 {
-    internal class IAiContextLogRepository
+    public interface IAiContextLogRepository
+        : IMongoRepository<AiContextLog>
     {
+        Task<IEnumerable<AiContextLog>> GetByUserIdAsync(string userId);
+        Task<IEnumerable<AiContextLog>> GetByRelatedEntityAsync(
+            RelatedEntityType type, string relatedId);
     }
 }

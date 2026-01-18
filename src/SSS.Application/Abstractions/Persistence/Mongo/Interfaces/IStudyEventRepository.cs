@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SSS.Domain.Entities.Tracking;
 
 namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
 {
-    internal class IStudyEventRepository
+    public interface IStudyEventRepository
+        : IMongoRepository<StudyEvent>
     {
+        Task<IEnumerable<StudyEvent>> GetBySessionIdAsync(string sessionId);
     }
 }

@@ -13,6 +13,7 @@ namespace SSS.Infrastructure.Persistence.Sql
 {
     public class AppDbContext : IdentityDbContext<User>, IAppDbContext
     {
+        // Content
         public DbSet<LearningCategory> LearningCategories => Set<LearningCategory>();
         public DbSet<LearningSubject> LearningSubjects => Set<LearningSubject>();
         public DbSet<Roadmap> Roadmaps => Set<Roadmap>();

@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SSS.Domain.Entities.AI;
+using SSS.Domain.Enums;
 
 namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
 {
-    internal class IAiConversationRepository
+    public interface IAiConversationRepository
+            : IMongoRepository<AiConversation>
     {
+        Task<IEnumerable<AiConversation>> GetByUserIdAsync(string userId);
+        Task<AiConversation?> GetActiveByUserAsync(string userId);
+        Task<IEnumerable<AiConversation>> GetByRelatedEntityAsync(
+            RelatedEntityType type, string relatedId);
     }
 }

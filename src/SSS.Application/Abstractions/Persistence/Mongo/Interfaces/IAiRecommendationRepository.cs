@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SSS.Domain.Entities.AI;
 
 namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
 {
-    internal class IAiRecommendationRepository
+    public interface IAiRecommendationRepository
+       : IMongoRepository<AiRecommendation>
     {
+        Task<IEnumerable<AiRecommendation>> GetUnreadByUserIdAsync(string userId);
+        Task MarkAsReadAsync(string recommendationId);
     }
 }

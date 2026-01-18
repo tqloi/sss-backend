@@ -26,13 +26,56 @@
     // Notification
     public enum NotificationType { System, Reminder, Achievement, Resurvey, AiRecommendation }
     public enum NotificationRelatedType { None, Task, Module, Plan, Node, Session, Roadmap }
-
-    // AI (if you keep AI messages in SQL)
-    public enum AiMessageRole { User, Assistant, System }
     public enum Gender
     {
         Male,
         Female,
         Other
+    }
+
+    // AI (if you keep AI messages in SQL)
+    public enum AiMessageRole { User, Admin, System }
+
+    public enum AiRecommendationType
+    {
+        StudyTip = 1,
+        Reminder = 2,
+        Suggestion = 3
+    }
+
+    public enum RelatedEntityType
+    {
+        Lesson = 1,
+        Course = 2,
+        StudySession = 3
+    }
+
+    /* =======================
+     * STUDY / TRACKING
+     * ======================= */
+
+    public enum StudyEventType
+    {
+        View = 1,
+        Click = 2,
+        Start = 3,
+        Submit = 4,
+        Complete = 5
+    }
+
+    public enum StudyEventCategory
+    {
+        Learning = 1,
+        Assessment = 2,
+        Navigation = 3,
+        System = 4
+    }
+
+    public enum ContentMode
+    {
+        Video = 1,
+        Text = 2,
+        Quiz = 3,
+        Practice = 4
     }
 }
