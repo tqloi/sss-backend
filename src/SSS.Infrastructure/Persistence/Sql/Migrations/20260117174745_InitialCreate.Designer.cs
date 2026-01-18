@@ -619,7 +619,7 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    b.Property<string>("ContentType")
+                    b.Property<string>("NodeContentType")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");

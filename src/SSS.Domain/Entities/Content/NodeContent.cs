@@ -6,7 +6,7 @@ public class NodeContent
 {
     public long Id { get; set; }
     public long NodeId { get; set; }
-    public ContentType ContentType { get; set; } = ContentType.Article;
+    public NodeContentType ContentType { get; set; } = NodeContentType.Article;
     public string Title { get; set; } = null!;
     public string? Url { get; set; }
     public string? Description { get; set; }
