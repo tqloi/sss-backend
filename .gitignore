@@ -374,3 +374,6 @@ secrets/
 
 # Bỏ qua thư mục chứa mail tạm (local email output)
 mailssave/
+
+# Data seeder
+**DataSeeder.cs

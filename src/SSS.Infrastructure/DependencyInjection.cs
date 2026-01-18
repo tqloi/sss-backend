@@ -3,8 +3,10 @@ using FastEndpoints.Swagger;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SSS.Application.Features.Auth.Login;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Identity.Google;
+using SSS.Infrastructure.Persistence.Mongo;
 using SSS.Infrastructure.Persistence.Sql;
 using SSS.Infrastructure.Sercurity.Jwt;
 using System.Reflection;
@@ -23,17 +25,16 @@ namespace SSS.Infrastructure
             services.AddJwtAuthentication(config);
             services.AddMailService(config);
             services.AddGoogleAuthService(config);
-            //services.AddGoogleStorage(config);
+            services.AddMongo(config);
+            //services.AddGcsStorage(config);
             //services.AddPayOSService(config);
-            //services.AddSwaggerWithAuth();
-            //services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
-            //services.AddFastEndpoints();
-            //services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateCourseHandler).Assembly));
-            //services.AddScopedServicesByConvention
-            //(
-            //     appAssembly: typeof(ICertificateIssuanceService).Assembly,
-            //     infraAssembly: typeof(CertificateIssuanceService).Assembly
-            //);
+            services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(LoginHandler).Assembly));
+            services.AddScopedServicesByConvention
+            (
+                 appAssembly: typeof(IGoogleAuthService).Assembly,
+                 infraAssembly: typeof(GoogleAuthService).Assembly
+            );
 
             //// Certificate background workers
             //services.AddSingleton<StudentCourseCompletionQueue>();
@@ -65,7 +66,7 @@ namespace SSS.Infrastructure
             Assembly infraAssembly,
             string[]? allowedSuffixes = null)
         {
-            allowedSuffixes ??= new[] { "Service", "Repository", "Provider", "Generator", "Client", "Gateway" };
+            allowedSuffixes ??= new[] { "Service", "Repository", "Provider", "Generator", "Client", "Gateway", "Sender", "Builder" };
 
             var appTypes = appAssembly.GetTypes();
             var infraTypes = infraAssembly.GetTypes();

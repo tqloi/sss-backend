@@ -36,8 +36,8 @@
 		<PackageReference Include="payOS" Version="1.0.9" />
 
 		<!-- API Framework -->
-		<PackageReference Include="FastEndpoints" Version="7.2.0" />
-		<PackageReference Include="FastEndpoints.Swagger" Version="7.2.0" />
+		<PackageReference Include="FastEndpoints" Version="5.24.0" />
+		<PackageReference Include="FastEndpoints.Swagger" Version="5.24.0" />
 
 		<!-- Mapping -->
 		<PackageReference Include="AutoMapper" Version="15.0.1" />
@@ -51,5 +51,9 @@
 	  <ProjectReference Include="..\SSS.Application\SSS.Application.csproj" />
 	  <ProjectReference Include="..\SSS.Domain\SSS.Domain.csproj" />
 	</ItemGroup>
-	
+
+	<ItemGroup>
+		<EmbeddedResource Include="External/Communication/Email/Templates/**/*.html" />
+	</ItemGroup>
+
 </Project>

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Sercurity.Jwt;
+using SSS.Application.Features.Auth.Common;
 using SSS.Domain.Entities.Identity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -31,30 +32,30 @@ namespace SSS.Infrastructure.Sercurity.Jwt
         /// <summary>
         /// Issue access + refresh token pair
         /// </summary>
-        //public async Task<AuthResult> IssueAsync(User user, string? clientIp, CancellationToken ct = default)
-        //{
-        //    // 1) Access token
-        //    var (accessToken, accessExp) = await GenerateAccessAsync(user);
+        public async Task<AuthResult> IssueAsync(User user, string? clientIp, CancellationToken ct = default)
+        {
+            // 1) Access token
+            var (accessToken, accessExp) = await GenerateAccessAsync(user);
 
-        //    // 2) Refresh token
-        //    var refreshPlain = RefreshTokenUtil.GeneratePlaintext();
-        //    var refreshHash = RefreshTokenUtil.Hash(refreshPlain);
-        //    var refreshExp = DateTime.Now.AddDays(_options.ExpireDays);
+            // 2) Refresh token
+            var refreshPlain = RefreshTokenUtil.GeneratePlaintext();
+            var refreshHash = RefreshTokenUtil.Hash(refreshPlain);
+            var refreshExp = DateTime.Now.AddDays(_options.ExpireDays);
 
-        //    var rt = new RefreshToken
-        //    {
-        //        UserId = user.Id,
-        //        TokenHash = refreshHash,
-        //        ExpiresAtUtc = refreshExp,
-        //        CreatedByIp = clientIp
-        //    };
+            var rt = new RefreshToken
+            {
+                UserId = user.Id,
+                TokenHash = refreshHash,
+                ExpiresAtUtc = refreshExp,
+                CreatedByIp = clientIp
+            };
 
-        //    _db.Set<RefreshToken>().Add(rt);
-        //    await _db.SaveChangesAsync(ct);
+            _db.RefreshTokens.Add(rt);
+            await _db.SaveChangesAsync(ct);
 
-        //    // 3) Build ticket
-        //    //return await BuildTicketAsync(user, accessToken, accessExp, refreshPlain, refreshExp, ct);
-        //}
+            // 3) Build ticket
+            return await BuildTicketAsync(user, accessToken, accessExp, refreshPlain, refreshExp, ct);
+        }
 
         /// <summary>
         /// Generate JWT access token
@@ -95,32 +96,32 @@ namespace SSS.Infrastructure.Sercurity.Jwt
         ///// <summary>
         ///// Build AuthResult (ticket)
         ///// </summary>
-        //public async Task<AuthResult> BuildTicketAsync(
-        //    User user,
-        //    string accessToken,
-        //    DateTime accessExp,
-        //    string refreshPlain,
-        //    DateTime refreshExp,
-        //    CancellationToken ct)
-        //{
-        //    var roles = await _userManager.GetRolesAsync(user);
+        public async Task<AuthResult> BuildTicketAsync(
+            User user,
+            string accessToken,
+            DateTime accessExp,
+            string refreshPlain,
+            DateTime refreshExp,
+            CancellationToken ct)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
 
-        //    return new AuthResult
-        //    {
-        //        AccessToken = accessToken,
-        //        AccessTokenExpiresUtc = accessExp,
-        //        RefreshTokenPlain = refreshPlain,
-        //        RefreshTokenExpiresUtc = refreshExp,
-        //        User = new UserDto
-        //        {
-        //            Id = user.Id,
-        //            Email = user.Email ?? string.Empty,
-        //            FirstName = user.FirstName,
-        //            LastName = user.LastName,
-        //            AvatarUrl = user.ProfileImagePath,
-        //            Roles = roles.ToList()
-        //        }
-        //    };
-        //}
+            return new AuthResult
+            {
+                AccessToken = accessToken,
+                AccessTokenExpiresUtc = accessExp,
+                RefreshTokenPlain = refreshPlain,
+                RefreshTokenExpiresUtc = refreshExp,
+                User = new UserDto
+                {
+                    Id = user.Id,
+                    Email = user.Email ?? string.Empty,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    AvatarUrl = user.AvatarUrl,
+                    Roles = roles.ToList()
+                }
+            };
+        }
     }
 }

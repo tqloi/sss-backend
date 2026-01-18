@@ -7,7 +7,7 @@ using SSS.Application.Abstractions.External.Communication.Email;
 
 namespace SSS.Infrastructure.External.Communication.Email
 {
-    internal class SmtpEmailSender : ISmtpEmailSender
+    public class SmtpEmailSender : ISmtpEmailSender
     {
         private readonly EmailOptions _emailOptions;
         private readonly ILogger<MailService> _logger;

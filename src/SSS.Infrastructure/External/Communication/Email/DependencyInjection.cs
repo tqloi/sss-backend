@@ -14,7 +14,7 @@ namespace SSS.Infrastructure.External.Communication.Email
             var mailConfigs = config.GetSection("MailSettings");
             services.Configure<EmailOptions>(mailConfigs);
             services.AddTransient<ISmtpEmailSender, SmtpEmailSender>();
-            //services.AddScoped<IMailTemplateService, MailTemplateService>();
+            //services.AddScoped<IMailTemplateBuilder, MailTemplateService>();
 
             return services;
         }
