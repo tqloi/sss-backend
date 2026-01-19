@@ -30,7 +30,7 @@ namespace SSS.Application.Features.Auth.GoogleCallBack
             if (user is null)
             {
                 user = await googleService.AutoProvisionUserAsync(info);
-                await userManager.AddToRoleAsync(user, "Student");
+                await userManager.AddToRoleAsync(user, "User");
             }
 
             // 2) đảm bảo liên kết external

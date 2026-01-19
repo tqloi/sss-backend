@@ -18,11 +18,12 @@ public sealed class GoogleLoginEndpoint(SignInManager<User> signInManager)
     {
         //var returnUrl = Query<string>("returnUrl") ?? "/";
         var returnUrl = HttpContext.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+        var opener = HttpContext.Request.Query["opener"].FirstOrDefault() ?? "http://localhost:3000";
 
         var req = HttpContext.Request;
         var redirectUrl =
             $"{req.Scheme}://{req.Host}{req.PathBase}{GoogleCallbackEndpoint.Route}" +
-            $"?returnUrl={Uri.EscapeDataString(returnUrl)}";
+             $"?returnUrl={Uri.EscapeDataString(returnUrl)}&opener={Uri.EscapeDataString(opener)}";
 
         var props = signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
         await HttpContext.ChallengeAsync("Google", props);
