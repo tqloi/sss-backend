@@ -11,7 +11,7 @@ namespace SSS.WebApi.Endpoints.Auth.Register
         ISmtpEmailSender mail,
         IMailTemplateBuilder mailTpl,
         ILogger<RegisterEndpoint> logger,
-        AutoMapper.IMapper mapper
+        AutoMapper.IMapper mapper        
         )
         : Endpoint<RegisterRequest, RegisterResponse>
     {
@@ -31,11 +31,12 @@ namespace SSS.WebApi.Endpoints.Auth.Register
             var scheme = reqHttp.Scheme;
             var host = reqHttp.Host.Value;
             var basePath = reqHttp.PathBase.Value;
+            var feBaseUrl = Config["Frontend:BaseUrl"]!.TrimEnd('/');
 
-            var confirmUrl = $"{reqHttp.Scheme}://{host}{basePath}{ConfirmEmailEndpoint.Route}"
-                           + $"?userId={result.UserId}"
-                           + $"&token={result.EncodedEmailConfirmToken}"
-                           + (string.IsNullOrEmpty(req.ReturnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(req.ReturnUrl)}");
+            var confirmUrl = $"{feBaseUrl}/confirm-email"
+               + $"?userId={Uri.EscapeDataString(result.UserId)}"
+               + $"&token={Uri.EscapeDataString(result.EncodedEmailConfirmToken)}"
+               + (string.IsNullOrEmpty(req.ReturnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(req.ReturnUrl)}");
 
             // render template + gửi mail
             var body = await mailTpl.BuildConfirmEmailAsync(
