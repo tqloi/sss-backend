@@ -1,4 +1,4 @@
-﻿namespace SSS.Infrastructure.External.Storage.Gcs
+﻿namespace SSS.Application.Abstractions.External.Storage.Gcs
 {
     public interface IGcsStorageService
     {

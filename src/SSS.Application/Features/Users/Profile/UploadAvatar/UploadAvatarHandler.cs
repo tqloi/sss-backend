@@ -1,7 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using SSS.Application.Abstractions.External.Storage.Gcs;
 using SSS.Domain.Entities.Identity;
-using SSS.Infrastructure.External.Storage.Gcs;
+
 
 namespace SSS.Application.Features.Users.Profile.UploadAvatar;
 
