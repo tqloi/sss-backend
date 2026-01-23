@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using SSS.Application.Features.Auth.Login;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Identity.Google;
+using SSS.Infrastructure.External.Storage.Gcs;
 using SSS.Infrastructure.Persistence.Mongo;
 using SSS.Infrastructure.Persistence.Sql;
 using SSS.Infrastructure.Sercurity.Jwt;
@@ -26,7 +27,7 @@ namespace SSS.Infrastructure
             services.AddMailService(config);
             services.AddGoogleAuthService(config);
             services.AddMongo(config);
-            //services.AddGcsStorage(config);
+            services.AddGcsStorage(config);
             //services.AddPayOSService(config);
             services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(LoginHandler).Assembly));
