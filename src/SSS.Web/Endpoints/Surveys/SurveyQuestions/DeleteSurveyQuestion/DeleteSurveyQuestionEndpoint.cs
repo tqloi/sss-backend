@@ -13,6 +13,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestions.DeleteSurveyQuestion
             {
                 s.Summary = "Delete a survey question by id";
             });
+            Description(d => d.WithTags("Survey Questions"));
             Roles("Admin");
         }
 

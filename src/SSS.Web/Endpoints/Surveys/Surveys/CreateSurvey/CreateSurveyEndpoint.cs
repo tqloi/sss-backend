@@ -9,6 +9,7 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.CreateSurvey
         public override void Configure()
         {
             Post("api/surveys");
+            Description(d => d.WithTags("Surveys"));
             Summary(s => s.Summary = "Create new survey");
             Roles("Admin");
         }

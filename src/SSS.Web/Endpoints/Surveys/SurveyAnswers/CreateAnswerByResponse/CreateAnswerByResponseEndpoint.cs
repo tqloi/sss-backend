@@ -10,6 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyAnswers.CreateAnswerByResponse
         public override void Configure()
         {
             Post("/api/surveys/responses/{responseId}/answers");
+            Description(d => d.WithTags("Survey Answers"));
             Summary(s => s.Summary = "Create or update answer for a survey response");
         }
 

@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyResponses.GetResponseById
         public override void Configure()
         {
             Get("/api/surveys/response/{responseId}");
+            Description(d => d.WithTags("Survey Responses"));
             Summary(s => s.Summary = "Get response detail by ID");
         }
         public override async Task HandleAsync(CancellationToken ct)

@@ -10,6 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestionOptions.GetSurveyQuestionOptio
         public override void Configure()
         {
             Get("/api/surveys/question/options/{optionId}");
+            Description(d => d.WithTags("Survey Options"));
             Summary(s => s.Summary = "Get option detail by ID");
         }
         public override async Task HandleAsync(CancellationToken ct)
