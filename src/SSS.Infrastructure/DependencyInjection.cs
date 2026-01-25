@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SSS.Application.Features.Auth.Login;
+using SSS.Infrastructure.External.AiServices;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Identity.Google;
 using SSS.Infrastructure.Persistence.Mongo;
@@ -26,6 +27,7 @@ namespace SSS.Infrastructure
             services.AddMailService(config);
             services.AddGoogleAuthService(config);
             services.AddMongo(config);
+            services.AddAIService(config);
             //services.AddGcsStorage(config);
             //services.AddPayOSService(config);
             services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));

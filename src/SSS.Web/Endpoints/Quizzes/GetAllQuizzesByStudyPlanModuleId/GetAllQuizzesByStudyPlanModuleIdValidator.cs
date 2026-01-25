@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Quizzes.GetAllQuizzesByStudyPlanModuleId
         {
             RuleFor(x => x.StudyPlanModuleId)
                 .GreaterThan(0)
-                .WithMessage("");
+                .WithMessage("StudyPlanModuleId must be greater than 0");
             RuleFor(x => x.PageIndex)
                 .GreaterThan(0)
                 .WithMessage("PageIndex must be greater than 0.");
