@@ -10,6 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyAnswers.GetAnswerByQuestion
         public override void Configure()
         {
             Get("/api/surveys/responses/{responseId}/answers/{questionId}");
+            Description(d => d.WithTags("Survey Answers"));
             Summary(s => s.Summary = "Get answer for a specific question in a response");
             AllowAnonymous();
         }

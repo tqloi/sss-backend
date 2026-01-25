@@ -10,6 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.EditSurvey
         public override void Configure()
         {
             Patch("/api/surveys/edit");
+            Description(d => d.WithTags("Surveys"));
             Summary(s => s.Summary = "edit a survey");
             Roles("Admin");
         }

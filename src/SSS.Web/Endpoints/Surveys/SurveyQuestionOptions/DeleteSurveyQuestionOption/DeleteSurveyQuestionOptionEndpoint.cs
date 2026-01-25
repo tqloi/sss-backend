@@ -9,6 +9,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestionOptions.DeleteSurveyQuestionOp
         public override void Configure()
         {
             Delete("api/surveys/question/option/{id}");
+            Description(d => d.WithTags("Survey Options"));
             Summary(s =>
             {
                 s.Summary = "Delete a survey question option by id";

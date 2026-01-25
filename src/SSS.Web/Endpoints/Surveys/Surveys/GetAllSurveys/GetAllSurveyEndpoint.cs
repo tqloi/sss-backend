@@ -9,8 +9,9 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.GetAllSurveys
         public override void Configure()
         {
             Get("/api/surveys/all");
-            Summary(s => s.Summary = "Get all surveys (paginated)");
             Description(d => d.WithTags("Surveys"));
+            Summary(s => s.Summary = "Get all surveys (paginated)");
+            
             Roles("Admin");
         }
 
