@@ -8,5 +8,5 @@ public class LearningCategory
     public bool IsActive { get; set; }
 
     // Navigation
-    public ICollection<LearningSubject> Subjects { get; set; } = new HashSet<LearningSubject>();
+    public virtual ICollection<LearningSubject> Subjects { get; set; } = new HashSet<LearningSubject>();
 }

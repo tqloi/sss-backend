@@ -16,9 +16,9 @@ public class UserNotification
     public string? RelatedSessionId { get; set; }
     public bool IsRead { get; set; }
     public DateTime? ReadAt { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
-    public User User { get; set; } = null!;
-    public StudySession? RelatedSession { get; set; }
+    public virtual User User { get; set; } = null!;
+    public virtual StudySession? RelatedSession { get; set; }
 }

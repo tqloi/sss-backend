@@ -9,6 +9,6 @@ public class LearningSubject
     public bool IsActive { get; set; }
 
     // Navigation
-    public LearningCategory Category { get; set; } = null!;
-    public ICollection<Roadmap> Roadmaps { get; set; } = new HashSet<Roadmap>();
+    public virtual LearningCategory Category { get; set; } = null!;
+    public virtual ICollection<Roadmap> Roadmaps { get; set; } = new HashSet<Roadmap>();
 }

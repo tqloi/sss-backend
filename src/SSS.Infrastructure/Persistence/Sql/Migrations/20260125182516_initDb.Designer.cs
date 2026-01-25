@@ -8,11 +8,11 @@ using SSS.Infrastructure.Persistence.Sql;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Persistence.Sql.Migrations
+namespace SSS.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260117174745_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260125182516_initDb")]
+    partial class initDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,7 +162,7 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<long>("StudyPlanModuleId")
+                    b.Property<long>("RoadmapNodeId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Title")
@@ -174,7 +174,7 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudyPlanModuleId")
+                    b.HasIndex("RoadmapNodeId")
                         .IsUnique();
 
                     b.ToTable("As_Quizzes", (string)null);
@@ -508,62 +508,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.ToTable("As_SurveyResponses", (string)null);
                 });
 
-            modelBuilder.Entity("SSS.Domain.Entities.Assessment.UserLearningProfile", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("AvailableDaysJson")
-                        .HasColumnType("json");
-
-                    b.Property<decimal?>("ConfOverall")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CurrentLevel")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("PreferredTimeBlocksJson")
-                        .HasColumnType("json");
-
-                    b.Property<int>("ProfileVersion")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SessionLengthPrefMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TargetDeadlineMonths")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TargetRole")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<decimal?>("WPractice")
-                        .HasColumnType("decimal(6,4)");
-
-                    b.Property<decimal?>("WReading")
-                        .HasColumnType("decimal(6,4)");
-
-                    b.Property<decimal?>("WVisual")
-                        .HasColumnType("decimal(6,4)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "ProfileVersion")
-                        .IsUnique();
-
-                    b.ToTable("As_UserLearningProfiles", (string)null);
-                });
-
             modelBuilder.Entity("SSS.Domain.Entities.Content.LearningCategory", b =>
                 {
                     b.Property<long>("Id")
@@ -827,13 +771,16 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FirstName")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Gender")
                         .HasColumnType("longtext");
 
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
@@ -862,6 +809,15 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("SubscriptionEndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("SubscriptionStartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SubscriptionType")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
 
@@ -879,6 +835,107 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("Id_Users", (string)null);
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Learning.UserLearningBehavior", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AvailableDaysJson")
+                        .HasColumnType("json");
+
+                    b.Property<string>("CommonDifficultiesJson")
+                        .HasColumnType("json");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DisciplineType")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("PreferredTimeBlocksJson")
+                        .HasColumnType("json");
+
+                    b.Property<int?>("SessionLengthPrefMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<decimal>("WPractice")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.Property<decimal>("WReading")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.Property<decimal>("WVisual")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Ln_UserLearningBehaviors", (string)null);
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Learning.UserLearningTarget", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+                    b.Property<string>("CurrentLevel")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("GoalDescription")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProfileVersion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("TargetDeadlineMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Ln_UserLearningTargets", (string)null);
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Notification.UserNotification", b =>
@@ -1047,6 +1104,9 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int>("EstimatedDurationSeconds")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("date");
@@ -1321,13 +1381,12 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.Quiz", b =>
                 {
-                    b.HasOne("SSS.Domain.Entities.Planning.StudyPlanModule", "StudyPlanModule")
-                        .WithMany("Quizzes")
-                        .HasForeignKey("StudyPlanModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("SSS.Domain.Entities.Content.RoadmapNode", "RoadmapNode")
+                        .WithOne("Quiz")
+                        .HasForeignKey("SSS.Domain.Entities.Assessment.Quiz", "RoadmapNodeId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("StudyPlanModule");
+                    b.Navigation("RoadmapNode");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.QuizAnswer", b =>
@@ -1460,17 +1519,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .IsRequired();
 
                     b.Navigation("Survey");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SSS.Domain.Entities.Assessment.UserLearningProfile", b =>
-                {
-                    b.HasOne("SSS.Domain.Entities.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1797,6 +1845,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Navigation("OutgoingEdges");
 
+                    b.Navigation("Quiz");
+
                     b.Navigation("StudyPlanModules");
 
                     b.Navigation("StudySessions");
@@ -1821,8 +1871,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
             modelBuilder.Entity("SSS.Domain.Entities.Planning.StudyPlanModule", b =>
                 {
-                    b.Navigation("Quizzes");
-
                     b.Navigation("StudySessions");
 
                     b.Navigation("Tasks");

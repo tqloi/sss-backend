@@ -13,9 +13,8 @@ public class StudyPlanModule
     public ModuleStatus? Status { get; set; }
 
     // Navigation
-    public StudyPlan StudyPlan { get; set; } = null!;
-    public RoadmapNode RoadmapNode { get; set; } = null!;
-    public ICollection<TaskItem> Tasks { get; set; } = new HashSet<TaskItem>();
-    public ICollection<Quiz> Quizzes { get; set; } = new HashSet<Quiz>();
-    public ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+    public virtual StudyPlan StudyPlan { get; set; } = null!;
+    public virtual RoadmapNode RoadmapNode { get; set; } = null!;
+    public virtual ICollection<TaskItem> Tasks { get; set; } = new HashSet<TaskItem>();
+    public virtual ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
 }
