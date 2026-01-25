@@ -2,6 +2,7 @@
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,7 +75,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.UseFastEndpoints();
+app.UseFastEndpoints(c =>
+{
+    c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
+});
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
     app.UseSwaggerGen();

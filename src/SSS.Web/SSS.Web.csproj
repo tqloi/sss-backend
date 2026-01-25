@@ -19,6 +19,7 @@
 
 	<ItemGroup>
 	  <Folder Include="Endpoints\Content\LearningSubject\" />
+	  <Folder Include="Endpoints\Content\Roadmap\" />
 	</ItemGroup>
 
 </Project>
