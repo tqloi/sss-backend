@@ -33,7 +33,7 @@
 
     // Roadmap / Content
     public enum NodeDifficulty { Beginner, Intermediate, Advanced }
-    public enum ContentType { Video, Article, Book, Course, Exercise, Quiz, Project }
+    public enum ContentType { Video, Article, Book, Course, Exercise, Quiz, Project, }
     public enum EdgeType { Prerequisite, Recommended, Next }
 
     // Notification
