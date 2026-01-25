@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace SSS.Application.Common.DTOs
+namespace SSS.Application.Common.Dtos
 {
     public class PaginatedResult<T>
     {

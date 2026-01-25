@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SSS.Application.Common.Dtos
+﻿namespace SSS.Application.Common.Dtos
 {
     public abstract class GenericResponseClass<T>
     {
