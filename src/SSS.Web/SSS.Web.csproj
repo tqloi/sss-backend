@@ -17,4 +17,9 @@
 	  <ProjectReference Include="..\SSS.Infrastructure\SSS.Infrastructure.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Endpoints\Content\LearningSubject\" />
+	  <Folder Include="Endpoints\Content\Roadmap\" />
+	</ItemGroup>
+
 </Project>

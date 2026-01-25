@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SSS.Application.Common.Dtos
+﻿namespace SSS.Application.Common.Dtos
 {
     // Version không có data (cho các response chỉ cần Success/Message)
     public abstract record GenericResponseRecord(

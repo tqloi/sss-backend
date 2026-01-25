@@ -53,6 +53,7 @@ public class NodeContentConfiguration : IEntityTypeConfiguration<NodeContent>
             .HasForeignKey(e => e.NodeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(e => new { e.NodeId, e.OrderNo });
+        builder.HasIndex(e => new { e.NodeId, e.OrderNo })
+            .IsUnique();
     }
 }   
