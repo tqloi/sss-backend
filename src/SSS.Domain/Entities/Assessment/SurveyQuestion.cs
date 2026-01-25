@@ -15,7 +15,7 @@ public class SurveyQuestion
     public bool IsRequired { get; set; }
 
     // Navigation
-    public Survey Survey { get; set; } = null!;
-    public ICollection<SurveyQuestionOption> Options { get; set; } = new HashSet<SurveyQuestionOption>();
-    public ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
+    public virtual Survey Survey { get; set; } = null!;
+    public virtual ICollection<SurveyQuestionOption> Options { get; set; } = new HashSet<SurveyQuestionOption>();
+    public virtual ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
 }

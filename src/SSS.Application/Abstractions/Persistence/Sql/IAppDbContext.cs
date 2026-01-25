@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Identity;
+using SSS.Domain.Entities.Learning;
 using SSS.Domain.Entities.Notification;
 using SSS.Domain.Entities.Planning;
 using SSS.Domain.Entities.Tracking;
@@ -25,7 +26,9 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<SurveyQuestionOption> SurveyQuestionOptions { get; }
         DbSet<SurveyResponse> SurveyResponses { get; }
         DbSet<SurveyAnswer> SurveyAnswers { get; }
-        DbSet<UserLearningProfile> UserLearningProfiles { get; }
+        DbSet<UserLearningBehavior> UserLearningBehaviors { get; }
+        DbSet<UserLearningTarget> UserLearningTargets { get; }
+
 
         // Planning / Tracking
         DbSet<StudyPlan> StudyPlans { get; }

@@ -28,12 +28,12 @@ public class StudySession
     public int? SelfRating { get; set; }
     public LocalTimeBlock? LocalTimeBlock { get; set; }
     public string? Timezone { get; set; }
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; } = DateTime.MinValue;
 
     // Navigation
-    public User User { get; set; } = null!;
-    public TaskItem? Task { get; set; }
-    public StudyPlan? StudyPlan { get; set; }
-    public StudyPlanModule? Module { get; set; }
-    public RoadmapNode? Node { get; set; }
+    public  virtual User User { get; set; } = null!;
+    public virtual TaskItem? Task { get; set; }
+    public virtual StudyPlan? StudyPlan { get; set; }
+    public virtual StudyPlanModule? Module { get; set; }
+    public virtual RoadmapNode? Node { get; set; }
 }

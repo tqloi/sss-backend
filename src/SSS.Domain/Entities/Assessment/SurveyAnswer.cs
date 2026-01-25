@@ -11,7 +11,7 @@ public class SurveyAnswer
     public DateTime AnsweredAt { get; set; }
 
     // Navigation
-    public SurveyResponse Response { get; set; } = null!;
-    public SurveyQuestion Question { get; set; } = null!;
-    public SurveyQuestionOption? Option { get; set; }
+    public virtual SurveyResponse Response { get; set; } = null!;
+    public virtual SurveyQuestion Question { get; set; } = null!;
+    public virtual SurveyQuestionOption? Option { get; set; }
 }

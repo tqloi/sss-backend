@@ -16,7 +16,7 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
             .HasColumnType("bigint")
             .ValueGeneratedOnAdd();
 
-        builder.Property(e => e.StudyPlanModuleId)
+        builder.Property(e => e.RoadmapNodeId)
             .HasColumnType("bigint")
             .IsRequired();
 
@@ -33,11 +33,12 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
             .HasColumnType("datetime(6)")
             .IsRequired();
 
-        builder.HasOne(e => e.StudyPlanModule)
-            .WithMany(m => m.Quizzes)
-            .HasForeignKey(e => e.StudyPlanModuleId)
+        builder.HasOne(e => e.RoadmapNode)
+            .WithOne(m => m.Quiz)
+            .HasForeignKey<Quiz>(e => e.RoadmapNodeId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(e => e.StudyPlanModuleId).IsUnique();
+        builder.HasIndex(e => e.RoadmapNodeId).IsUnique();
     }
 }

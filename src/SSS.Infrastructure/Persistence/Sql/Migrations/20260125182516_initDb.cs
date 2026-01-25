@@ -4,10 +4,10 @@ using MySql.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Persistence.Sql.Migrations
+namespace SSS.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class initDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -73,6 +73,10 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     Address = table.Column<string>(type: "longtext", nullable: true),
                     Dob = table.Column<DateTime>(type: "date", nullable: true),
                     Gender = table.Column<string>(type: "longtext", nullable: true),
+                    SubscriptionType = table.Column<string>(type: "longtext", nullable: true),
+                    SubscriptionStartDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    SubscriptionEndDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: true),
                     UserName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true),
@@ -91,6 +95,51 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Id_Users", x => x.Id);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Ln_UserLearningBehaviors",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    UserId = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false),
+                    AvailableDaysJson = table.Column<string>(type: "json", nullable: true),
+                    PreferredTimeBlocksJson = table.Column<string>(type: "json", nullable: true),
+                    SessionLengthPrefMinutes = table.Column<int>(type: "int", nullable: true),
+                    WVisual = table.Column<decimal>(type: "decimal(6,4)", precision: 6, scale: 4, nullable: false),
+                    WReading = table.Column<decimal>(type: "decimal(6,4)", precision: 6, scale: 4, nullable: false),
+                    WPractice = table.Column<decimal>(type: "decimal(6,4)", precision: 6, scale: 4, nullable: false),
+                    DisciplineType = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
+                    CommonDifficultiesJson = table.Column<string>(type: "json", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true, defaultValueSql: "CURRENT_TIMESTAMP(6)")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ln_UserLearningBehaviors", x => x.Id);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Ln_UserLearningTargets",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    UserId = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false),
+                    ProfileVersion = table.Column<int>(type: "int", nullable: false),
+                    TargetRole = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
+                    CurrentLevel = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
+                    TargetDeadlineMonths = table.Column<int>(type: "int", nullable: true),
+                    GoalDescription = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<string>(type: "longtext", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP(6)")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ln_UserLearningTargets", x => x.Id);
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
@@ -190,38 +239,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_As_SurveyResponses_Id_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Id_Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "As_UserLearningProfiles",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    UserId = table.Column<string>(type: "varchar(255)", nullable: false),
-                    ProfileVersion = table.Column<int>(type: "int", nullable: false),
-                    TargetRole = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    CurrentLevel = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    TargetDeadlineMonths = table.Column<int>(type: "int", nullable: true),
-                    AvailableDaysJson = table.Column<string>(type: "json", nullable: true),
-                    PreferredTimeBlocksJson = table.Column<string>(type: "json", nullable: true),
-                    SessionLengthPrefMinutes = table.Column<int>(type: "int", nullable: true),
-                    WVisual = table.Column<decimal>(type: "decimal(6,4)", nullable: true),
-                    WReading = table.Column<decimal>(type: "decimal(6,4)", nullable: true),
-                    WPractice = table.Column<decimal>(type: "decimal(6,4)", nullable: true),
-                    ConfOverall = table.Column<decimal>(type: "decimal(5,4)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_As_UserLearningProfiles", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_As_UserLearningProfiles_Id_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Id_Users",
                         principalColumn: "Id",
@@ -598,6 +615,30 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "As_Quizzes",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    RoadmapNodeId = table.Column<long>(type: "bigint", nullable: false),
+                    Title = table.Column<string>(type: "varchar(300)", maxLength: 300, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    TotalScore = table.Column<decimal>(type: "decimal(6,2)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_As_Quizzes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_As_Quizzes_Ct_RoadmapNodes_RoadmapNodeId",
+                        column: x => x.RoadmapNodeId,
+                        principalTable: "Ct_RoadmapNodes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "Ct_NodeContents",
                 columns: table => new
                 {
@@ -690,54 +731,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "As_Quizzes",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    StudyPlanModuleId = table.Column<long>(type: "bigint", nullable: false),
-                    Title = table.Column<string>(type: "varchar(300)", maxLength: 300, nullable: true),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    TotalScore = table.Column<decimal>(type: "decimal(6,2)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_As_Quizzes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_As_Quizzes_Pl_StudyPlanModules_StudyPlanModuleId",
-                        column: x => x.StudyPlanModuleId,
-                        principalTable: "Pl_StudyPlanModules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "Pl_TaskItems",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    StudyPlanModuleId = table.Column<long>(type: "bigint", nullable: false),
-                    Title = table.Column<string>(type: "varchar(400)", maxLength: 400, nullable: false),
-                    Status = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true),
-                    ScheduledDate = table.Column<DateTime>(type: "date", nullable: false),
-                    CompletedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Pl_TaskItems", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Pl_TaskItems_Pl_StudyPlanModules_StudyPlanModuleId",
-                        column: x => x.StudyPlanModuleId,
-                        principalTable: "Pl_StudyPlanModules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
-
-            migrationBuilder.CreateTable(
                 name: "As_QuizAttempts",
                 columns: table => new
                 {
@@ -789,6 +782,56 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         name: "FK_As_QuizQuestions_As_Quizzes_QuizId",
                         column: x => x.QuizId,
                         principalTable: "As_Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Pl_TaskItems",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    StudyPlanModuleId = table.Column<long>(type: "bigint", nullable: false),
+                    Title = table.Column<string>(type: "varchar(400)", maxLength: 400, nullable: false),
+                    Status = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true),
+                    EstimatedDurationSeconds = table.Column<int>(type: "int", nullable: false),
+                    ScheduledDate = table.Column<DateTime>(type: "date", nullable: false),
+                    CompletedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pl_TaskItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Pl_TaskItems_Pl_StudyPlanModules_StudyPlanModuleId",
+                        column: x => x.StudyPlanModuleId,
+                        principalTable: "Pl_StudyPlanModules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "As_QuizQuestionOptions",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    QuestionId = table.Column<long>(type: "bigint", nullable: false),
+                    ValueKey = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                    DisplayText = table.Column<string>(type: "varchar(300)", maxLength: 300, nullable: false),
+                    IsCorrect = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    ScoreValue = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    OrderNo = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_As_QuizQuestionOptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_As_QuizQuestionOptions_As_QuizQuestions_QuestionId",
+                        column: x => x.QuestionId,
+                        principalTable: "As_QuizQuestions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -858,27 +901,40 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "As_QuizQuestionOptions",
+                name: "As_QuizAnswers",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    AttemptId = table.Column<long>(type: "bigint", nullable: false),
                     QuestionId = table.Column<long>(type: "bigint", nullable: false),
-                    ValueKey = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    DisplayText = table.Column<string>(type: "varchar(300)", maxLength: 300, nullable: false),
-                    IsCorrect = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
-                    ScoreValue = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    OrderNo = table.Column<int>(type: "int", nullable: false)
+                    OptionId = table.Column<long>(type: "bigint", nullable: true),
+                    TextValue = table.Column<string>(type: "text", nullable: true),
+                    NumberValue = table.Column<decimal>(type: "decimal(10,4)", nullable: true),
+                    ScoredValue = table.Column<decimal>(type: "decimal(6,2)", nullable: true),
+                    AnsweredAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_As_QuizQuestionOptions", x => x.Id);
+                    table.PrimaryKey("PK_As_QuizAnswers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_As_QuizQuestionOptions_As_QuizQuestions_QuestionId",
+                        name: "FK_As_QuizAnswers_As_QuizAttempts_AttemptId",
+                        column: x => x.AttemptId,
+                        principalTable: "As_QuizAttempts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_As_QuizAnswers_As_QuizQuestionOptions_OptionId",
+                        column: x => x.OptionId,
+                        principalTable: "As_QuizQuestionOptions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_As_QuizAnswers_As_QuizQuestions_QuestionId",
                         column: x => x.QuestionId,
                         principalTable: "As_QuizQuestions",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
@@ -914,44 +970,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         principalTable: "Tr_StudySessions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "As_QuizAnswers",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    AttemptId = table.Column<long>(type: "bigint", nullable: false),
-                    QuestionId = table.Column<long>(type: "bigint", nullable: false),
-                    OptionId = table.Column<long>(type: "bigint", nullable: true),
-                    TextValue = table.Column<string>(type: "text", nullable: true),
-                    NumberValue = table.Column<decimal>(type: "decimal(10,4)", nullable: true),
-                    ScoredValue = table.Column<decimal>(type: "decimal(6,2)", nullable: true),
-                    AnsweredAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_As_QuizAnswers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_As_QuizAnswers_As_QuizAttempts_AttemptId",
-                        column: x => x.AttemptId,
-                        principalTable: "As_QuizAttempts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_As_QuizAnswers_As_QuizQuestionOptions_OptionId",
-                        column: x => x.OptionId,
-                        principalTable: "As_QuizQuestionOptions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_As_QuizAnswers_As_QuizQuestions_QuestionId",
-                        column: x => x.QuestionId,
-                        principalTable: "As_QuizQuestions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
@@ -994,9 +1012,9 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_As_Quizzes_StudyPlanModuleId",
+                name: "IX_As_Quizzes_RoadmapNodeId",
                 table: "As_Quizzes",
-                column: "StudyPlanModuleId",
+                column: "RoadmapNodeId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1034,12 +1052,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 name: "IX_As_SurveyResponses_UserId_SubmittedAt",
                 table: "As_SurveyResponses",
                 columns: new[] { "UserId", "SubmittedAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_As_UserLearningProfiles_UserId_ProfileVersion",
-                table: "As_UserLearningProfiles",
-                columns: new[] { "UserId", "ProfileVersion" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Ct_LearningSubjects_CategoryId",
@@ -1129,6 +1141,17 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 table: "Id_Users",
                 column: "NormalizedUserName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ln_UserLearningBehaviors_UserId",
+                table: "Ln_UserLearningBehaviors",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ln_UserLearningTargets_UserId",
+                table: "Ln_UserLearningTargets",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Nt_UserNotifications_RelatedSessionId",
@@ -1246,9 +1269,6 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                 name: "As_SurveyAnswers");
 
             migrationBuilder.DropTable(
-                name: "As_UserLearningProfiles");
-
-            migrationBuilder.DropTable(
                 name: "Ct_NodeContents");
 
             migrationBuilder.DropTable(
@@ -1271,6 +1291,12 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
             migrationBuilder.DropTable(
                 name: "Id_UserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Ln_UserLearningBehaviors");
+
+            migrationBuilder.DropTable(
+                name: "Ln_UserLearningTargets");
 
             migrationBuilder.DropTable(
                 name: "Nt_UserNotifications");

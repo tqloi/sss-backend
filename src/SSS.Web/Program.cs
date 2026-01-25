@@ -2,6 +2,9 @@
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
+//using Microsoft.AspNetCore.Identity;
+//using SSS.Domain.Entities.Identity;
+//using SSS.Infrastructure.Persistence.Sql;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,7 +58,7 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-//// Seed Database
+// Seed Database
 //using (var scope = app.Services.CreateScope())
 //{
 //    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();

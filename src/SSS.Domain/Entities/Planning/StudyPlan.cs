@@ -13,11 +13,11 @@ public class StudyPlan
     public int? ProfileVersion { get; set; }
     public StudyPlanStatus? Status { get; set; }
     public StudyPlanStrategy? Strategy { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
-    public User User { get; set; } = null!;
-    public Roadmap Roadmap { get; set; } = null!;
-    public ICollection<StudyPlanModule> Modules { get; set; } = new HashSet<StudyPlanModule>();
-    public ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+    public virtual User User { get; set; } = null!;
+    public virtual Roadmap Roadmap { get; set; } = null!;
+    public virtual ICollection<StudyPlanModule> Modules { get; set; } = new HashSet<StudyPlanModule>();
+    public virtual ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
 }

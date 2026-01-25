@@ -12,5 +12,5 @@ public class UserPushToken
     public DateTime LastUpdated { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
 }
