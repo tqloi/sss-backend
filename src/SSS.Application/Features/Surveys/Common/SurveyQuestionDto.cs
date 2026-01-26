@@ -4,7 +4,7 @@ namespace SSS.Application.Features.Surveys.Common
 {
     public sealed record SurveyQuestionDto
     (
-
+        long Id,
         long SurveyId,
         string QuestionKey,
         string Prompt,

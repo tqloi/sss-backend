@@ -8,6 +8,7 @@ namespace SSS.Application.Features.Surveys.Common
 {
     public sealed record SurveyQuestionOptionDto
     (
+     long Id,
      long QuestionId,
      string ValueKey,
      string DisplayText,
