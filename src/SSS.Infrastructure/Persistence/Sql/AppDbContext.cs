@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Domain.Entities.Assessment;
+using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Identity;
+using SSS.Domain.Entities.Learning;
 using SSS.Domain.Entities.Notification;
 using SSS.Domain.Entities.Planning;
-using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Tracking;
-using SSS.Domain.Entities.Assessment;
-using SSS.Application.Abstractions.Persistence.Sql;
 
 namespace SSS.Infrastructure.Persistence.Sql
 {
@@ -27,7 +28,8 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<SurveyQuestionOption> SurveyQuestionOptions => Set<SurveyQuestionOption>();
         public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
         public DbSet<SurveyAnswer> SurveyAnswers => Set<SurveyAnswer>();
-        public DbSet<UserLearningProfile> UserLearningProfiles => Set<UserLearningProfile>();
+        public DbSet<UserLearningBehavior> UserLearningBehaviors => Set<UserLearningBehavior>();
+        public DbSet<UserLearningTarget> UserLearningTargets => Set<UserLearningTarget>();
 
         // Study Plan / Tasks / Tracking
         public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
@@ -90,6 +92,7 @@ namespace SSS.Infrastructure.Persistence.Sql
                     var ns when ns.Contains("Content") => "Ct_",
                     var ns when ns.Contains("Assessment") => "As_",
                     var ns when ns.Contains("Planning") => "Pl_",
+                    var ns when ns.Contains("Learning") => "Ln_",
                     var ns when ns.Contains("Tracking") => "Tr_",
                     var ns when ns.Contains("Notification") => "Nt_", // Sửa lại đúng tên folder bạn đặt
                     _ => ""

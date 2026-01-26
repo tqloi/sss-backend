@@ -12,7 +12,7 @@ public class RoadmapEdge
     public int? OrderNo { get; set; }
 
     // Navigation
-    public Roadmap Roadmap { get; set; } = null!;
-    public RoadmapNode FromNode { get; set; } = null!;
-    public RoadmapNode ToNode { get; set; } = null!;
+    public virtual Roadmap Roadmap { get; set; } = null!;
+    public virtual RoadmapNode FromNode { get; set; } = null!;
+    public virtual RoadmapNode ToNode { get; set; } = null!;
 }

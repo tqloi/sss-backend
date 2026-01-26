@@ -1,0 +1,10 @@
+﻿namespace SSS.Domain.Constants
+{
+    public static class SurveyCodes
+    {
+        public const string LearningBehavior = "LEARNING_BEHAVIOR";
+        public const string LearningTarget = "LEARNING_TARGET";
+        public const string RoadmapLearningTarget = "ROADMAP_LEARNING_TARGET";
+        public const string PostModuleFeedback = "POST_MODULE_FEEDBACK";
+    }
+}

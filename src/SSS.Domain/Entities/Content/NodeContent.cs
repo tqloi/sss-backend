@@ -16,5 +16,5 @@ public class NodeContent
     public bool IsRequired { get; set; }
 
     // Navigation
-    public RoadmapNode Node { get; set; } = null!;
+    public virtual RoadmapNode Node { get; set; } = null!;
 }

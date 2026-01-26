@@ -14,7 +14,7 @@ public class QuizQuestion
     public bool IsRequired { get; set; }
 
     // Navigation
-    public Quiz Quiz { get; set; } = null!;
-    public ICollection<QuizQuestionOption> Options { get; set; } = new HashSet<QuizQuestionOption>();
-    public ICollection<QuizAnswer> Answers { get; set; } = new HashSet<QuizAnswer>();
+    public virtual Quiz Quiz { get; set; } = null!;
+    public virtual ICollection<QuizQuestionOption> Options { get; set; } = new HashSet<QuizQuestionOption>();
+    public virtual ICollection<QuizAnswer> Answers { get; set; } = new HashSet<QuizAnswer>();
 }

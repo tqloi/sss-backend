@@ -13,6 +13,19 @@
     public enum SurveyStatus { Draft, Published, Archived }
     public enum SurveyTriggerReason { Initial, Resurvey, Manual }
     public enum SurveyQuestionType { SingleChoice, MultipleChoice, Scale, ShortAnswer, FreeText }
+    public enum TargetStatus
+    {
+        active,
+        archived,
+        completed
+    }
+
+    public enum DisciplineType
+    {
+        OnTime,
+        LateButDone,
+        DropMidway
+    }
 
     // Quiz
     public enum QuizQuestionType { SingleChoice, MultipleChoice, Scale, ShortAnswer }
@@ -20,7 +33,7 @@
 
     // Roadmap / Content
     public enum NodeDifficulty { Beginner, Intermediate, Advanced }
-    public enum ContentType { Video, Article, Book, Course, Exercise, Quiz, Project }
+    public enum ContentType { Video, Article, Book, Course, Exercise, Quiz, Project, }
     public enum EdgeType { Prerequisite, Recommended, Next }
 
     // Notification
@@ -77,5 +90,12 @@
         Text = 2,
         Quiz = 3,
         Practice = 4
+    }
+
+    public enum SubscriptionType
+    {
+        Free = 1,
+        Premium = 2,
+        Pro = 3
     }
 }

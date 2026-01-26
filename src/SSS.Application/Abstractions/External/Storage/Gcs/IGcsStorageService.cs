@@ -1,12 +1,12 @@
-﻿//namespace SSS.Infrastructure.External.Storage.Gcs
-//{
-//    public interface IGcsStorageService
-//    {
-//        Task<string> UploadAsync(Stream stream, string objectName, string contentType, CancellationToken ct = default);
-//        string GetPublicUrl(string objectName);
-//        string GetSignedReadUrl(string objectName, TimeSpan ttl);
-//        string GetSignedWriteUrl(string objectName, string contentType, TimeSpan ttl);
-//        string GetSignedResumableInitiationUrl(string objectName, string contentType, TimeSpan ttl);
-//        Task<bool> DeleteAsync(string objectName, CancellationToken ct = default);
-//    }
-//}
+﻿namespace SSS.Application.Abstractions.External.Storage.Gcs
+{
+    public interface IGcsStorageService
+    {
+        Task<string> UploadAsync(Stream stream, string objectName, string contentType, CancellationToken ct = default);
+        string GetPublicUrl(string objectName);
+        string GetSignedReadUrl(string objectName, TimeSpan ttl);
+        string GetSignedWriteUrl(string objectName, string contentType, TimeSpan ttl);
+        string GetSignedResumableInitiationUrl(string objectName, string contentType, TimeSpan ttl);
+        Task<bool> DeleteAsync(string objectName, CancellationToken ct = default);
+    }
+}

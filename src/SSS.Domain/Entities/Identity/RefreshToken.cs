@@ -6,7 +6,7 @@ public class RefreshToken
     public string UserId { get; set; } = null!;
     public string TokenHash { get; set; } = null!;
     public DateTime ExpiresAtUtc { get; set; }
-    public DateTime CreatedAtUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public string? CreatedByIp { get; set; }
     public DateTime? RevokedAtUtc { get; set; }
     public string? RevokedByIp { get; set; }
@@ -14,7 +14,7 @@ public class RefreshToken
     public bool IsUsed { get; set; }
 
     // Navigation properties
-    public User User { get; set; } = null!;
-    public RefreshToken? ReplacedByToken { get; set; }
-    public ICollection<RefreshToken> ReplacedTokens { get; set; } = new HashSet<RefreshToken>();
+    public virtual User User { get; set; } = null!;
+    public virtual RefreshToken? ReplacedByToken { get; set; }
+    public virtual ICollection<RefreshToken> ReplacedTokens { get; set; } = new HashSet<RefreshToken>();
 }

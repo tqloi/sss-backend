@@ -16,5 +16,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.AvatarUrl).HasColumnType("varchar(512)");
         builder.Property(x => x.Address).HasColumnType("longtext");
         builder.Property(x => x.Dob).HasColumnType("date");
+        builder.Property(x => x.SubscriptionStartDate).HasColumnType("datetime(6)");
+        builder.Property(x => x.SubscriptionEndDate).HasColumnType("datetime(6)");
     }
 }

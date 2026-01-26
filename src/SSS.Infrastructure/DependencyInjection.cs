@@ -7,6 +7,7 @@ using SSS.Application.Features.Auth.Login;
 using SSS.Infrastructure.External.AiServices;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Identity.Google;
+using SSS.Infrastructure.External.Storage.Gcs;
 using SSS.Infrastructure.Persistence.Mongo;
 using SSS.Infrastructure.Persistence.Sql;
 using SSS.Infrastructure.Sercurity.Jwt;
@@ -29,6 +30,7 @@ namespace SSS.Infrastructure
             services.AddMongo(config);
             services.AddAIService(config);
             //services.AddGcsStorage(config);
+            services.AddGcsStorage(config);
             //services.AddPayOSService(config);
             services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(LoginHandler).Assembly));
@@ -49,7 +51,7 @@ namespace SSS.Infrastructure
             services.AddFastEndpoints();
             services.SwaggerDocument(o =>
             {
-                o.AutoTagPathSegmentIndex = 2;
+                //o.AutoTagPathSegmentIndex = 2;
                 o.DocumentSettings = s =>
                 {
                     s.Title = "sss-backend";
