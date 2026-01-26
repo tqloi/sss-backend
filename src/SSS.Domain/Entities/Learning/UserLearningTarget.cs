@@ -7,6 +7,7 @@ namespace SSS.Domain.Entities.Learning
         public long Id { get; set; }
 
         public string UserId { get; set; } = default!;
+        public long RoadmapId { get; set; }
 
         public int ProfileVersion { get; set; }
 
