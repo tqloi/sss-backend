@@ -4,7 +4,7 @@ using SSS.Application.Features.Quizzes.GetQuizById;
 
 namespace SSS.Web.Endpoints.Quizzes.GetQuizById
 {
-    public class GetQuizByIdValidator : Validator<GetQuizByIdRequest>
+    public class GetQuizByIdValidator : Validator<GetQuizByIdQuery>
     {
         public GetQuizByIdValidator()
         {

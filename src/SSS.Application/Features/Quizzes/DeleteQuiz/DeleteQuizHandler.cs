@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 namespace SSS.Application.Features.Quizzes.DeleteQuiz
 {
     public class DeleteQuizHandler(IAppDbContext _db)
-        : IRequestHandler<DeleteQuizRequest, DeleteQuizResponse>
+        : IRequestHandler<DeleteQuizCommand, DeleteQuizResult>
     {
-        public async Task<DeleteQuizResponse> Handle(DeleteQuizRequest req, CancellationToken ct)
+        public async Task<DeleteQuizResult> Handle(DeleteQuizCommand req, CancellationToken ct)
         {
             var entity = await _db.Quizzes
                 .FirstOrDefaultAsync(q => q.Id == req.QuizId, ct);
@@ -24,7 +24,7 @@ namespace SSS.Application.Features.Quizzes.DeleteQuiz
 
             _db.Quizzes.Remove(entity);
             await _db.SaveChangesAsync(ct);
-            return new DeleteQuizResponse(                
+            return new DeleteQuizResult(                
                 IsDeleted: true,
                 msg: "Quiz deleted successfully."
             );

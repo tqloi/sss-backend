@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SSS.Web.Endpoints.Quizzes.UpdateQuiz
 {
-    public class UpdateQuizValidator : Validator<UpdateQuizRequest>
+    public class UpdateQuizValidator : Validator<UpdateQuizCommand>
     {
         public UpdateQuizValidator() 
         {

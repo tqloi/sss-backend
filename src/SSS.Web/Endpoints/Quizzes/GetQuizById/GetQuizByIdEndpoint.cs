@@ -5,7 +5,7 @@ using SSS.Application.Features.Quizzes.GetQuizById;
 namespace SSS.Web.Endpoints.Quizzes.GetQuizById
 {
     public class GetQuizByIdEndpoint(ISender sender)
-        : Endpoint<GetQuizByIdRequest, GetQuizByIdResponse>
+        : Endpoint<GetQuizByIdQuery, GetQuizByIdResult>
     {
         public override void Configure()
         {
@@ -14,11 +14,12 @@ namespace SSS.Web.Endpoints.Quizzes.GetQuizById
             {
                 s.Summary = "Retrieves a quiz by its ID.";
             });
+            Description(d => d.WithTags("Quizzes"));
 
-           // Roles("Admin", "Instructor", "Student");
+            // Roles("Admin", "Instructor", "Student");
         }
 
-        public override async Task HandleAsync(GetQuizByIdRequest req, CancellationToken ct)
+        public override async Task HandleAsync(GetQuizByIdQuery req, CancellationToken ct)
         {
             var result = await sender.Send(req, ct);
             if (result.QuizDto == null)

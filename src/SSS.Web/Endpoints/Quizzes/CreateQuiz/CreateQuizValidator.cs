@@ -4,7 +4,7 @@ using SSS.Application.Features.Quizzes.CreateQuiz;
 
 namespace SSS.Web.Endpoints.Quizzes.CreateQuiz
 {
-    public sealed class CreateQuizValidator : Validator<CreateQuizRequest>
+    public sealed class CreateQuizValidator : Validator<CreateQuizCommand>
     {
         public CreateQuizValidator() 
         {

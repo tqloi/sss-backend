@@ -1,11 +1,11 @@
 ﻿using FastEndpoints;
 using FluentValidation;
-using SSS.Application.Features.Quizzes.GetAllQuizNode;
+using SSS.Application.Features.Quizzes.GetAllQuizzes;
 using System.ComponentModel.DataAnnotations;
 
 namespace SSS.Web.Endpoints.Quizzes.GetAllQuizzes
 {
-    public class GetAllQuizzesValidator : Validator<GetAllQuizzesRequest>
+    public class GetAllQuizzesValidator : Validator<GetAllQuizzesQuery>
     {
         public GetAllQuizzesValidator() 
         {

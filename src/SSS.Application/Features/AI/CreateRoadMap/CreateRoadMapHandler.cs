@@ -1,6 +1,6 @@
 ﻿using MediatR;
-using SSS.Application.Abstractions.External.AiServices.LLM;
-using SSS.Application.Abstractions.External.AiServices.PipeLine;
+using SSS.Application.Abstractions.External.AI.LLM;
+using SSS.Application.Abstractions.External.AI.PipeLine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
