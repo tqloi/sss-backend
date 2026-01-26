@@ -41,6 +41,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Configurations.Assessment
 
             builder.Property(x => x.CreatedAt)
             .HasColumnType("datetime(6)");
+
+            builder.HasIndex(x => new { x.UserId, x.RoadmapId, x.Status });
         }
     }
 }
