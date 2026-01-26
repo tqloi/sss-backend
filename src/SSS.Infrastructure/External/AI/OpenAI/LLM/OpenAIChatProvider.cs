@@ -1,4 +1,5 @@
 ﻿using OpenAI.Chat;
+using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.LLM;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.LLM
@@ -6,7 +7,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.LLM
     public class OpenAIChatProvider : ILlmChatProvider
     {
         private readonly ChatClient _chatClient;
-
+        public LlmProvider Provider => LlmProvider.Gpt;
         public OpenAIChatProvider(ChatClient chatClient)
         {
             _chatClient = chatClient;

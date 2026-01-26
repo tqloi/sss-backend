@@ -1,18 +1,20 @@
 ﻿using Microsoft.Extensions.Options;
+using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.LLM;
 using System.Text;
 using System.Text.Json;
 
 namespace SSS.Infrastructure.External.AI.Gemini
 {
-    public class GeminiChatProvider
+    public class GeminiChatProvider : ILlmChatProvider
     {
         private readonly HttpClient _httpClient;
-        private readonly GeminiOptions _options;
+        private readonly GeminiAIOptions _options;
+        public LlmProvider Provider => LlmProvider.Gemini;
 
         public GeminiChatProvider(
         HttpClient httpClient,
-        IOptions<GeminiOptions> options)
+        IOptions<GeminiAIOptions> options)
         {
             _httpClient = httpClient;
             _options = options.Value;

@@ -1,5 +1,4 @@
-﻿using SSS.Application.Abstractions.External.AI;
-using SSS.Application.Abstractions.External.AI.Embedding;
+﻿using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.LLM;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
@@ -11,8 +10,8 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         private readonly ILlmChatProvider _llmChatProvider;
         private readonly IEmbeddingProvider _emp;
         private readonly IQdrantClient _vec;
-        private readonly AiConfig _config;
-        public RagPipeline(ILlmChatProvider llmChatProvider, IEmbeddingProvider emp, IQdrantClient vec, AiConfig config)
+        private readonly AiOptions _config;
+        public RagPipeline(ILlmChatProvider llmChatProvider, IEmbeddingProvider emp, IQdrantClient vec, AiOptions config)
         {
             _llmChatProvider = llmChatProvider;
             _emp = emp;
