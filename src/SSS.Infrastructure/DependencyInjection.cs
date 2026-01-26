@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SSS.Application.Features.Auth.Login;
+using SSS.Infrastructure.Caching.Redis;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Identity.Google;
 using SSS.Infrastructure.External.Storage.Gcs;
@@ -24,11 +25,6 @@ namespace SSS.Infrastructure
         {
             services.AddDatabase(config);
             services.AddJwtAuthentication(config);
-            services.AddMailService(config);
-            services.AddGoogleAuthService(config);
-            services.AddMongo(config);
-            services.AddGcsStorage(config);
-            //services.AddPayOSService(config);
             services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(LoginHandler).Assembly));
             services.AddScopedServicesByConvention
@@ -37,6 +33,12 @@ namespace SSS.Infrastructure
                  infraAssembly: typeof(GoogleAuthService).Assembly
             );
 
+            services.AddMailService(config);
+            services.AddGoogleAuthService(config);
+            services.AddMongo(config);
+            services.AddRedis(config);
+            services.AddGcsStorage(config);
+            //services.AddPayOSService(config);
             //// Certificate background workers
             //services.AddSingleton<StudentCourseCompletionQueue>();
             //services.AddSingleton<IStudentCourseCompletionQueue>(sp => sp.GetRequiredService<StudentCourseCompletionQueue>());
