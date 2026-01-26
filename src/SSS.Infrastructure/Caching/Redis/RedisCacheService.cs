@@ -1,10 +1,10 @@
-﻿using SSS.Application.Abstractions.Caching.Redis;
+﻿using SSS.Application.Abstractions.Caching;
 using StackExchange.Redis;
 using System.Text.Json;
 
 namespace SSS.Infrastructure.Caching.Redis
 {
-    public class RedisCacheService : IRedisCacheService
+    public class RedisCacheService : ICacheService
     {
         private readonly IDatabase _db;
 
