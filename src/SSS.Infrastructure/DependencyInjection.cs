@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SSS.Application.Features.Auth.Login;
 using SSS.Infrastructure.Caching.Redis;
+using SSS.Infrastructure.External.AiServices;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Identity.Google;
 using SSS.Infrastructure.External.Storage.Gcs;
@@ -32,7 +33,8 @@ namespace SSS.Infrastructure
                  appAssembly: typeof(IGoogleAuthService).Assembly,
                  infraAssembly: typeof(GoogleAuthService).Assembly
             );
-
+          
+            services.AddAIService(config);
             services.AddMailService(config);
             services.AddGoogleAuthService(config);
             services.AddMongo(config);
