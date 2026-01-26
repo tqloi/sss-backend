@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningSubject.GetAll
         {
             Get("/api/learning-subjects");
             Summary(s => s.Summary = "Get all learning subjects with pagination and optional category filter");
+            Description(d => d.WithTags("LearningSubjects"));
             AllowAnonymous();
         }
 

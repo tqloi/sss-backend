@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.NodeContents.Create
         {
             Post("/api/roadmaps/{roadmapId}/nodes/{nodeId}/contents");
             Summary(s => s.Summary = "Create node content");
+            Description(d => d.WithTags("NodeContents"));
             Roles("Admin");
         }
 

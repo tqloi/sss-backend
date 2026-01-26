@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyResponses.DeleteResponse
         public override void Configure()
         {
             Delete("/api/surveys/responses/{responseId}");
-            Description(d => d.WithTags("Survey Responses"));
+            Description(d => d.WithTags("SurveyResponses"));
             Summary(s => s.Summary = "Delete a survey response");
         }
         public override async Task HandleAsync(CancellationToken ct)

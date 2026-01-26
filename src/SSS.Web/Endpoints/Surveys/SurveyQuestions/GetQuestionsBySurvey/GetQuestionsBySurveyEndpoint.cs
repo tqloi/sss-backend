@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestions.GetQuestionsBySurvey
         public override void Configure()
         {
             Get("/api/surveys/{surveyId}/questions");
-            Description(d => d.WithTags("Survey Questions"));
+            Description(d => d.WithTags("SurveyQuestions"));
             Summary(s => s.Summary = "Get List questions by Survey ID");
         }
 

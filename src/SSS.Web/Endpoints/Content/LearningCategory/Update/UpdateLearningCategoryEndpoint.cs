@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningCategory.Update
         {
             Put("/api/learning-categories/{id}");
             Summary(s => s.Summary = "Update an existing learning category");
+            Description(d => d.WithTags("LearningCategories"));
             Roles("Admin");
         }
 

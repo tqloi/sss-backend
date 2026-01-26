@@ -13,7 +13,7 @@ public sealed class CreateUserGamificationEndpoint(
     public override void Configure()
     {
         Post("/api/user-gamifications");
-        Tags("UserGamifications");
+        Description(d => d.WithTags("UserGamifications"));
         Summary(s =>
         {
             s.Summary = "Create user gamification";

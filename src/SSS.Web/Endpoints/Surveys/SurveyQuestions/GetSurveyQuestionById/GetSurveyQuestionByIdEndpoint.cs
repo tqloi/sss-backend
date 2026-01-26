@@ -9,7 +9,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestions.GetSurveyQuestionById
         public override void Configure()
         {
             Get("/api/surveys/{surveyId}/questions/{questionId}");
-            Description(d => d.WithTags("Survey Questions"));
+            Description(d => d.WithTags("SurveyQuestions"));
             Summary(s => s.Summary = "Get question detail by ID");
         }
         public override async Task HandleAsync(CancellationToken ct)

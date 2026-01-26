@@ -13,7 +13,7 @@ public sealed class UpdateUserGamificationEndpoint(
     public override void Configure()
     {
         Put("/api/user-gamifications/{id}");
-        Tags("UserGamifications");
+        Description(d => d.WithTags("UserGamifications"));
         Summary(s =>
         {
             s.Summary = "Update user gamification";

@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.NodeContents.Delete
         {
             Delete("/api/roadmaps/{roadmapId}/nodes/{nodeId}/contents/{contentId}");
             Summary(s => s.Summary = "Delete node content");
+            Description(d => d.WithTags("NodeContents"));
             Roles("Admin");
         }
 

@@ -13,7 +13,7 @@ public sealed class UpdateUserSubjectStatEndpoint(
     public override void Configure()
     {
         Put("/api/user-subject-stats/{id}");
-        Tags("UserSubjectStats");
+        Description(d => d.WithTags("UserSubjectStats"));
         Summary(s =>
         {
             s.Summary = "Update a user subject stat";

@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningSubject.Delete
         {
             Delete("/api/learning-subjects/{id}");
             Summary(s => s.Summary = "Delete a learning subject");
+            Description(d => d.WithTags("LearningSubjects"));
             Roles("Admin");
         }
 

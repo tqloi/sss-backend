@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyResponses.SubmitResponse
         public override void Configure()
         {
             Patch("/api/surveys/{surveyId}/responses/{responseId}");
-            Description(d => d.WithTags("Survey Responses"));
+            Description(d => d.WithTags("SurveyResponses"));
             
             Summary(s => s.Summary = "Submit a survey response");
         }

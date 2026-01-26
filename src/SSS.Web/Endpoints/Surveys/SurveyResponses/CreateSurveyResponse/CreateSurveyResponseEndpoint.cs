@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyResponses.CreateSurveyResponse
         public override void Configure()
         {
             Post("/api/surveys/{surveyId}/responses");
-            Description(d => d.WithTags("Survey Responses"));
+            Description(d => d.WithTags("SurveyResponses"));
             Summary(s => s.Summary = "Create a new survey response");
         }
         

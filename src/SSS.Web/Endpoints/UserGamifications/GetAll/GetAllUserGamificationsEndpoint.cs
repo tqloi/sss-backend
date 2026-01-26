@@ -12,7 +12,7 @@ public sealed class GetAllUserGamificationsEndpoint(
     {
         Get("/api/user-gamifications");
         Roles("Admin");
-        Tags("UserGamifications");
+        Description(d => d.WithTags("UserGamifications"));
         Summary(s =>
         {
             s.Summary = "Get all user gamifications (Admin only)";

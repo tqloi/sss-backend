@@ -14,7 +14,7 @@ public sealed class GetAllUserSubjectStatsEndpoint(
     {
         Get("/api/user-subject-stats");
         Roles("Admin");
-        Tags("UserSubjectStats");
+        Description(d => d.WithTags("UserSubjectStats"));
         Summary(s =>
         {
             s.Summary = "Get all user subject stats (Admin only)";

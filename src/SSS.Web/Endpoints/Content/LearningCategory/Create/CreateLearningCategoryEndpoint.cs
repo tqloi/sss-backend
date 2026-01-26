@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningCategory.Create
         {
             Post("/api/learning-categories");
             Summary(s => s.Summary = "Create a new learning category");
+            Description(d => d.WithTags("LearningCategories"));
             Roles("Admin");
         }
         public override async Task HandleAsync(

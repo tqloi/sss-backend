@@ -48,7 +48,7 @@ namespace SSS.Infrastructure
             services.AddFastEndpoints();
             services.SwaggerDocument(o =>
             {
-                o.AutoTagPathSegmentIndex = 2;
+                //o.AutoTagPathSegmentIndex = 2;
                 o.DocumentSettings = s =>
                 {
                     s.Title = "sss-backend";
