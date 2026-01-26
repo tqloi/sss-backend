@@ -12,7 +12,7 @@ public sealed class GetMyUserGamificationEndpoint(
     public override void Configure()
     {
         Get("/api/user-gamifications/me");
-        Tags("UserGamifications");
+        Description(d => d.WithTags("UserGamifications"));
         Summary(s =>
         {
             s.Summary = "Get my gamification";

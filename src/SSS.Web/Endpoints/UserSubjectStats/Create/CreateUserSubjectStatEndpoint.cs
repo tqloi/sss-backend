@@ -13,7 +13,7 @@ public sealed class CreateUserSubjectStatEndpoint(
     public override void Configure()
     {
         Post("/api/user-subject-stats");
-        Tags("UserSubjectStats");
+        Description(d => d.WithTags("UserSubjectStats"));
         Summary(s =>
         {
             s.Summary = "Create a new user subject stat";

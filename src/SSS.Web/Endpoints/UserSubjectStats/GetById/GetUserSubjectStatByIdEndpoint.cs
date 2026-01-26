@@ -13,7 +13,7 @@ public sealed class GetUserSubjectStatByIdEndpoint(
     public override void Configure()
     {
         Get("/api/user-subject-stats/{id}");
-        Tags("UserSubjectStats");
+        Description(d => d.WithTags("UserSubjectStats"));
         Summary(s =>
         {
             s.Summary = "Get user subject stat by ID";

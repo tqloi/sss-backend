@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.RoadmapEdges.Delete
         {
             Delete("/api/roadmaps/{roadmapId}/edges/{edgeId}");
             Summary(s => s.Summary = "Delete roadmap edge");
+            Description(d => d.WithTags("RoadmapEdges"));
             Roles("Admin");
         }
 

@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningSubject.Update
         {
             Put("/api/learning-subjects/{id}");
             Summary(s => s.Summary = "Update an existing learning subject");
+            Description(d => d.WithTags("LearningSubjects"));
             Roles("Admin");
         }
 

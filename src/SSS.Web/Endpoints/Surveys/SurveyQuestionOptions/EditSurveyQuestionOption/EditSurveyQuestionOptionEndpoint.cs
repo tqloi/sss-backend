@@ -9,7 +9,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestionOptions.EditSurveyQuestionOpti
         public override void Configure()
         {
             Patch("/api/surveys/question/option");
-            Description(d => d.WithTags("Survey Options"));
+            Description(d => d.WithTags("SurveyOptions"));
             Summary(s => s.Summary = "edit an option for a question");
             Roles("Admin");
         }

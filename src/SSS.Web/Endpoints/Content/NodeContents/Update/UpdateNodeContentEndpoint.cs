@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.NodeContents.Update
         {
             Patch("/api/roadmaps/{roadmapId}/nodes/{nodeId}/contents/{contentId}");
             Summary(s => s.Summary = "Update node content");
+            Description(d => d.WithTags("NodeContents"));
             Roles("Admin");
         }
 

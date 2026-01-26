@@ -12,7 +12,7 @@ public sealed class GetMyUserSubjectStatsEndpoint(
     public override void Configure()
     {
         Get("/api/user-subject-stats/me");
-        Tags("UserSubjectStats");
+        Description(d => d.WithTags("UserSubjectStats"));
         Summary(s =>
         {
             s.Summary = "Get my subject stats";

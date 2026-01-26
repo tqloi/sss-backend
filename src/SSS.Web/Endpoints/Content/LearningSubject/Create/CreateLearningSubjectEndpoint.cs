@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningSubject.Create
         {
             Post("/api/learning-subjects");
             Summary(s => s.Summary = "Create a new learning subject");
+            Description(d => d.WithTags("LearningSubjects"));
             Roles("Admin");
         }
 

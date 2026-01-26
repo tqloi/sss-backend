@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyAnswers.DeleteAnswer
         public override void Configure()
         {
             Delete("/api/surveys/responses/answers/{answerId}");
-            Description(d => d.WithTags("Survey Answers"));
+            Description(d => d.WithTags("SurveyAnswers"));
             Summary(s => s.Summary = "Delete a survey answer by ID");
         }
 

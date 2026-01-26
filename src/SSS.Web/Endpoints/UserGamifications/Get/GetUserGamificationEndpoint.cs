@@ -18,7 +18,7 @@ public sealed class GetUserGamificationEndpoint(
     public override void Configure()
     {
         Get("/api/user-gamifications/{id}");
-        Tags("UserGamifications");
+        Description(d => d.WithTags("UserGamifications"));
         Summary(s =>
         {
             s.Summary = "Get user gamification by ID";

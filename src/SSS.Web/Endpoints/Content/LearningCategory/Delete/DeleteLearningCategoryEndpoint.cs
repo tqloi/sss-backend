@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.LearningCategory.Delete
         {
             Delete("/api/learning-categories/{id}");
             Summary(s => s.Summary = "Delete a learning category");
+            Description(d => d.WithTags("LearningCategories"));
             Roles("Admin");
         }
 

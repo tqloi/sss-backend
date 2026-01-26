@@ -12,7 +12,7 @@ public sealed class DeleteUserSubjectStatEndpoint(
     public override void Configure()
     {
         Delete("/api/user-subject-stats/{id}");
-        Tags("UserSubjectStats");
+        Description(d => d.WithTags("UserSubjectStats"));
         Summary(s =>
         {
             s.Summary = "Delete a user subject stat";

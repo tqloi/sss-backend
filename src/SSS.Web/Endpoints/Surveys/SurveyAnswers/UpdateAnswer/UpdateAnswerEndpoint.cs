@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyAnswers.UpdateAnswer
         public override void Configure()
         {
             Put("/api/surveys/responses/answers/{answerId}");
-            Description(d => d.WithTags("Survey Answers"));
+            Description(d => d.WithTags("SurveyAnswers"));
             Summary(s => s.Summary = "Update a survey answer");
         }
 

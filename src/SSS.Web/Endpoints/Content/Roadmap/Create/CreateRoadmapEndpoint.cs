@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.Roadmap.Create
         {
             Post("/api/roadmaps");
             Summary(s => s.Summary = "Create a new roadmap");
+            Description(d => d.WithTags("Roadmaps"));
             Roles("Admin");
         }
 

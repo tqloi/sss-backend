@@ -11,6 +11,7 @@ public class SyncRoadmapGraphEndpoint(ISender sender)
     {
         Put("/api/roadmaps/{roadmapId}/graph");
         Summary(s => s.Summary = "Sync/update full roadmap graph (add/update/delete to match payload)");
+        Description(d => d.WithTags("Roadmaps"));
         AllowAnonymous();
     }
 

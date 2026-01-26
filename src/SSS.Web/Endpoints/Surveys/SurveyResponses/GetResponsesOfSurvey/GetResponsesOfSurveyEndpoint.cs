@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyResponses.GetResponsesOfSurvey
         public override void Configure()
         {
             Get("/api/surveys/{surveyId}/responses");
-            Description(d => d.WithTags("Survey Responses"));
+            Description(d => d.WithTags("SurveyResponses"));
             Summary(s => s.Summary = "Get List responses by Survey ID");
         }
 

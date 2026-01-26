@@ -11,6 +11,7 @@ public class CreateRoadmapGraphEndpoint(ISender sender)
     {
         Post("/api/roadmaps/graph");
         Summary(s => s.Summary = "Create a full roadmap graph (roadmap + nodes + edges + contents)");
+        Description(d => d.WithTags("Roadmaps"));
         AllowAnonymous();
     }
 

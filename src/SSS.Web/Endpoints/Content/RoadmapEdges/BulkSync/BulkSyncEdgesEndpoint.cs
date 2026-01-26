@@ -11,6 +11,7 @@ namespace SSS.Web.Endpoints.Content.RoadmapEdges.BulkSync
         {
             Put("/api/roadmaps/{roadmapId}/edges/bulk");
             Summary(s => s.Summary = "Bulk sync roadmap edges (add/update/delete)");
+            Description(d => d.WithTags("RoadmapEdges"));
             Roles("Admin");
         }
 
