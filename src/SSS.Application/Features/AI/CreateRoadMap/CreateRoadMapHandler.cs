@@ -1,19 +1,12 @@
 ﻿using MediatR;
-using SSS.Application.Abstractions.External.AI.LLM;
 using SSS.Application.Abstractions.External.AI.PipeLine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace SSS.Application.Features.AI.CreateRoadMap
 {
     public sealed class CreateRoadMapHandler(IPipeLine pipeLine)
-        : IRequestHandler<CreateRoadMapRequest, CreateRoadMapResponse>
+        : IRequestHandler<CreateRoadMapCommand, CreateRoadMapResult>
     {
-        public async Task<CreateRoadMapResponse> Handle(CreateRoadMapRequest request, CancellationToken cancellationToken)
+        public async Task<CreateRoadMapResult> Handle(CreateRoadMapCommand request, CancellationToken cancellationToken)
         {
             var rawJson = await pipeLine.AskAsync(
                 request.Message,
@@ -21,7 +14,7 @@ namespace SSS.Application.Features.AI.CreateRoadMap
                 ct: cancellationToken
             );
             // 2. Deserialize
-            var response = new CreateRoadMapResponse(rawJson);
+            var response = new CreateRoadMapResult(rawJson);
             if (response is null)
                 throw new ApplicationException("AI returned null roadmap");
             return response;

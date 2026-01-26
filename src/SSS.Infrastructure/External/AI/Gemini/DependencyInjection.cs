@@ -12,14 +12,14 @@ namespace SSS.Infrastructure.External.AI.Gemini
         IConfiguration configuration)
         {
             // Bind Gemini options
-            services.Configure<GeminiOptions>(
+            services.Configure<GeminiAIOptions>(
             configuration.GetSection("Gemini"));
 
             // Typed HttpClient
             services.AddHttpClient<GeminiChatProvider>((sp, client) =>
             {
                 var options = sp
-                .GetRequiredService<IOptions<GeminiOptions>>()
+                .GetRequiredService<IOptions<GeminiAIOptions>>()
                 .Value;
 
                 client.BaseAddress = new Uri(options.BaseUrl);
