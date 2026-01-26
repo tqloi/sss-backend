@@ -8,9 +8,9 @@ using SSS.Application.Features.Quizzes.UpdateQuizNode;
 namespace SSS.Application.Features.Quizzes.UpdateQuiz
 {
     public class UpdateQuizNodeHandler(IAppDbContext _db, IMapper _mapper)
-        : IRequestHandler<UpdateQuizRequest, UpdateQuizResponse>
+        : IRequestHandler<UpdateQuizCommand, UpdateQuizResult>
     {
-        public async Task<UpdateQuizResponse> Handle(UpdateQuizRequest req, CancellationToken ct)
+        public async Task<UpdateQuizResult> Handle(UpdateQuizCommand req, CancellationToken ct)
         {
             var entity = await _db.Quizzes
                 .FirstOrDefaultAsync(c => c.Id == req.Id, ct);
@@ -23,7 +23,7 @@ namespace SSS.Application.Features.Quizzes.UpdateQuiz
             await _db.SaveChangesAsync(ct);
 
             var res = _mapper.Map<UpdateQuizDto>(entity);
-            return new UpdateQuizResponse(res);
+            return new UpdateQuizResult(res);
         }
     }
 }

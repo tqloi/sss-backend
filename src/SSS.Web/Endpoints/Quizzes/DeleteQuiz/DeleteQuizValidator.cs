@@ -4,7 +4,7 @@ using SSS.Application.Features.Quizzes.DeleteQuiz;
 
 namespace SSS.Web.Endpoints.Quizzes.DeleteQuiz
 {
-    public class DeleteQuizValidator : Validator<DeleteQuizRequest>
+    public class DeleteQuizValidator : Validator<DeleteQuizCommand>
     {
         public DeleteQuizValidator() 
         {

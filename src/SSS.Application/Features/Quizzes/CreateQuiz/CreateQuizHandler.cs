@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 namespace SSS.Application.Features.Quizzes.CreateQuiz
 {
     public class CreateQuizHandler(IAppDbContext _db, IMapper _mapper)
-        : IRequestHandler<CreateQuizRequest, CreateQuizResponse>
+        : IRequestHandler<CreateQuizCommand, CreateQuizResult>
     {
-        public async Task<CreateQuizResponse> Handle(CreateQuizRequest req, CancellationToken ct)
+        public async Task<CreateQuizResult> Handle(CreateQuizCommand req, CancellationToken ct)
         {
             var dto = req.CreateQuizNode;
             var entity = _mapper.Map<Quiz>(dto);
@@ -26,7 +26,7 @@ namespace SSS.Application.Features.Quizzes.CreateQuiz
 
             var createdDto = _mapper.Map<CreateQuizDto>(entity);
 
-            return new CreateQuizResponse(createdDto);
+            return new CreateQuizResult(createdDto);
         }
     }
 }

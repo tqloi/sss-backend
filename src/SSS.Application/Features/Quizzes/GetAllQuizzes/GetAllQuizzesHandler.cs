@@ -1,17 +1,17 @@
 ﻿using AutoMapper;
-using LecX.Application.Common.Dtos;
+using SSS.Application.Common.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.Quizzes.Common;
 using SSS.Domain.Entities.Assessment;
 
-namespace SSS.Application.Features.Quizzes.GetAllQuizNode
+namespace SSS.Application.Features.Quizzes.GetAllQuizzes
 {
     public class GetAllQuizzesHandler(IAppDbContext _db, IMapper mapper)
-        : IRequestHandler<GetAllQuizzesRequest, GetAllQuizzesResponse>
+        : IRequestHandler<GetAllQuizzesQuery, GetAllQuizzesResult>
     {
-        public async Task<GetAllQuizzesResponse> Handle(GetAllQuizzesRequest req, CancellationToken ct)
+        public async Task<GetAllQuizzesResult> Handle(GetAllQuizzesQuery req, CancellationToken ct)
         {
             var query = _db.Quizzes
                 .AsNoTracking()
@@ -22,7 +22,7 @@ namespace SSS.Application.Features.Quizzes.GetAllQuizNode
 
             var result = paginated
                 .MapItems(q => mapper.Map<QuizDto>(q));
-            return new GetAllQuizzesResponse(result);
+            return new GetAllQuizzesResult(result);
         }
     }
 }

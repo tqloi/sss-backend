@@ -5,7 +5,7 @@ using SSS.Application.Features.Quizzes.DeleteQuiz;
 namespace SSS.Web.Endpoints.Quizzes.DeleteQuiz
 {
     public sealed class DeleteQuizEndpoint(ISender sender)
-        : Endpoint<DeleteQuizRequest, DeleteQuizResponse>
+        : Endpoint<DeleteQuizCommand, DeleteQuizResult>
     {
         public override void Configure()
         {
@@ -14,10 +14,11 @@ namespace SSS.Web.Endpoints.Quizzes.DeleteQuiz
             {
                 s.Summary = "Deletes a quiz by its ID.";
             });
+            Description(d => d.WithTags("Quizzes"));
             Roles("Admin");
         }
 
-        public override async Task HandleAsync(DeleteQuizRequest req, CancellationToken ct)
+        public override async Task HandleAsync(DeleteQuizCommand req, CancellationToken ct)
         {
             var result = await sender.Send(req, ct);
             if (!result.IsDeleted)
