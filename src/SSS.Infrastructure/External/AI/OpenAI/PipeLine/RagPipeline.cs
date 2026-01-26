@@ -4,7 +4,7 @@ using SSS.Application.Abstractions.External.AI.LLM;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 
-namespace SSS.Infrastructure.External.AI.PipeLine
+namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
     public class RagPipeline : IPipeLine
     {

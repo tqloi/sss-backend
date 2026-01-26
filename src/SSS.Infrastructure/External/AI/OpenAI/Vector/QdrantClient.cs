@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SSS.Infrastructure.External.AI.Vector
+namespace SSS.Infrastructure.External.AI.OpenAI.Vector
 {
     public class QdrantClient : IQdrantClient
     {
@@ -69,7 +69,7 @@ namespace SSS.Infrastructure.External.AI.Vector
 
             var body = new
             {
-                vector = vector,
+                vector,
                 limit = topK,
                 with_payload = true,
                 filter = new

@@ -1,7 +1,7 @@
 ﻿using OpenAI.Chat;
 using SSS.Application.Abstractions.External.AI.LLM;
 
-namespace SSS.Infrastructure.External.AI.LLM
+namespace SSS.Infrastructure.External.AI.OpenAI.LLM
 {
     public class OpenAIChatProvider : ILlmChatProvider
     {

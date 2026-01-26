@@ -1,7 +1,7 @@
 ﻿using OpenAI.Embeddings;
 using SSS.Application.Abstractions.External.AI.Embedding;
 
-namespace SSS.Infrastructure.External.AI.Embedding
+namespace SSS.Infrastructure.External.AI.OpenAI.Embedding
 {
     public class OpenAIEmbeddingProvider : IEmbeddingProvider
     {

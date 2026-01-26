@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SSS.Infrastructure.External.AI.Text
+namespace SSS.Infrastructure.External.AI.OpenAI.Text
 {
     public static class TextChunker
     {

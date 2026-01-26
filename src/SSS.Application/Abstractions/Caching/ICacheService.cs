@@ -1,6 +1,6 @@
-﻿namespace SSS.Application.Abstractions.Caching.Redis
+﻿namespace SSS.Application.Abstractions.Caching
 {
-    public interface IRedisCacheService
+    public interface ICacheService
     {
         Task<T?> GetAsync<T>(string key);
         Task SetAsync<T>(string key, T value, TimeSpan? expiry = null);
