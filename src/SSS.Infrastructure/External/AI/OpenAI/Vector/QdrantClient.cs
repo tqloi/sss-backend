@@ -1,5 +1,4 @@
-﻿using SSS.Application.Abstractions.External.AI;
-using SSS.Application.Abstractions.External.AI.Vector;
+﻿using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Domain.Entities.AI;
 using System;
 using System.Collections.Generic;
@@ -13,9 +12,9 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
     public class QdrantClient : IQdrantClient
     {
         private readonly HttpClient _client;
-        private readonly AiConfig _cfg;
+        private readonly AiOptions _cfg;
         private string? _activeCollection;
-        public QdrantClient(IHttpClientFactory client, AiConfig cfg)
+        public QdrantClient(IHttpClientFactory client, AiOptions cfg)
         {
 
             _cfg = cfg;

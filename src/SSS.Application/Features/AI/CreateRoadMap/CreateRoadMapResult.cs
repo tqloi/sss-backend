@@ -1,5 +1,5 @@
 ﻿namespace SSS.Application.Features.AI.CreateRoadMap
 {
-    public sealed record CreateRoadMapResponse(string Result);
+    public sealed record CreateRoadMapResult(string Result);
     
 }

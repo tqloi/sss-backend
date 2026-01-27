@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI.Chat;
 using OpenAI.Embeddings;
-using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.LLM;
 using SSS.Application.Abstractions.External.AI.PipeLine;
@@ -21,7 +20,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI
             IConfiguration config
         )
         {
-            var configuration = config.Get<AiConfig>() ?? new AiConfig();
+            var configuration = config.Get<AiOptions>() ?? new AiOptions();
             services.AddSingleton(configuration);
             services.AddHttpClient();
 

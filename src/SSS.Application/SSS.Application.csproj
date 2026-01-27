@@ -15,11 +15,4 @@
 		<PackageReference Include="AutoMapper" Version="15.0.1" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Features\Content\LearningCategory\GetAll\" />
-	  <Folder Include="Features\Content\LearningCategory\Delete\" />
-	  <Folder Include="Features\Content\LearningCategory\Update\" />
-	  <Folder Include="Features\Content\LearningSubject\" />
-	</ItemGroup>
-
 </Project>
