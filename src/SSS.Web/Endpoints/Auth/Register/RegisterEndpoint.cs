@@ -46,7 +46,7 @@ namespace SSS.WebApi.Endpoints.Auth.Register
             await mail.SendMailAsync(new EmailContent
             {
                 To = result.Email,
-                Subject = "Confirm Otp SSS",
+                Subject = "Confirm Otp StudySense",
                 Body = body
             });
 

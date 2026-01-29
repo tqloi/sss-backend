@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.LLM;
 
@@ -7,11 +8,20 @@ namespace SSS.Infrastructure.External.AI
     public class LlmRouter : ILlmRouter
     {
         private readonly IDictionary<LlmProvider, ILlmChatProvider> _providers;
+        private readonly ILogger<LlmRouter> _logger;
 
-
-        public LlmRouter(IEnumerable<ILlmChatProvider> providers)
+        public LlmRouter(
+            IEnumerable<ILlmChatProvider> providers,
+            ILogger<LlmRouter> logger)
         {
+            _logger = logger;
+
             _providers = providers.ToDictionary(p => p.Provider);
+
+            _logger.LogInformation(
+                "LlmRouter initialized with providers: {Providers}",
+                string.Join(", ", _providers.Keys)
+            );
         }
 
 

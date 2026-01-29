@@ -56,7 +56,7 @@ namespace SSS.WebApi.Endpoints.Auth.ResetPassword
             await mail.SendMailAsync(new EmailContent
             {
                 To = user.Email,
-                Subject = "Reset your SSS password",
+                Subject = "Reset your StudySense password",
                 Body = emailBody
             });
 
