@@ -1,5 +1,5 @@
-﻿using SSS.Application.Abstractions.External.AI.Embedding;
-using SSS.Application.Abstractions.External.AI.LLM;
+﻿using SSS.Application.Abstractions.External.AI;
+using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 
@@ -7,13 +7,13 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
     public class RagPipeline : IPipeLine
     {
-        private readonly ILlmChatProvider _llmChatProvider;
+        private readonly ILlmRouter _llmRouter;
         private readonly IEmbeddingProvider _emp;
         private readonly IQdrantClient _vec;
         private readonly AiOptions _config;
-        public RagPipeline(ILlmChatProvider llmChatProvider, IEmbeddingProvider emp, IQdrantClient vec, AiOptions config)
+        public RagPipeline(ILlmRouter llmRouter, IEmbeddingProvider emp, IQdrantClient vec, AiOptions config)
         {
-            _llmChatProvider = llmChatProvider;
+            _llmRouter = llmRouter;
             _emp = emp;
             _vec = vec;
             _config = config;
@@ -55,7 +55,8 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             var systemPrompt = "You are an AI curriculum designer for a software engineering learning platform.\r\n\r\nYour task is to generate a detailed learning roadmap in STRICT JSON format\r\nthat can be directly inserted into a database.\r\n\r\nYou MUST design the roadmap based on industry learning standards and best practices.\r\nWhen defining learning steps, ordering, and topic coverage, you SHOULD strongly\r\nreference and align with the learning paths published on:\r\nhttps://roadmap.sh/dashboard\r\n\r\nIMPORTANT RULES:\r\n1. Output ONLY valid JSON. No markdown. No explanation.\r\n2. Do NOT include database navigation properties.\r\n3. Use temporary negative IDs for nodes and edges (e.g. -1, -2, -3).\r\n4. The roadmap must be detailed, practical, and ordered.\r\n5. Include learning resource links where possible.\r\n6. Node difficulty must be one of: \"Beginner\", \"Intermediate\", \"Advanced\".\r\n7. EdgeType must be one of: \"Prerequisite\", \"Optional\", \"Parallel\".\r\n\r\n========================\r\nJSON STRUCTURE REQUIRED:\r\n========================\r\n\r\n{\r\n  \"roadmap\": {\r\n    \"subjectId\": number,\r\n    \"title\": string,\r\n    \"description\": string\r\n  },\r\n  \"nodes\": [\r\n    {\r\n      \"id\": number,\r\n      \"title\": string,\r\n      \"description\": string,\r\n      \"difficulty\": \"Beginner\" | \"Intermediate\" | \"Advanced\",\r\n      \"orderNo\": number,\r\n      \"resources\": [\r\n        {\r\n          \"title\": string,\r\n          \"url\": string,\r\n          \"type\": \"article\" | \"video\" | \"course\" | \"documentation\"\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  \"edges\": [\r\n    {\r\n      \"fromNodeId\": number,\r\n      \"toNodeId\": number,\r\n      \"edgeType\": \"Prerequisite\" | \"Optional\" | \"Parallel\",\r\n      \"orderNo\": number\r\n    }\r\n  ]\r\n}\r\n\r\n========================\r\nCONTENT GUIDELINES:\r\n========================\r\n\r\n- Nodes must represent clear learning steps.\r\n- OrderNo defines the recommended learning sequence.\r\n- Edges must correctly represent prerequisite relationships.\r\n- Resources must be real and reputable (official docs, well-known platforms).\r\n- The roadmap should be suitable for self-study.\r\n\r\nGenerate the roadmap based on the user's requested subject.\r\n";
             var userPromptWithContext = $"QUESTION:\n{question}\n\nCONTEXT:\n{context}";
 
-            var response = await _llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
             return response;
         }
         public async Task<string> BuildStudyPlanContextAsync(
@@ -375,8 +376,9 @@ that fits the user's level, goals, and availability
 while strictly respecting the provided roadmap.
 """;
 
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);
             // 3. Gọi GPT provider
-            var response = await _llmChatProvider.AskAsync(
+            var response = await llmChatProvider.AskAsync(
                 systemPrompt,
                 userPrompt,
                 ct);
