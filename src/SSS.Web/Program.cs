@@ -2,6 +2,7 @@
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
+using SSS.Middleware;
 //using Microsoft.AspNetCore.Identity;
 //using SSS.Domain.Entities.Identity;
 //using SSS.Infrastructure.Persistence.Sql;
@@ -54,7 +55,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 builder.Services.AddProblemDetails();
-//builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
