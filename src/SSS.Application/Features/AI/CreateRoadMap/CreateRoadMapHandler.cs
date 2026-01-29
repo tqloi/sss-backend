@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using SSS.Application.Abstractions.External.AI.PipeLine;
+using SSS.Application.Features.AI.Common;
 
 namespace SSS.Application.Features.AI.CreateRoadMap
 {
@@ -13,6 +14,8 @@ namespace SSS.Application.Features.AI.CreateRoadMap
                 topK: 5,
                 ct: cancellationToken
             );
+            var roadmap = new RoadmapDto();
+            var rawString = await pipeLine.GenerateStudyPlanAsync("admin2", roadmap, ct: cancellationToken);
             // 2. Deserialize
             var response = new CreateRoadMapResult(rawJson);
             if (response is null)
