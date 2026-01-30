@@ -94,6 +94,7 @@ namespace SSS.Infrastructure.Persistence.Sql
                     var ns when ns.Contains("Planning") => "Pl_",
                     var ns when ns.Contains("Learning") => "Ln_",
                     var ns when ns.Contains("Tracking") => "Tr_",
+                    var ns when ns.Contains("Payment") => "Pm_",
                     var ns when ns.Contains("Notification") => "Nt_", // Sửa lại đúng tên folder bạn đặt
                     _ => ""
                 };
