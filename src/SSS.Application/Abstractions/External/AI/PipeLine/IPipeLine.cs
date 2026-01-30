@@ -12,6 +12,6 @@ namespace SSS.Application.Abstractions.External.AI.PipeLine
         Task<string> AskAsync(string question, int? topK, CancellationToken ct = default);
 
         Task<string> BuildStudyPlanContextAsync(string userId, CancellationToken ct = default);
-        Task<string> GenerateStudyPlanAsync(string userId, CancellationToken ct = default);
+        Task<string> GenerateStudyPlanAsync(string userId, object roadmap, CancellationToken ct = default);
     }
 }
