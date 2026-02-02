@@ -28,7 +28,7 @@ namespace SSS.Infrastructure.Persistence.Sql.Configurations.Payment
             builder.Property(x => x.Status)
                 .HasConversion<string>() // enum -> NVARCHAR
                 .HasMaxLength(20)
-                .HasDefaultValue(PaymentStatus.Success)
+                .HasDefaultValue(PaymentStatus.Pending)
                 .IsRequired();
 
             builder.Property(x => x.PaymentDate)

@@ -14,7 +14,7 @@ namespace SSS.Domain.Entities.Payment
 
         public string Currency { get; set; } = "VND";
 
-        public PaymentStatus Status { get; set; } = PaymentStatus.Success;
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
         public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
     }
