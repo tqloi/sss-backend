@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.Content.Roadmaps.GraphCreate;
 
-public class CreateRoadmapGraphEndpoint(ISender sender, HttpContextAccessor httpContext)
+public class CreateRoadmapGraphEndpoint(ISender sender)
     : Endpoint<CreateRoadmapGraphCommand, CreateRoadmapGraphResult>
 {
     public override void Configure()

@@ -1,12 +1,11 @@
 using FastEndpoints;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using SSS.Application.Features.Content.Roadmap.GetRoadMapByManager;
 using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.Content.Roadmap.GetRoadMapByManager
 {
-    public class GetRoadMapByManagerEndpoint(ISender sender, IHttpContextAccessor httpContext)
+    public class GetRoadMapByManagerEndpoint(ISender sender)
         : Endpoint<GetRoadMapByManagerQuery, GetRoadMapByManagerResult>
     {
         public override void Configure()
@@ -21,7 +20,7 @@ namespace SSS.Web.Endpoints.Content.Roadmap.GetRoadMapByManager
             GetRoadMapByManagerQuery req,
             CancellationToken ct)
         {
-            var managerId = httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var managerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             var query = req with
             {

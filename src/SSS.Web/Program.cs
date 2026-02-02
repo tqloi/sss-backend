@@ -66,9 +66,9 @@ var app = builder.Build();
 //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 //    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    var seeder = new DataSeeder(ctx, roleManager, userManager);
-    await seeder.SeedAllAsync();
-}
+//    var seeder = new DataSeeder(ctx, roleManager, userManager);
+//    await seeder.SeedAllAsync();
+//}
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
