@@ -3,9 +3,9 @@ using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
 using SSS.Middleware;
-using Microsoft.AspNetCore.Identity;
-using SSS.Domain.Entities.Identity;
-using SSS.Infrastructure.Persistence.Sql;
+//using Microsoft.AspNetCore.Identity;
+//using SSS.Domain.Entities.Identity;
+//using SSS.Infrastructure.Persistence.Sql;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,15 +60,15 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 var app = builder.Build();
 
 // Seed Database
-using (var scope = app.Services.CreateScope())
-{
-    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+//    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+//    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    var seeder = new DataSeeder(ctx, roleManager, userManager);
-    await seeder.SeedAllAsync();
-}
+//    var seeder = new DataSeeder(ctx, roleManager, userManager);
+//    await seeder.SeedAllAsync();
+//}
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();

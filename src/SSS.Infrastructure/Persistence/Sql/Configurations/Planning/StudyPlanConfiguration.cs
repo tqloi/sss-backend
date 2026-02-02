@@ -46,5 +46,8 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
             .WithMany(r => r.StudyPlans)
             .HasForeignKey(e => e.RoadmapId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.UserId, x.RoadmapId })
+       .IsUnique();
     }
 }
