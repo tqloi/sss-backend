@@ -1,7 +1,6 @@
 using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Tracking;
 using SSS.Domain.Enums;
-using SSS.Domain.Entities.Assessment;
 
 namespace SSS.Domain.Entities.Planning;
 

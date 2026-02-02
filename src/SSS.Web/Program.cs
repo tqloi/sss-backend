@@ -3,9 +3,9 @@ using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
 using SSS.Middleware;
-using Microsoft.AspNetCore.Identity;
-using SSS.Domain.Entities.Identity;
-using SSS.Infrastructure.Persistence.Sql;
+//using Microsoft.AspNetCore.Identity;
+//using SSS.Domain.Entities.Identity;
+//using SSS.Infrastructure.Persistence.Sql;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);

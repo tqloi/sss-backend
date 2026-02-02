@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SSS.Infrastructure.Persistence.Sql;
 
@@ -10,9 +11,11 @@ using SSS.Infrastructure.Persistence.Sql;
 namespace SSS.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202163515_addPlanIx")]
+    partial class addPlanIx
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1221,9 +1224,6 @@ namespace SSS.Infrastructure.Migrations
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
 
                     b.Property<int>("EstimatedDurationSeconds")
                         .HasColumnType("int");
