@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SSS.Infrastructure.Persistence.Sql;
 
@@ -10,9 +11,11 @@ using SSS.Infrastructure.Persistence.Sql;
 namespace SSS.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202151311_fixPm")]
+    partial class fixPm
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -503,46 +506,6 @@ namespace SSS.Infrastructure.Migrations
                     b.HasIndex("UserId", "SubmittedAt");
 
                     b.ToTable("As_SurveyResponses", (string)null);
-                });
-
-            modelBuilder.Entity("SSS.Domain.Entities.Content.ContentManagerSubject", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("datetime");
-
-                    b.Property<string>("AssignedBy")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("ContentManagerId")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(true);
-
-                    b.Property<long>("SubjectId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedBy");
-
-                    b.HasIndex("ContentManagerId");
-
-                    b.HasIndex("SubjectId");
-
-                    b.HasIndex("ContentManagerId", "SubjectId")
-                        .IsUnique();
-
-                    b.ToTable("Ct_ContentManagerSubject", (string)null);
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.LearningCategory", b =>
@@ -1637,32 +1600,6 @@ namespace SSS.Infrastructure.Migrations
                     b.Navigation("Survey");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SSS.Domain.Entities.Content.ContentManagerSubject", b =>
-                {
-                    b.HasOne("SSS.Domain.Entities.Identity.User", "AssignedByUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedBy")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("SSS.Domain.Entities.Identity.User", "ContentManager")
-                        .WithMany()
-                        .HasForeignKey("ContentManagerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SSS.Domain.Entities.Content.LearningSubject", "Subject")
-                        .WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedByUser");
-
-                    b.Navigation("ContentManager");
-
-                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.LearningSubject", b =>

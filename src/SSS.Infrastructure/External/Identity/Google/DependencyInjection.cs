@@ -35,7 +35,8 @@ namespace SSS.Infrastructure.External.Identity.Google
                 };
             });
             services.Configure<GoogleAuthOptions>(section);
-            services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+
+            //services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             return services;
         }
     }

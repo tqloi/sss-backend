@@ -48,7 +48,7 @@ namespace SSS.Infrastructure.Sercurity.Jwt
                 });
 
             services.AddAuthorization();
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            //services.AddScoped<IJwtTokenService, JwtTokenService>();
             return services;
         }
     }

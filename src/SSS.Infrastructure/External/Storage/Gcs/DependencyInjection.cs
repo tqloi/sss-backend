@@ -38,7 +38,7 @@ namespace SSS.Infrastructure.External.Storage.Gcs
             });
 
             // Service triển khai
-            services.AddScoped<IGcsStorageService, GcsStorageService>();
+            //services.AddScoped<IGcsStorageService, GcsStorageService>();
 
             return services;
         }

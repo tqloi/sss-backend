@@ -21,6 +21,7 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<RoadmapNode> RoadmapNodes => Set<RoadmapNode>();
         public DbSet<RoadmapEdge> RoadmapEdges => Set<RoadmapEdge>();
         public DbSet<NodeContent> NodeContents => Set<NodeContent>();
+        public DbSet<ContentManagerSubject> ContentManagerSubjects => Set<ContentManagerSubject>();
 
         // Survey & Profile
         public DbSet<Survey> Surveys => Set<Survey>();
@@ -94,6 +95,7 @@ namespace SSS.Infrastructure.Persistence.Sql
                     var ns when ns.Contains("Planning") => "Pl_",
                     var ns when ns.Contains("Learning") => "Ln_",
                     var ns when ns.Contains("Tracking") => "Tr_",
+                    var ns when ns.Contains("Payment") => "Pm_",
                     var ns when ns.Contains("Notification") => "Nt_", // Sửa lại đúng tên folder bạn đặt
                     _ => ""
                 };

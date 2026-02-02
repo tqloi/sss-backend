@@ -9,7 +9,7 @@ namespace SSS.Application.Features.Surveys.Common
 {
     public sealed record SurveyDto
     (
-       
+        long Id, // Added to support frontend identification
         string? Title,
         string Code  = null!,
         SurveyStatus Status  = SurveyStatus.Draft

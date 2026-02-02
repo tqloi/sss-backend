@@ -31,5 +31,28 @@ public class RoadmapConfiguration : IEntityTypeConfiguration<Roadmap>
             .WithMany(s => s.Roadmaps)
             .HasForeignKey(e => e.SubjectId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(e => e.Version)
+            .HasDefaultValue(1)
+            .IsRequired();
+
+        builder.Property(e => e.IsLatest)
+            .HasDefaultValue(true)
+            .IsRequired();
+
+        builder.Property(e => e.CreatedAt);
+
+        builder.Property(e => e.CreateById)
+            .HasMaxLength(450);
+
+        builder.HasOne(e => e.CreateBy)
+            .WithMany()
+            .HasForeignKey(e => e.CreateById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(e => new { e.SubjectId, e.Title, e.Version })
+            .IsUnique();
+
+        builder.HasIndex(e => new { e.SubjectId, e.Title, e.IsLatest });
     }
 }
