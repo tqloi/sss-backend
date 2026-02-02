@@ -136,7 +136,11 @@ public sealed class CreateRoadmapGraphHandler(IAppDbContext dbContext)
             {
                 SubjectId = request.Roadmap.SubjectId,
                 Title = request.Roadmap.Title,
-                Description = request.Roadmap.Description
+                Description = request.Roadmap.Description,
+                CreateById = request.Roadmap.CreateById,
+                CreatedAt = DateTime.UtcNow,
+                Version = 1,
+                IsLatest = true,
             };
 
             dbContext.Roadmaps.Add(roadmap);

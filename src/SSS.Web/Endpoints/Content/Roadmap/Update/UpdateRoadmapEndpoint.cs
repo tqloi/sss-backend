@@ -11,7 +11,8 @@ namespace SSS.Web.Endpoints.Content.Roadmap.Update
         {
             Patch("/api/roadmaps/{id}");
             Summary(s => s.Summary = "Update roadmap metadata (partial update)");
-            Roles("Admin");
+            Description(d => d.WithTags("Roadmaps"));
+            Roles("ContentManager");
         }
 
         public override async Task HandleAsync(

@@ -11,7 +11,8 @@ namespace SSS.Web.Endpoints.Content.RoadmapEdges.Update
         {
             Patch("/api/roadmaps/{roadmapId}/edges/{edgeId}");
             Summary(s => s.Summary = "Update roadmap edge");
-            Roles("Admin");
+            Description(d => d.WithTags("RoadmapEdges"));
+            Roles("ContentManager");
         }
 
         public override async Task HandleAsync(

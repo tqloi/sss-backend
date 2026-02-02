@@ -11,7 +11,8 @@ namespace SSS.Web.Endpoints.Content.RoadmapNodes.Update
         {
             Patch("/api/roadmaps/{roadmapId}/nodes/{nodeId}");
             Summary(s => s.Summary = "Update roadmap node");
-            Roles("Admin");
+            Description(d => d.WithTags("RoadmapNodes"));
+            Roles("ContentManager");
         }
 
         public override async Task HandleAsync(

@@ -11,7 +11,8 @@ namespace SSS.Web.Endpoints.Content.Roadmap.GetAll
         {
             Get("/api/roadmaps");
             Summary(s => s.Summary = "Get all roadmaps with pagination and filtering");
-            Roles("Admin");
+            Description(d => d.WithTags("Roadmaps"));
+            Roles("Admin", "User");
         }
 
         public override async Task HandleAsync(

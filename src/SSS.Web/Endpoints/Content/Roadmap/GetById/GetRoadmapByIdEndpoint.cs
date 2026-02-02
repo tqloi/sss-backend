@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Content.Roadmap.GetById
         {
             Get("/api/roadmaps/{roadmapId}");
             Summary(s => s.Summary = "Get roadmap graph including nodes and edges");
-            AllowAnonymous();
+            Description(d => d.WithTags("Roadmaps"));
         }
 
         public override async Task HandleAsync(

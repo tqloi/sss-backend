@@ -28,7 +28,11 @@ namespace SSS.Application.Features.Content.Roadmap.Create
             {
                 SubjectId = request.SubjectId,
                 Title = request.Title,
-                Description = request.Description
+                Description = request.Description,
+                CreateById = request.CreatedById,
+                CreatedAt = DateTime.UtcNow,
+                Version = 1,
+                IsLatest = true
             };
 
             dbContext.Roadmaps.Add(entity);
@@ -43,7 +47,11 @@ namespace SSS.Application.Features.Content.Roadmap.Create
                     Id = entity.Id,
                     SubjectId = entity.SubjectId,
                     Title = entity.Title,
-                    Description = entity.Description
+                    Description = entity.Description,
+                    CreatedById = entity.CreateById,
+                    CreatedAt = entity.CreatedAt,
+                    Version = entity.Version,
+                    IsLatest = entity.IsLatest
                 }
             };
         }

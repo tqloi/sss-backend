@@ -2,6 +2,10 @@
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
+using SSS.Middleware;
+using Microsoft.AspNetCore.Identity;
+using SSS.Domain.Entities.Identity;
+using SSS.Infrastructure.Persistence.Sql;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,11 +55,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 builder.Services.AddProblemDetails();
-//builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
-//// Seed Database
+// Seed Database
 //using (var scope = app.Services.CreateScope())
 //{
 //    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();

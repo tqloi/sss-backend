@@ -16,10 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Features\Content\LearningCategory\GetAll\" />
-	  <Folder Include="Features\Content\LearningCategory\Delete\" />
-	  <Folder Include="Features\Content\LearningCategory\Update\" />
-	  <Folder Include="Features\Content\LearningSubject\" />
+	  <Folder Include="Features\Content\Roadmap\GetRoadMapByManager\" />
 	</ItemGroup>
 
 </Project>

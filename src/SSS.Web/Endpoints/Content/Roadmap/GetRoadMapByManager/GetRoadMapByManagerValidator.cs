@@ -1,12 +1,12 @@
 using FastEndpoints;
 using FluentValidation;
-using SSS.Application.Features.Content.Roadmap.GetAll;
+using SSS.Application.Features.Content.Roadmap.GetRoadMapByManager;
 
-namespace SSS.Web.Endpoints.Content.Roadmap.GetAll
+namespace SSS.Web.Endpoints.Content.Roadmap.GetRoadMapByManager
 {
-    public class GetAllRoadmapsValidator : Validator<GetAllRoadmapsQuery>
+    public class GetRoadMapByManagerValidator : Validator<GetRoadMapByManagerQuery>
     {
-        public GetAllRoadmapsValidator()
+        public GetRoadMapByManagerValidator()
         {
             RuleFor(x => x.PageIndex)
                 .GreaterThanOrEqualTo(1).WithMessage("PageIndex must be at least 1.");
@@ -25,4 +25,3 @@ namespace SSS.Web.Endpoints.Content.Roadmap.GetAll
         }
     }
 }
-

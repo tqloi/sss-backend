@@ -24,6 +24,9 @@ public record RoadmapGraphMetadata
     public required long SubjectId { get; init; }
     public required string Title { get; init; }
     public string? Description { get; init; }
+    public int? Version { get; set; }
+    public bool? IsLatest { get; set; }
+    public string? CreateById { get; set; }
 }
 
 public record RoadmapGraphUpdateMetadata
