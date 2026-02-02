@@ -25,6 +25,7 @@ namespace SSS.Application.Features.Surveys.Surveys.GetSurveyById
 
                 var dto = new SurveyDto
                 (
+                    survey.Id,
                     survey.Title,
                     survey.Code,
                     survey.Status

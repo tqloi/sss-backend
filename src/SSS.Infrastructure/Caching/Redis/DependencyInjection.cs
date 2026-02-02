@@ -31,7 +31,7 @@ namespace SSS.Infrastructure.Caching.Redis
                 return ConnectionMultiplexer.Connect(config);
             });
 
-            services.AddScoped<ICacheService, RedisCacheService>();
+            //services.AddScoped<ICacheService, RedisCacheService>();
             return services;
         }
     }

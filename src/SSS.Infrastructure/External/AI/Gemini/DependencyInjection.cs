@@ -28,7 +28,7 @@ namespace SSS.Infrastructure.External.AI.Gemini
             });
 
             // Bind abstraction
-            //services.AddScoped<ILlmChatProvider, GeminiChatProvider>();
+            services.AddScoped<ILlmChatProvider, GeminiChatProvider>();
 
             return services;
         }
