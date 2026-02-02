@@ -73,7 +73,7 @@ namespace SSS.Infrastructure
             Assembly infraAssembly,
             string[]? allowedSuffixes = null)
         {
-            allowedSuffixes ??= new[] { "Service", "Repository", "Provider", "Generator", "Client", "Gateway", "Sender", "Builder" };
+            allowedSuffixes ??= new[] { "Service", "Repository",  "Generator", "Client", "Gateway", "Sender", "Builder","Router" };
 
             var appTypes = appAssembly.GetTypes();
             var infraTypes = infraAssembly.GetTypes();

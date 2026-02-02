@@ -36,24 +36,239 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             await _vec.UpsertAsync(list, ct);
 
         }
+        //public async Task<string> AskAsync(string question, int? topK, CancellationToken ct = default)
+        //{
+        //    var dim = await _emp.GetDimAsync(ct);
+        //    await _vec.EnsureCollectionAsync(dim, ct);
 
-        public async Task<string> AskAsync(string question, int? topK, CancellationToken ct = default)
+        //    var qVec = await _emp.EmbeddingAsync(question, ct);
+
+        //    var hits = await _vec.SearchAsync(qVec, topK ?? _config.Rag.TopK, ct);
+
+            
+        //}
+
+        public async Task<string> GenerateRoadmapAsync(string question, CancellationToken ct = default)
         {
-            var dim = await _emp.GetDimAsync(ct);
-            await _vec.EnsureCollectionAsync(dim, ct);
-
-            var qVec = await _emp.EmbeddingAsync(question, ct);
-
-            var hits = await _vec.SearchAsync(qVec, topK ?? _config.Rag.TopK, ct);
-
-            var context = string.Join("\n---\n", hits.Select(h => h.Text));
-
-            var relevantDocs = string.Empty;
+            
 
 
 
-            var systemPrompt = "You are an AI curriculum designer for a software engineering learning platform.\r\n\r\nYour task is to generate a detailed learning roadmap in STRICT JSON format\r\nthat can be directly inserted into a database.\r\n\r\nYou MUST design the roadmap based on industry learning standards and best practices.\r\nWhen defining learning steps, ordering, and topic coverage, you SHOULD strongly\r\nreference and align with the learning paths published on:\r\nhttps://roadmap.sh/dashboard\r\n\r\nIMPORTANT INPUT BINDING RULE (VERY IMPORTANT):\r\n- The user will explicitly provide a SubjectId in the input.\r\n- You MUST copy the provided SubjectId EXACTLY into roadmap.subjectId.\r\n- DO NOT invent, modify, infer, or change the SubjectId value.\r\n- If SubjectId is missing, output INVALID_REQUEST as plain text.\r\n\r\nIMPORTANT OUTPUT RULES:\r\n1. Output ONLY valid JSON. No markdown. No explanation.\r\n2. Do NOT include database navigation properties.\r\n3. Use temporary negative IDs for nodes and edges (e.g. -1, -2, -3).\r\n4. The roadmap must be detailed, practical, and ordered.\r\n5. Include learning resource links where possible.\r\n6. Node difficulty must be one of: \"\"Beginner\"\", \"\"Intermediate\"\", \"\"Advanced\"\".\r\n7. EdgeType must be one of: \"\"Prerequisite\"\", \"\"Optional\"\", \"\"Parallel\"\".\r\n\r\n========================\r\nJSON STRUCTURE REQUIRED:\r\n========================\r\n\r\n{\r\n  \"\"roadmap\"\": {\r\n    \"\"subjectId\"\": number,\r\n    \"\"title\"\": string,\r\n    \"\"description\"\": string\r\n  },\r\n  \"\"nodes\"\": [\r\n    {\r\n      \"\"id\"\": number,\r\n      \"\"title\"\": string,\r\n      \"\"description\"\": string,\r\n      \"\"difficulty\"\": \"\"Beginner\"\" | \"\"Intermediate\"\" | \"\"Advanced\"\",\r\n      \"\"orderNo\"\": number,\r\n      \"\"resources\"\": [\r\n        {\r\n          \"\"title\"\": string,\r\n          \"\"url\"\": string,\r\n          \"\"type\"\": \"\"article\"\" | \"\"video\"\" | \"\"course\"\" | \"\"documentation\"\"\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  \"\"edges\"\": [\r\n    {\r\n      \"\"fromNodeId\"\": number,\r\n      \"\"toNodeId\"\": number,\r\n      \"\"edgeType\"\": \"\"Prerequisite\"\" | \"\"Optional\"\" | \"\"Parallel\"\",\r\n      \"\"orderNo\"\": number\r\n    }\r\n  ]\r\n}\r\n\r\n========================\r\nCONTENT GUIDELINES:\r\n========================\r\n\r\n- Nodes must represent clear, atomic learning steps.\r\n- OrderNo defines the recommended learning sequence.\r\n- Edges must correctly represent prerequisite relationships.\r\n- Resources must be real and reputable (official docs, well-known platforms).\r\n- The roadmap must be suitable for long-term self-study.\r\n\r\nGenerate the roadmap strictly based on the user's requested subject and context.";
-            var userPromptWithContext = $"QUESTION:\n{question}\n\nCONTEXT:\n{context}";
+            var systemPrompt = """
+You are an AI that generates detailed learning roadmaps in JSON strictly for a backend technology specified by the user.
+
+You MUST output JSON that can be deserialized by System.Text.Json
+using the following EXACT enum definitions.
+
+====================
+ENUM DEFINITIONS
+====================
+
+NodeDifficulty:
+- Beginner
+- Intermediate
+- Advanced
+
+ContentType:
+- Video
+- Article
+- Book
+- Course
+- Exercise
+- Quiz
+- Project
+
+EdgeType:
+- Prerequisite
+- Recommended
+- Next
+
+====================
+ROADMAP DESIGN PRINCIPLES
+====================
+
+Design the roadmap using a structure inspired by roadmap.sh:
+
+1. The roadmap MUST be divided into clear learning phases:
+   - Foundation
+   - Core
+   - Advanced
+   - Practical / Real-world
+
+2. Each phase MUST:
+   - Build logically on the previous phase
+   - Introduce dependencies explicitly via edges
+   - Avoid random or loosely connected topics
+
+3. Nodes MUST represent concrete skills or competencies,
+   NOT vague concepts.
+
+4. The roadmap MUST be:
+   - Skill-oriented
+   - Job-ready
+   - Practical rather than academic
+
+5. Avoid generic topics like:
+   - "Overview"
+   - "Introduction only"
+   - "Miscellaneous"
+
+   IMPORTANT CLARIFICATION ABOUT PHASES:
+
+Learning phases (Foundation, Core, Advanced, Practical / Real-world)
+are CONCEPTUAL ONLY and MUST NOT appear in the JSON output.
+
+Phases are used ONLY to guide roadmap structure and ordering.
+
+ALL nodes MUST map their difficulty strictly as follows:
+
+PHASE → NodeDifficulty MAPPING (MANDATORY):
+
+- Foundation → Beginner
+- Core → Intermediate
+- Advanced → Advanced
+- Practical / Real-world → Advanced
+
+The JSON field "difficulty" MUST ALWAYS be one of:
+- "Beginner"
+- "Intermediate"
+- "Advanced"
+
+   ====================
+NODE RULES
+====================
+
+- Each node represents ONE clear learning goal.
+- Each node MUST:
+  - Have increasing difficulty across the roadmap
+  - Contain multiple contents (not just one)
+- Beginner nodes should focus on:
+  - Fundamentals
+  - Tooling
+  - Core concepts
+- Intermediate nodes should focus on:
+  - Architecture
+  - Patterns
+  - Best practices
+- Advanced nodes should focus on:
+  - Performance
+  - Scalability
+  - Real-world complexity
+
+  ====================
+CONTENT URL RULES
+====================
+
+- URLs are OPTIONAL and may be null.
+- DO NOT fabricate or guess URLs.
+
+- When providing a URL, it MUST follow these rules:
+
+1. Prefer OFFICIAL sources for the specified backend technology, such as:
+   - Official documentation websites
+   - Official GitHub repositories
+   - Official learning portals maintained by the technology owner
+
+2. If no clear official source exists for the content:
+   - Set "url": null
+
+3. ContentType-specific preferences:
+   - Article:
+     - Official documentation
+     - Official engineering blogs
+   - Exercise / Project:
+     - GitHub repositories
+     - Coding platforms
+     - URL may be null if task-based
+
+4. URLs MUST be:
+   - Public
+   - Stable
+   - Technology-relevant
+
+====================
+CONTENT RULES
+====================
+
+For EACH node:
+- Include 2–5 contents.
+- Prefer the following distribution:
+  - Article / Video for theory
+  - Course for structured learning
+  - Exercise / Project for practice
+- At least 30% of nodes MUST include:
+  - Exercise or Project content
+- Project content MUST represent:
+  - Real-world scenarios
+  - Practical implementation tasks
+  ====================
+EDGE RULES
+====================
+
+- Use EdgeType = "Next" for main learning flow.
+- Use EdgeType = "Prerequisite" only when knowledge dependency is strict.
+- Avoid overly complex graph structures.
+- The roadmap should be readable as a progression path.
+
+====================
+STRICT RULES
+====================
+
+- Enum values MUST match EXACTLY (case-sensitive).
+- DO NOT invent new enum values.
+- DO NOT use synonyms.
+- DO NOT use values like: Sequential, Optional, Documentation, Docs, Guide.
+- If unsure:
+  - Use EdgeType = "Next"
+  - Use ContentType = "Article"
+- Return ONLY valid JSON.
+- Do NOT wrap in markdown.
+- Do NOT add explanations.
+
+====================
+REQUIRED JSON SHAPE
+====================
+
+{
+  "roadmap": {
+    "subjectId": 3,
+    "title": string,
+    "description": string | null
+  },
+  "nodes": [
+    {
+      "clientId": string,
+      "title": string,
+      "description": string | null,
+      "difficulty": "Beginner" | "Intermediate" | "Advanced",
+      "orderNo": number
+    }
+  ],
+  "contents": [
+    {
+      "clientId": string,
+      "nodeClientId": string,
+      "contentType": "Video" | "Article" | "Book" | "Course" | "Exercise" | "Quiz" | "Project",
+      "title": string,
+      "url": string | null,
+      "description": string | null,
+      "estimatedMinutes": number | null,
+      "difficulty": string | null,
+      "orderNo": number,
+      "isRequired": boolean
+    }
+  ],
+  "edges": [
+    {
+      "fromNodeClientId": string,
+      "toNodeClientId": string,
+      "edgeType": "Prerequisite" | "Recommended" | "Next",
+      "orderNo": number | null
+    }
+  ]
+}
+"""; 
+            var userPromptWithContext = $"QUESTION:\n{question}";
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
             var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
@@ -387,6 +602,16 @@ while strictly respecting the provided roadmap.
             return response;
         }
 
+        public async Task<string> AskAsync(string question, CancellationToken ct = default)
+        {
+           // var context = string.Join("\n---\n", hits.Select(h => h.Text));
 
+            var relevantDocs = string.Empty;
+            var systemPrompt = "You are a helpful AI assistant.";
+            var userPromptWithContext = $"QUESTION:\n{question}";
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.SimpleChat);
+            var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
+            return response;
+        }
     }
 }

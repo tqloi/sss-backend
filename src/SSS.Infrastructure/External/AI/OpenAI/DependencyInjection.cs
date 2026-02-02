@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI.Chat;
 using OpenAI.Embeddings;
+using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.LLM;
 using SSS.Application.Abstractions.External.AI.PipeLine;
