@@ -7,6 +7,8 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
         int PageSize,
         long? SubjectId = null,
         string? Q = null,
-        string? Status = null
+        string? Status = null,
+        int? Version = null,
+        bool? IsLatest = null
     ) : IRequest<GetAllRoadmapsResult>;
 }

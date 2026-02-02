@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Content.RoadmapNodes.Create
             Post("/api/roadmaps/{roadmapId}/nodes");
             Summary(s => s.Summary = "Create a new roadmap node");
             Description(d => d.WithTags("RoadmapNodes"));
-            Roles("Admin");
+            Roles("ContentManager");
         }
 
         public override async Task HandleAsync(

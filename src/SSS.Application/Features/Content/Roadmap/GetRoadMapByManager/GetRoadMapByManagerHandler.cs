@@ -4,14 +4,17 @@ using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Dtos;
 using SSS.Application.Features.Content.Roadmap.Common;
 
-namespace SSS.Application.Features.Content.Roadmap.GetAll
+namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
 {
-    public sealed class GetAllRoadmapsHandler(IAppDbContext dbContext) 
-        : IRequestHandler<GetAllRoadmapsQuery, GetAllRoadmapsResult>
+    public sealed class GetRoadMapByManagerHandler(IAppDbContext dbContext)
+        : IRequestHandler<GetRoadMapByManagerQuery, GetRoadMapByManagerResult>
     {
-        public async Task<GetAllRoadmapsResult> Handle(GetAllRoadmapsQuery request, CancellationToken cancellationToken)
+        public async Task<GetRoadMapByManagerResult> Handle(GetRoadMapByManagerQuery request, CancellationToken cancellationToken)
         {
             var query = dbContext.Roadmaps.AsNoTracking();
+
+            // Filter by manager who created the roadmap
+            query = query.Where(x => x.CreateById == request.ManagerId);
 
             // Filter by SubjectId if provided
             if (request.SubjectId.HasValue)
@@ -19,10 +22,10 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
                 query = query.Where(x => x.SubjectId == request.SubjectId.Value);
             }
 
-            // Search by Title if q provided
-            if (!string.IsNullOrWhiteSpace(request.Q))
+            // Search by Title/Keyword if provided
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
-                query = query.Where(x => x.Title.Contains(request.Q));
+                query = query.Where(x => x.Title.Contains(request.Keyword));
             }
 
             // Filter by Version if provided
@@ -37,7 +40,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
                 query = query.Where(x => x.IsLatest == request.IsLatest.Value);
             }
 
-            // Status filter - placeholder, no actual field exists yet
+            // Status filter - placeholder for future implementation
             // If Status field is added in future, implement here
 
             // Order by Id descending
@@ -57,7 +60,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
                 Status = request.Status // Placeholder, echo back for future compatibility
             });
 
-            return new GetAllRoadmapsResult(result);
+            return new GetRoadMapByManagerResult(result);
         }
     }
 }

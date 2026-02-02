@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using SSS.Application.Features.Content.Roadmap.Create;
+using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.Content.Roadmap.Create
 {
@@ -19,6 +20,9 @@ namespace SSS.Web.Endpoints.Content.Roadmap.Create
             CreateRoadmapCommand req,
             CancellationToken ct)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            req.CreatedById = userId;
+
             var result = await sender.Send(req, ct);
 
             if (!result.Success)

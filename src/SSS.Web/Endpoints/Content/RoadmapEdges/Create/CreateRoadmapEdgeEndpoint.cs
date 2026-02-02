@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Content.RoadmapEdges.Create
             Post("/api/roadmaps/{roadmapId}/edges");
             Summary(s => s.Summary = "Create a new roadmap edge with validation");
             Description(d => d.WithTags("RoadmapEdges"));
-            Roles("Admin");
+            Roles("ContentManager");
         }
 
         public override async Task HandleAsync(
