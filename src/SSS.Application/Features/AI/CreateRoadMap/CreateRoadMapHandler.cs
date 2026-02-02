@@ -19,6 +19,7 @@ namespace SSS.Application.Features.AI.CreateRoadMap
             // 1. Call GPT
             var rawJson = await pipeLine.GenerateRoadmapAsync(
                 request.Message,
+                request.subjectid,
                 ct: cancellationToken
             );
             Console.Write(rawJson);

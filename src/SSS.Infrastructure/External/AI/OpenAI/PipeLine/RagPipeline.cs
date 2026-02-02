@@ -48,11 +48,11 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             
         //}
 
-        public async Task<string> GenerateRoadmapAsync(string question, CancellationToken ct = default)
+        public async Task<string> GenerateRoadmapAsync(string question, string subjectid, CancellationToken ct = default)
         {
+
+
             
-
-
 
             var systemPrompt = """
 You are an AI that generates detailed learning roadmaps in JSON strictly for a backend technology specified by the user.
@@ -231,7 +231,7 @@ REQUIRED JSON SHAPE
 
 {
   "roadmap": {
-    "subjectId": 3,
+    "subjectId": {subjectid},
     "title": string,
     "description": string | null
   },
@@ -267,8 +267,14 @@ REQUIRED JSON SHAPE
     }
   ]
 }
-"""; 
-            var userPromptWithContext = $"QUESTION:\n{question}";
+""";
+            var userPromptWithContext = $"""
+                    QUESTION:
+{question}
+
+SUBJECT_ID:
+{subjectid}
+""";
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
             var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
