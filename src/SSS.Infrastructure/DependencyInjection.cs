@@ -73,6 +73,7 @@ namespace SSS.Infrastructure
             Assembly infraAssembly,
             string[]? allowedSuffixes = null)
         {
+
             allowedSuffixes ??= new[] { "Service", "Repository", "Gateway" , "Router" };
 
             var appTypes = appAssembly.GetTypes();  

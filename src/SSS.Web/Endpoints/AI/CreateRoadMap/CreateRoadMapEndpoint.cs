@@ -15,6 +15,7 @@ namespace SSS.Web.Endpoints.AI.CreateRoadMap
         public override async Task HandleAsync(CreateRoadMapCommand req, CancellationToken ct)
         {
             var response = await sender.Send(req, ct);
+
             await SendAsync(response, cancellation: ct);
         }
     }
