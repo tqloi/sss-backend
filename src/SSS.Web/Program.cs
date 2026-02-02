@@ -60,11 +60,11 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 var app = builder.Build();
 
 // Seed Database
-using (var scope = app.Services.CreateScope())
-{
-    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+//    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+//    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
     var seeder = new DataSeeder(ctx, roleManager, userManager);
     await seeder.SeedAllAsync();

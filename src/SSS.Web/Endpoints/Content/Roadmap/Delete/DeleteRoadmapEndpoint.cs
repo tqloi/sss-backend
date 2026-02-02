@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Content.Roadmap.Delete
             Delete("/api/roadmaps/{roadmapId}");
             Summary(s => s.Summary = "Delete roadmap and all related data");
             Description(d => d.WithTags("Roadmaps"));
-            Roles("Admin");
+            Roles("Admin,ContentManager");
         }
 
         public override async Task HandleAsync(
