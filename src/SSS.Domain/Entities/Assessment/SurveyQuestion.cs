@@ -18,4 +18,6 @@ public class SurveyQuestion
     public virtual Survey Survey { get; set; } = null!;
     public virtual ICollection<SurveyQuestionOption> Options { get; set; } = new HashSet<SurveyQuestionOption>();
     public virtual ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
+
+    public virtual ICollection<SurveyFieldSemantic> Semantics { get; set; } = new HashSet<SurveyFieldSemantic>();
 }

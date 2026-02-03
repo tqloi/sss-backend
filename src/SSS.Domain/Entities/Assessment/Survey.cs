@@ -12,4 +12,5 @@ public class Survey
     // Navigation
     public virtual ICollection<SurveyQuestion> Questions { get; set; } = new HashSet<SurveyQuestion>();
     public virtual ICollection<SurveyResponse> Responses { get; set; } = new HashSet<SurveyResponse>();
+    public virtual ICollection<SurveyTriggerMapping> TriggerMappings { get; set; } = new HashSet<SurveyTriggerMapping>();
 }
