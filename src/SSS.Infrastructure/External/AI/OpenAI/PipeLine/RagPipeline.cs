@@ -50,10 +50,6 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 
         public async Task<string> GenerateRoadmapAsync(string question, string subjectid, CancellationToken ct = default)
         {
-
-
-            
-
             var systemPrompt = """
 You are an AI that generates detailed learning roadmaps in JSON strictly for a backend technology specified by the user.
 
@@ -270,19 +266,19 @@ REQUIRED JSON SHAPE
 """;
             var userPromptWithContext = $"""
                     QUESTION:
-{question}
+                    {question}
 
-SUBJECT_ID:
-{subjectid}
-""";
+                    SUBJECT_ID:
+                    {subjectid}
+                    """;
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
             var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
             return response;
         }
         public async Task<string> BuildStudyPlanContextAsync(
-    string userId,
-    CancellationToken ct = default)
+            string userId,
+            CancellationToken ct = default)
         {
             // 1. Vector đại diện cho "tạo study plan"
             var query = "User survey information describing learning orientation, target role, experience level, and preferred roadmap.";
@@ -386,209 +382,9 @@ TASK DESIGN RULES
 """;
             var userPrompt = $$"""
 USER SURVEY CONTEXT:
-{context}
+${{context}}
 ROADMAP:
-{
-  "roadmap": {
-    "subjectId": 1,
-    "title": "Mobile Developer Roadmap",
-    "description": "A comprehensive learning path for aspiring mobile developers to gain essential skills and practical experience within 3 months."
-  },
-  "nodes": [
-    {
-      "id": -1,
-      "title": "Introduction to Mobile Development",
-      "description": "Understanding the basics of mobile development, including platforms and languages.",
-      "difficulty": "Beginner",
-      "orderNo": 1,
-      "resources": [
-        {
-          "title": "Mobile App Development Overview",
-          "url": "https://www.freecodecamp.org/news/mobile-app-development-overview/",
-          "type": "article"
-        }
-      ]
-    },
-    {
-      "id": -2,
-      "title": "Learn Dart and Flutter",
-      "description": "Get started with Dart programming language and Flutter framework for building mobile applications.",
-      "difficulty": "Beginner",
-      "orderNo": 2,
-      "resources": [
-        {
-          "title": "Flutter Official Documentation",
-          "url": "https://flutter.dev/docs",
-          "type": "documentation"
-        },
-        {
-          "title": "Dart Programming Language",
-          "url": "https://dart.dev/",
-          "type": "documentation"
-        },
-        {
-          "title": "Flutter & Dart - The Complete Guide",
-          "url": "https://www.udemy.com/course/flutter-dart-the-complete-guide/",
-          "type": "course"
-        }
-      ]
-    },
-    {
-      "id": -3,
-      "title": "Building Your First Flutter App",
-      "description": "Hands-on project to build a simple mobile app using Flutter.",
-      "difficulty": "Beginner",
-      "orderNo": 3,
-      "resources": [
-        {
-          "title": "Creating Your First Flutter App",
-          "url": "https://flutter.dev/docs/get-started/codelab",
-          "type": "documentation"
-        }
-      ]
-    },
-    {
-      "id": -4,
-      "title": "Understanding Mobile App Architecture",
-      "description": "Learn about MVC, MVVM, and other architectures used in mobile app development.",
-      "difficulty": "Intermediate",
-      "orderNo": 4,
-      "resources": [
-        {
-          "title": "Intro to Mobile App Architecture",
-          "url": "https://medium.com/swlh/a-beginners-guide-to-mobile-architecture-patterns-26b6334c3e32",
-          "type": "article"
-        }
-      ]
-    },
-    {
-      "id": -5,
-      "title": "State Management in Flutter",
-      "description": "Learn different state management techniques in Flutter applications.",
-      "difficulty": "Intermediate",
-      "orderNo": 5,
-      "resources": [
-        {
-          "title": "State Management in Flutter",
-          "url": "https://flutter.dev/docs/development/data-and-backend/state-mgmt/intro",
-          "type": "documentation"
-        }
-      ]
-    },
-    {
-      "id": -6,
-      "title": "Working with APIs",
-      "description": "Learn to connect your Flutter app to REST APIs for dynamic data.",
-      "difficulty": "Intermediate",
-      "orderNo": 6,
-      "resources": [
-        {
-          "title": "Consume a RESTful API",
-          "url": "https://flutter.dev/docs/cookbook/networking/fetch-data",
-          "type": "documentation"
-        }
-      ]
-    },
-    {
-      "id": -7,
-      "title": "Testing Flutter Applications",
-      "description": "Learn to write unit and integration tests for your mobile applications.",
-      "difficulty": "Advanced",
-      "orderNo": 7,
-      "resources": [
-        {
-          "title": "Testing Flutter Apps",
-          "url": "https://flutter.dev/docs/cookbook/testing/integration/introduction",
-          "type": "documentation"
-        }
-      ]
-    },
-    {
-      "id": -8,
-      "title": "Publishing Your App",
-      "description": "Learn the steps to publish your Flutter app on Google Play Store and Apple App Store.",
-      "difficulty": "Advanced",
-      "orderNo": 8,
-      "resources": [
-        {
-          "title": "Building and Releasing an Android App",
-          "url": "https://flutter.dev/docs/deployment/android",
-          "type": "documentation"
-        },
-        {
-          "title": "Building and Releasing iOS Apps",
-          "url": "https://flutter.dev/docs/deployment/ios",
-          "type": "documentation"
-        }
-      ]
-    },
-    {
-      "id": -9,
-      "title": "Portfolio Project",
-      "description": "Complete a significant mobile app project to showcase your skills.",
-      "difficulty": "Advanced",
-      "orderNo": 9,
-      "resources": [
-        {
-          "title": "Creating a Personal Project",
-          "url": "https://medium.com/@benny.6497/building-a-personal-project-thats-not-a-tutorial-544c3d2763e0",
-          "type": "article"
-        }
-      ]
-    }
-  ],
-  "edges": [
-    {
-      "fromNodeId": -1,
-      "toNodeId": -2,
-      "edgeType": "Prerequisite",
-      "orderNo": 1
-    },
-    {
-      "fromNodeId": -2,
-      "toNodeId": -3,
-      "edgeType": "Prerequisite",
-      "orderNo": 2
-    },
-    {
-      "fromNodeId": -3,
-      "toNodeId": -4,
-      "edgeType": "Prerequisite",
-      "orderNo": 3
-    },
-    {
-      "fromNodeId": -4,
-      "toNodeId": -5,
-      "edgeType": "Prerequisite",
-      "orderNo": 4
-    },
-    {
-      "fromNodeId": -5,
-      "toNodeId": -6,
-      "edgeType": "Prerequisite",
-      "orderNo": 5
-    },
-    {
-      "fromNodeId": -6,
-      "toNodeId": -7,
-      "edgeType": "Prerequisite",
-      "orderNo": 6
-    },
-    {
-      "fromNodeId": -7,
-      "toNodeId": -8,
-      "edgeType": "Prerequisite",
-      "orderNo": 7
-    },
-    {
-      "fromNodeId": -8,
-      "toNodeId": -9,
-      "edgeType": "Prerequisite",
-      "orderNo": 8
-    }
-  ]
-}
-
+${{roadmap}}
 --------------------------------------------------
 GOAL
 --------------------------------------------------
