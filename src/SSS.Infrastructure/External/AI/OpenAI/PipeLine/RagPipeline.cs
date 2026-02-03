@@ -303,96 +303,87 @@ REQUIRED JSON SHAPE
         public async Task<string> GenerateStudyPlanAsync(
     string userId,
     object roadmap,
+    object roadmapnode,
     CancellationToken ct = default)
         {
             // 1. Build context từ vector DB
             var context = await BuildStudyPlanContextAsync(userId, ct);
-            Console.WriteLine(context);
 
             // 2. System prompt chuyên cho study plan
             var systemPrompt = """
-You are a senior learning system architect and backend-aware AI.
+You are a backend-aware AI responsible for generating TASK ITEMS
+for a learning system.
 
-Your task is to generate a PERSONALIZED STUDY PLAN
-that can be DIRECTLY DESERIALIZED into backend domain entities.
+Your task is to generate STUDY TASKS
+for EXACTLY ONE roadmap node.
 
-CRITICAL RULES (MUST FOLLOW):
-1. Output MUST be a SINGLE valid JSON object
+======================
+CRITICAL RULES (MUST FOLLOW)
+======================
+
+1. Output MUST be a SINGLE valid JSON array
 2. Do NOT include explanations, comments, markdown, or extra text
-3. Do NOT modify, reorder, or create new roadmap nodes
-4. Use ONLY roadmap nodes that are provided
-5. The roadmap defines WHAT exists — you decide PRIORITY and SCHEDULING only
-6. All decisions MUST be driven strictly by the user's survey context
-7. If information is missing, make a reasonable inference — DO NOT ask questions
+3. Generate tasks for ONE AND ONLY ONE roadmap node
+4. You MUST NOT generate tasks for any other roadmap node
+5. ALL tasks MUST use the SAME roadmapNodeId provided
+6. Do NOT infer or expand to other roadmap nodes
+7. Decisions MUST be driven by the user's survey context
 
---------------------------------------------------
+======================
+INPUT GUARANTEES
+======================
+
+You will receive:
+- User survey context
+- A roadmap (FOR CONTEXT ONLY)
+- EXACTLY ONE roadmap node (TARGET NODE)
+
+The roadmap is provided ONLY to understand progression and difficulty.
+The roadmap node is the ONLY entity you are allowed to generate tasks for.
+
+======================
 OUTPUT SCHEMA (STRICT)
---------------------------------------------------
+======================
 
-{
-  "studyPlan": {
-    "roadmapId": number,
-    "profileVersion": number,
-    "strategy": "Balanced | Intensive | Light",
-    "status": "Draft | Active",
-    "modules": [
-      {
-        "roadmapNodeId": number,
-        "status": "NotStarted | InProgress | Completed",
-        "tasks": [
-          {
-            "title": string,
-            "scheduledDate": "YYYY-MM-DD",
-            "status": "Planned"
-          }
-        ]
-      }
-    ]
+[
+  {
+    "roadmapNodeId": number,
+    "title": string,
+    "description": string | null,
+    "status": "Planned",
+    "estimatedDurationSeconds": number,
+    "scheduledDate": "YYYY-MM-DDTHH:mm:ss"
   }
-}
+]
 
---------------------------------------------------
-ENTITY MAPPING GUARANTEE
---------------------------------------------------
-
-- studyPlan → StudyPlan
-- studyPlan.modules[] → StudyPlanModule
-- modules[].tasks[] → TaskItem
-
-Field mapping:
-- roadmapId            → StudyPlan.RoadmapId
-- profileVersion       → StudyPlan.ProfileVersion
-- strategy             → StudyPlan.Strategy
-- status               → StudyPlan.Status
-- roadmapNodeId        → StudyPlanModule.RoadmapNodeId
-- modules[].status     → StudyPlanModule.Status
-- tasks[].title        → TaskItem.Title
-- tasks[].scheduledDate→ TaskItem.ScheduledDate
-- tasks[].status       → TaskItem.Status
-
---------------------------------------------------
+======================
 TASK DESIGN RULES
---------------------------------------------------
+======================
 
-- Each module MUST have 2–5 tasks
-- Tasks must be concrete and actionable (study, build, review, test…)
-- Scheduled dates MUST be realistic and progressive
-- Earlier roadmap nodes should be scheduled earlier
-- Difficulty affects task density and pacing
+- Generate 2–5 tasks ONLY for the given roadmap node
+- Tasks must be concrete and actionable
+- estimatedDurationSeconds: 900–7200
+- scheduledDate must be realistic and progressive
+- Do NOT generate tasks for any other node
 """;
             var userPrompt = $$"""
 USER SURVEY CONTEXT:
 ${{context}}
-ROADMAP:
+
+ROADMAP (FOR CONTEXT ONLY):
 ${{roadmap}}
+
+TARGET ROADMAP NODE (GENERATE TASKS FOR THIS NODE ONLY):
+${{roadmapnode}}
+
 --------------------------------------------------
 GOAL
 --------------------------------------------------
 
-Produce a backend-ready personalized study plan
-that fits the user's level, goals, and availability
-while strictly respecting the provided roadmap.
+Generate task items ONLY for the TARGET ROADMAP NODE above.
+All tasks MUST use its roadmapNodeId.
 """;
+
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);
             // 3. Gọi GPT provider
@@ -400,6 +391,9 @@ while strictly respecting the provided roadmap.
                 systemPrompt,
                 userPrompt,
                 ct);
+            Console.WriteLine(roadmap);
+            Console.WriteLine(roadmapnode);
+
 
             return response;
         }

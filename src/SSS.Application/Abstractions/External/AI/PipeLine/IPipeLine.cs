@@ -12,7 +12,7 @@ namespace SSS.Application.Abstractions.External.AI.PipeLine
         Task<string> AskAsync(string question, CancellationToken ct = default);
 
         Task<string> BuildStudyPlanContextAsync(string userId, CancellationToken ct = default);
-        Task<string> GenerateStudyPlanAsync(string userId, object roadmap, CancellationToken ct = default);
+        Task<string> GenerateStudyPlanAsync(string userId, object roadmap, object roadmapnode, CancellationToken ct = default);
         Task<string> GenerateRoadmapAsync(string question, string subjectid,  CancellationToken ct = default);
     }
 }
