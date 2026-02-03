@@ -1,19 +1,15 @@
 ﻿using MediatR;
 using SSS.Application.Abstractions.External.AI.PipeLine;
-using SSS.Application.Features.AI.Common;
-using SSS.Application.Features.Content.Roadmaps.Common;
-using SSS.Application.Features.Content.Roadmaps.GraphCreate;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace SSS.Application.Features.AI.CreateRoadMap
+namespace SSS.Application.Features.AI.CreateAiRoadMap
 {
-    public sealed class CreateRoadMapHandler(IPipeLine pipeLine,
+    public sealed class CreateAiRoadMapHandler(IPipeLine pipeLine,
     IMediator mediator
-) : IRequestHandler<CreateRoadMapCommand, CreateRoadMapResult>
+) : IRequestHandler<CreateAiRoadMapCommand, CreateAiRoadMapResult>
     {
-        public async Task<CreateRoadMapResult> Handle(
-            CreateRoadMapCommand request,
+        public async Task<CreateAiRoadMapResult> Handle(
+            CreateAiRoadMapCommand request,
             CancellationToken cancellationToken)
         {
             // 1. Call GPT
@@ -71,7 +67,7 @@ namespace SSS.Application.Features.AI.CreateRoadMap
 
             using var doc = JsonDocument.Parse(rawJson);
 
-            return new CreateRoadMapResult
+            return new CreateAiRoadMapResult
             {
                 Success = true,
                 Message = "AI roadmap generated successfully",

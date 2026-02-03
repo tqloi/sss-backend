@@ -94,6 +94,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
                 body,
                 ct);
 
+
             res.EnsureSuccessStatusCode();
 
             var json = await res.Content.ReadFromJsonAsync<QdrantSearchResponse>(ct);
