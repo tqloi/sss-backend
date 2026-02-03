@@ -1,5 +1,6 @@
 using SSS.Domain.Entities.Identity;
 using SSS.Domain.Entities.Planning;
+using SSS.Domain.Enums;
 
 namespace SSS.Domain.Entities.Content;
 
@@ -11,6 +12,7 @@ public class Roadmap
     public string? Description { get; set; }
     public int Version { get; set; } = 1;
     public bool IsLatest { get; set; }
+    public RoadmapStatus Status { get; set; } = RoadmapStatus.Active;
     public string? CreateById { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
