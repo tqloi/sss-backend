@@ -10,6 +10,7 @@ public class StudyPlanModule
     public long StudyPlanId { get; set; }
     public long RoadmapNodeId { get; set; }
     public ModuleStatus? Status { get; set; }
+    public bool isTaskGenerated { get; set; } = false;
 
     // Navigation
     public virtual StudyPlan StudyPlan { get; set; } = null!;
