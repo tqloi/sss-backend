@@ -13,6 +13,8 @@ namespace SSS.Web.Endpoints.StudyPlans.StudyPlans.Common
                 .ForMember(dest => dest.RoadmapName, opt => opt.MapFrom(src => src.Roadmap.Title))
                 .ForMember(dest => dest.Modules, opt => opt.MapFrom(src => src.Modules));
 
+            CreateMap<StudyPlan, StudyPlanSummaryDto>();
+
             CreateMap<StudyPlanModule, StudyModuleDto>()
                 .ForMember(dest => dest.RoadmapNodeName, opt => opt.MapFrom(src => src.RoadmapNode.Title));
         }
