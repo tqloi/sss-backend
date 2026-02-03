@@ -17,13 +17,20 @@ namespace SSS.Application.Features.AI.CreateAiTaskItems
     {
         public async Task<CreateAiTaskItemsResult> Handle(CreateAiTaskItemsCommand request, CancellationToken cancellationToken)
         {
-            var roadmap = await dbContext.Roadmaps
-                .Include(r => r.Nodes)
-                .Include(r => r.Edges)
+            
+            var module = await dbContext.StudyPlanModules
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Id == request.roadmapId);
+                .FirstOrDefaultAsync(spm => spm.Id == request.studyPlanModuleId);
 
-            var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.userId, roadmap, cancellationToken);
+            var roadmapnode = await dbContext.RoadmapNodes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(rm => rm.Id == module.RoadmapNodeId);
+
+            var roadmap = await dbContext.Roadmaps
+                .AsNoTracking()
+                .FirstOrDefaultAsync(rm => rm.Id == roadmapnode.RoadmapId);
+
+            var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.UserId, roadmap, roadmapnode, cancellationToken);
 
             if (aiResponse == null) throw new NotImplementedException();
 
