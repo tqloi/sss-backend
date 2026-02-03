@@ -15,6 +15,16 @@ namespace SSS.Application.Features.StudyPlans.StudyPlans.Common
         public IEnumerable<StudyModuleDto> Modules { get; set; } = new List<StudyModuleDto>();
     }
 
+    public class StudyPlanSummaryDto
+    {
+        public long Id { get; set; }
+        public string UserId { get; set; } = null!;
+        public long RoadmapId { get; set; }
+        public StudyPlanStrategy? Strategy { get; set; }
+        public StudyPlanStatus? Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
     public class StudyModuleDto
     {
         public long Id { get; set; }
