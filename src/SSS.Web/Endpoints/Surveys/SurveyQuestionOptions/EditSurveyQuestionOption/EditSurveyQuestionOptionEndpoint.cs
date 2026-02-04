@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestionOptions.EditSurveyQuestionOpti
             Patch("/api/surveys/question/option");
             Description(d => d.WithTags("SurveyOptions"));
             Summary(s => s.Summary = "edit an option for a question");
-            Roles("Admin");
+            Roles("Analyst");
         }
         public override async Task HandleAsync(EditSurveyQuestionOptionCommand req, CancellationToken ct)
             => await SendAsync(await sender.Send(req, ct), cancellation: ct);

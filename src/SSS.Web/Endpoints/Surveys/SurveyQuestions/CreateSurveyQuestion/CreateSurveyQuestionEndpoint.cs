@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestions.CreateSurveyQuestion
             Post("api/surveys/question");
             Description(d => d.WithTags("SurveyQuestions"));
             Summary(s => s.Summary = "Create new survey question");
-            Roles("Admin");
+            Roles("Analyst");
         }
 
         public override async Task HandleAsync(CreateSurveyQuestionCommand req, CancellationToken ct)

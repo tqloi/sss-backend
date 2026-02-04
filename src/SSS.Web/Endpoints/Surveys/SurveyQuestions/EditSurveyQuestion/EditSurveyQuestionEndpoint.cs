@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestions.EditSurveyQuestion
             Patch("/api/surveys/question");
             Description(d => d.WithTags("SurveyQuestions"));
             Summary(s => s.Summary = "edit a question for a survey");
-            Roles("Admin");
+            Roles("Analyst");
         }
         public override async Task HandleAsync(EditSurveyQuestionCommand req, CancellationToken ct)
             => await SendAsync(await sender.Send(req, ct), cancellation: ct);

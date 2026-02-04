@@ -29,6 +29,10 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserLearningBehavior> UserLearningBehaviors { get; }
         DbSet<UserLearningTarget> UserLearningTargets { get; }
 
+        DbSet<SurveyTriggerMapping> SurveyTriggerMappings { get; }
+
+        DbSet<SurveyFieldSemantic> SurveyFieldSemantics { get; }
+
 
         // Planning / Tracking
         DbSet<StudyPlan> StudyPlans { get; }
