@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyQuestionOptions.CreateSurveyQuestionOp
                 Post("api/surveys/question/option");
                 Description(d => d.WithTags("SurveyOptions"));
                 Summary(s => s.Summary = "Create new survey question option");
-                Roles("Admin");
+                Roles("Analyst");
             }
 
             public override async Task HandleAsync(CreateSurveyQuestionOptionCommand req, CancellationToken ct)

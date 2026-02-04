@@ -31,6 +31,8 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<SurveyAnswer> SurveyAnswers => Set<SurveyAnswer>();
         public DbSet<UserLearningBehavior> UserLearningBehaviors => Set<UserLearningBehavior>();
         public DbSet<UserLearningTarget> UserLearningTargets => Set<UserLearningTarget>();
+        public DbSet<SurveyFieldSemantic> SurveyFieldSemantics => Set<SurveyFieldSemantic>();
+        public DbSet<SurveyTriggerMapping> SurveyTriggerMappings => Set<SurveyTriggerMapping>();
 
         // Study Plan / Tasks / Tracking
         public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();

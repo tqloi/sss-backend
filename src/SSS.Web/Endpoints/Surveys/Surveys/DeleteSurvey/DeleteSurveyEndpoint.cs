@@ -14,7 +14,7 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.DeleteSurvey
             {
                 s.Summary = "Delete a survey by id";
             });
-            Roles("Admin");
+            Roles("Analyst");
         }
 
         public override async Task HandleAsync(CancellationToken ct)

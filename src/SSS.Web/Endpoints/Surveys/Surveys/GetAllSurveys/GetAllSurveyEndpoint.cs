@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.GetAllSurveys
             Description(d => d.WithTags("Surveys"));
             Summary(s => s.Summary = "Get all surveys (paginated)");
             
-            Roles("Admin");
+            Roles("Analyst");
         }
 
         public override async Task HandleAsync(GetAllSurveyQuery req, CancellationToken ct)

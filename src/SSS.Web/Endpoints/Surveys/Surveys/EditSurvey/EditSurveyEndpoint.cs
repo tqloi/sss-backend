@@ -9,10 +9,10 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.EditSurvey
     {
         public override void Configure()
         {
-            Patch("/api/surveys/edit");
+            Put("/api/surveys/edit");
             Description(d => d.WithTags("Surveys"));
             Summary(s => s.Summary = "edit a survey");
-            Roles("Admin");
+            Roles("Analyst");
         }
         public override async Task HandleAsync(EditSurveyCommand req, CancellationToken ct)
             => await SendAsync(await sender.Send(req, ct), cancellation: ct);

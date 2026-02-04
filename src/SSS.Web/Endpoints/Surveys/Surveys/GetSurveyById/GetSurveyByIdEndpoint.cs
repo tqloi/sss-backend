@@ -10,6 +10,7 @@ namespace SSS.Web.Endpoints.Surveys.Surveys.GetSurveyById
         public override void Configure()
         {
             Get("/api/surveys/{surveyId}");
+            Roles("Admin", "Analyst");
             Description(d => d.WithTags("Surveys"));
             Summary(s => s.Summary = "Get survey detail by ID");
         }
