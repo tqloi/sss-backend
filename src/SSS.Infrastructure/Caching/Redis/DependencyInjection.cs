@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using SSS.Application.Abstractions.Caching;
 using StackExchange.Redis;
 
 namespace SSS.Infrastructure.Caching.Redis
@@ -24,7 +23,6 @@ namespace SSS.Infrastructure.Caching.Redis
                 {
                     EndPoints = { redisOptions.ConnectionString },
                     Password = redisOptions.Password,
-                    Ssl = redisOptions.Ssl,
                     AbortOnConnectFail = false
                 };
 
