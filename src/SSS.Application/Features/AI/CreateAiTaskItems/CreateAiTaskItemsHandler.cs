@@ -29,8 +29,12 @@ namespace SSS.Application.Features.AI.CreateAiTaskItems
             var roadmap = await dbContext.Roadmaps
                 .AsNoTracking()
                 .FirstOrDefaultAsync(rm => rm.Id == roadmapnode.RoadmapId);
+            var roadmapJson = JsonSerializer.Serialize(roadmap);
 
-            var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.UserId, roadmap, roadmapnode, cancellationToken);
+            var roadmapNodeJson = JsonSerializer.Serialize(
+                roadmapnode);
+
+            var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.UserId, roadmapJson, roadmapNodeJson, cancellationToken);
 
             if (aiResponse == null) throw new NotImplementedException();
 
