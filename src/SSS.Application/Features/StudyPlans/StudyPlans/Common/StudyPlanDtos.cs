@@ -23,6 +23,11 @@ namespace SSS.Application.Features.StudyPlans.StudyPlans.Common
         public StudyPlanStrategy? Strategy { get; set; }
         public StudyPlanStatus? Status { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        // Roadmap info - AutoMapper will map from Roadmap navigation property
+        public string RoadmapTitle { get; set; } = null!;
+        public string? RoadmapDescription { get; set; }
+        public RoadmapStatus RoadmapStatus { get; set; }
     }
 
     public class StudyModuleDto
