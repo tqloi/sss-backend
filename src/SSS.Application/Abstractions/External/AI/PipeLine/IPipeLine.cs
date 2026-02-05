@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SSS.Application.Features.AI.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +15,6 @@ namespace SSS.Application.Abstractions.External.AI.PipeLine
         Task<string> BuildStudyPlanContextAsync(string userId, CancellationToken ct = default);
         Task<string> GenerateStudyPlanAsync(string userId, object roadmap, object roadmapnode, CancellationToken ct = default);
         Task<string> GenerateRoadmapAsync(string question, string subjectid,  CancellationToken ct = default);
+        Task<string> GenerateSurveyResultAsync(UserLearningTargetDto target, UserLearningBehaviorDto behavior, CancellationToken ct = default);
     }
 }
