@@ -9,9 +9,9 @@ namespace SSS.Web.Endpoints.QuizAnswers.CreateQuizAnswer
     {
         public override void Configure()
         {
-            Post("/api/quizanswer");
+            Post("/api/quiz-answer");
             Summary(s => s.Summary = "Create a new quiz answer");
-            Description(d => d.WithTags("Quiz Answers"));
+            Description(d => d.WithTags("QuizAnswers"));
         }
         public override async Task HandleAsync(CreateQuizAnswerCommand req, CancellationToken ct)
         => await SendAsync(await sender.Send(req, ct), cancellation: ct);

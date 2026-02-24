@@ -9,9 +9,9 @@ namespace SSS.Web.Endpoints.QuizAnswers.GetQuizAnswerById
     {
         public override void Configure()
         {
-            Get("/api/quizanswer/{id}");
+            Get("/api/quiz-answer/{id}");
             Summary(s => s.Summary = "Get a quiz answer by ID");
-            Description(d => d.WithTags("Quiz Answers"));
+            Description(d => d.WithTags("QuizAnswers"));
         }
         public override async Task HandleAsync(GetQuizAnswerByIdQuery req, CancellationToken ct)
         {

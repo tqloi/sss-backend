@@ -10,6 +10,8 @@ namespace SSS.Application.Features.QuizAnswers.Common.MappingProfile
                 CreateMap<CreateQuizAnswerDto, QuizAnswer>();
                 CreateMap<QuizAnswer, CreateQuizAnswerDto>();
                 CreateMap<QuizAnswer, QuizAnswerDto>();
+                CreateMap<UpdateQuizAnswerDto, QuizAnswer>();
+                CreateMap<QuizAnswer, UpdateQuizAnswerDto>();
         }
     }
 }
