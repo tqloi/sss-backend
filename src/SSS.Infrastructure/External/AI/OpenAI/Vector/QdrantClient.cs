@@ -24,7 +24,9 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
         public async Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default)
         {
             var baseName = _cfg.Qdrant.Collection;
-            var name = $"{baseName}_{vectorSize}";
+            var name = baseName.EndsWith($"_{vectorSize}")
+                ? baseName
+                : $"{baseName}_{vectorSize}";
             _activeCollection = name;
             // check exists
             var check = await _client.GetAsync($"collections/{name}", ct);

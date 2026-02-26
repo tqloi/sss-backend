@@ -2,6 +2,7 @@
 using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
+using SSS.Application.Features.AI.Common;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
@@ -23,7 +24,6 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         {
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
-
             var list = new List<VectorPoint>();
             foreach (var (text, source) in chunks)
             {
@@ -31,23 +31,49 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
                 list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
-
             }
             await _vec.UpsertAsync(list, ct);
-
         }
-        //public async Task<string> AskAsync(string question, int? topK, CancellationToken ct = default)
-        //{
-        //    var dim = await _emp.GetDimAsync(ct);
-        //    await _vec.EnsureCollectionAsync(dim, ct);
 
-        //    var qVec = await _emp.EmbeddingAsync(question, ct);
+        
+        public async Task<string> GenerateSurveyResultAsync(UserLearningTargetDto target, UserLearningBehaviorDto behavior, CancellationToken ct = default)
+        {
+            var systemPrompt = """
+You are an AI system that converts structured learning profile data into a single, concise, semantically rich English text.
 
-        //    var hits = await _vec.SearchAsync(qVec, topK ?? _config.Rag.TopK, ct);
+Your task:
+- Merge UserLearningTarget and UserLearningBehavior data into ONE coherent paragraph.
+- Do NOT invent or infer any information.
+- Do NOT output JSON, markdown, or bullet points.
+- Output plain natural language text only.
+- Preserve all important signals related to learning goals, level, deadline, availability, learning style, and preferences.
+- Keep the tone factual, neutral, and embedding-friendly.
 
-            
-        //}
+The output will be stored in a vector database (Qdrant) for semantic retrieval.
+"""; 
+            var userPromptWithContext = $"""
+Convert the following learning profile into a single semantic text.
 
+UserLearningTarget:
+- TargetRole: {target.TargetRole}
+- CurrentLevel: {target.CurrentLevel}
+- TargetDeadlineMonths: {target.TargetDeadlineMonths}
+- GoalDescription: {target.GoalDescription}
+
+UserLearningBehavior:
+- AvailableDays: {behavior.AvailableDaysJson}
+- PreferredTimeBlocks: {behavior.PreferredTimeBlocksJson}
+- SessionLengthPrefMinutes: {behavior.SessionLengthPrefMinutes}
+- LearningStyleWeights:
+  - Visual: {behavior.WVisual}
+  - Reading: {behavior.WReading}
+  - Practice: {behavior.WPractice}
+""";
+
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
+            return response;
+        }
         public async Task<string> GenerateRoadmapAsync(string question, string subjectid, CancellationToken ct = default)
         {
             var systemPrompt = """
@@ -289,7 +315,7 @@ REQUIRED JSON SHAPE
                 vector: queryVector,
                 topK: 5,
                 userId: userId,
-                dataType: "user_surveys",
+                dataType: "user_profile",
                 ct: ct);
 
             // 3. Ghép context
@@ -308,6 +334,9 @@ REQUIRED JSON SHAPE
         {
             // 1. Build context từ vector DB
             var context = await BuildStudyPlanContextAsync(userId, ct);
+
+            var currrentDate = DateTime.UtcNow;
+            var dayName = currrentDate.DayOfWeek.ToString();
 
             // 2. System prompt chuyên cho study plan
             var systemPrompt = """
@@ -365,6 +394,20 @@ TASK DESIGN RULES
 - estimatedDurationSeconds: 900–7200
 - scheduledDate must be realistic and progressive
 - Do NOT generate tasks for any other node
+- scheduledDate MUST be based on CURRENT DATETIME above
+- scheduledDate MUST be >= current datetime
+- scheduledDate MUST increase progressively
+
+======================
+TIME DISTRIBUTION RULES
+======================
+
+- Assume the learner prefers a relaxed pace over an aggressive schedule
+- If a task has a long duration (>= 3600 seconds), it is ACCEPTABLE and PREFERRED
+  to skip the next available day before scheduling the following task
+- Do NOT force tasks to be scheduled on consecutive days
+- It is better to leave gaps between tasks than to overload the learner
+- Scheduling fewer tasks with more spacing is preferred over dense scheduling
 """;
             var userPrompt = $$"""
 USER SURVEY CONTEXT:
@@ -376,6 +419,13 @@ ${{roadmap}}
 TARGET ROADMAP NODE (GENERATE TASKS FOR THIS NODE ONLY):
 ${{roadmapnode}}
 
+CURRENT DATETIME (UTC, SOURCE OF TRUTH):
+{{{currrentDate: yyyy-MM-ddTHH:mm:ss}}}
+{{{dayName}}}
+
+SCHEDULING PREFERENCE:
+- Prefer relaxed pacing over fast completion
+- It is acceptable to skip days between tasks, especially for long tasks
 --------------------------------------------------
 GOAL
 --------------------------------------------------
@@ -391,8 +441,6 @@ All tasks MUST use its roadmapNodeId.
                 systemPrompt,
                 userPrompt,
                 ct);
-            Console.WriteLine(roadmap);
-            Console.WriteLine(roadmapnode);
 
 
             return response;
