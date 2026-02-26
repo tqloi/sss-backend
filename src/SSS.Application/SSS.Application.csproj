@@ -16,6 +16,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Features\QuizAttempts\CreateQuizAttempt\" />
+	  <Folder Include="Features\QuizAttempts\DeleteQuizAttempt\" />
+	  <Folder Include="Features\QuizAttempts\UpdateQuizAttempt\" />
 	  <Folder Include="Features\QuizQuestions\GetAllQuizQuestions\" />
 	</ItemGroup>
 
