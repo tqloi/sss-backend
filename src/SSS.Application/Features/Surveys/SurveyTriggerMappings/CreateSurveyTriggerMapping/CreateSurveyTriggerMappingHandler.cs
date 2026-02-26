@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.Surveys.Common;
 using SSS.Domain.Entities.Assessment;
@@ -17,6 +18,16 @@ namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.CreateSurveyTri
         {
             try
             {
+                // If this new mapping is active, deactivate all existing mappings with the same TriggerType
+                if (request.IsActive)
+                {
+                    var conflicting = await db.SurveyTriggerMappings
+                        .Where(m => m.TriggerType == request.TriggerType && m.IsActive)
+                        .ToListAsync(cancellationToken);
+
+                    conflicting.ForEach(m => m.IsActive = false);
+                }
+
                 var entity = mapper.Map<SurveyTriggerMapping>(request);
                 await db.SurveyTriggerMappings.AddAsync(entity, cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);

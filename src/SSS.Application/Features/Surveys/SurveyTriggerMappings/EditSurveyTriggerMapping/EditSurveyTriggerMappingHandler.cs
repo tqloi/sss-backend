@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,20 @@ namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.EditSurveyTrigg
                 {
                     return new EditSurveyTriggerMappingResponse(false, $"Survey Trigger Mapping with ID {request.Id} not found");
                 }
+
+                // Determine the effective TriggerType after this update
+                var effectiveTriggerType = request.TriggerType ?? entity.TriggerType;
+
+                // If this mapping is being set to active, deactivate all other mappings with the same TriggerType
+                if (request.IsActive)
+                {
+                    var conflicting = await db.SurveyTriggerMappings
+                        .Where(m => m.TriggerType == effectiveTriggerType && m.IsActive && m.Id != request.Id)
+                        .ToListAsync(cancellationToken);
+
+                    conflicting.ForEach(m => m.IsActive = false);
+                }
+
                 entity.SurveyId = request.SurveyId;
                 entity.TriggerType = request.TriggerType;
                 entity.MaxAttempts = request.MaxAttempts;
