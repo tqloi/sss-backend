@@ -18,5 +18,7 @@
 
         // Navigation
         public Survey Survey { get; set; } = default!;
+
+        public SurveyTriggerType SurveyTriggerType { get; set; } = default!;
     }
 }

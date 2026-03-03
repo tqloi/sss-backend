@@ -31,6 +31,11 @@ namespace SSS.Infrastructure.Persistence.Sql.Configurations.Assessment
                    .HasForeignKey(x => x.SurveyId)
                    .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasOne(x => x.SurveyTriggerType)
+                   .WithMany(t => t.TriggerMappings)
+                   .HasForeignKey(x => x.TriggerType)
+                   .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasIndex(x => new { x.SurveyId, x.TriggerType })
                    .IsUnique();
         }
