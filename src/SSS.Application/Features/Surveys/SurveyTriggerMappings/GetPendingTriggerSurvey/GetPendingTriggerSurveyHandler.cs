@@ -48,7 +48,10 @@ namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.GetPendingTrigg
                 return new GetPendingTriggerSurveyResult
                 {
                     HasPendingSurvey = false,
-                    TriggerType = request.TriggerType
+                    TriggerType = request.TriggerType,
+                    CompletedAttempts = completedCount,
+                    MaxAttempts = mapping.MaxAttempts,
+                    BlockedReason = "MaxAttemptsExceeded"
                 };
             }
 
@@ -62,7 +65,11 @@ namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.GetPendingTrigg
                     return new GetPendingTriggerSurveyResult
                     {
                         HasPendingSurvey = false,
-                        TriggerType = request.TriggerType
+                        TriggerType = request.TriggerType,
+                        CompletedAttempts = completedCount,
+                        CooldownDays = mapping.CooldownDays,
+                        BlockedReason = "CooldownActive",
+                        CooldownEndsAt = cooldownEnd
                     };
                 }
             }
