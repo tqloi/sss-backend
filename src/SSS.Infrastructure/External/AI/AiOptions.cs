@@ -27,8 +27,9 @@
 
     public class QdrantOptions
     {
-        public string Endpoint { get; set; } = "http://localhost:6333";
-        public string Collection { get; set; } = "user_surveys";
+        public string Endpoint { get; set; } = null!;
+        public string ApiKey { get; set; } = null!;
+        public string Collection { get; set; } = "study_sense";
     }
 
     public class RagOptions
