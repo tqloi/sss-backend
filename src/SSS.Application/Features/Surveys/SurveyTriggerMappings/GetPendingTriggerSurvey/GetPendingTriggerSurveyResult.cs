@@ -28,5 +28,14 @@ namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.GetPendingTrigg
 
         /// <summary>Cooldown days configured (null = no cooldown).</summary>
         public int? CooldownDays { get; init; }
+
+        /// <summary>
+        /// Reason the survey is blocked (null when HasPendingSurvey = true).
+        /// Possible values: "MaxAttemptsExceeded", "CooldownActive".
+        /// </summary>
+        public string? BlockedReason { get; init; }
+
+        /// <summary>UTC datetime when the cooldown window ends (only set when BlockedReason = "CooldownActive").</summary>
+        public DateTime? CooldownEndsAt { get; init; }
     }
 }
