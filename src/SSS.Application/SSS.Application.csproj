@@ -7,6 +7,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Features\QuizAttempts\CreateQuizAttempt\**" />
+	  <Compile Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
+	  <Compile Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
+	  <EmbeddedResource Remove="Features\QuizAttempts\CreateQuizAttempt\**" />
+	  <EmbeddedResource Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
+	  <EmbeddedResource Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
+	  <None Remove="Features\QuizAttempts\CreateQuizAttempt\**" />
+	  <None Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
+	  <None Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\SSS.Domain\SSS.Domain.csproj" />
 	</ItemGroup>
 
@@ -16,9 +28,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Features\QuizAttempts\CreateQuizAttempt\" />
-	  <Folder Include="Features\QuizAttempts\DeleteQuizAttempt\" />
-	  <Folder Include="Features\QuizAttempts\UpdateQuizAttempt\" />
 	  <Folder Include="Features\QuizQuestions\GetAllQuizQuestions\" />
 	</ItemGroup>
 
