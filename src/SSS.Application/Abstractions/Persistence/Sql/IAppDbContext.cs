@@ -30,6 +30,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserLearningTarget> UserLearningTargets { get; }
 
         DbSet<SurveyTriggerMapping> SurveyTriggerMappings { get; }
+        DbSet<SurveyTriggerType> SurveyTriggerTypes { get; }
 
         DbSet<SurveyFieldSemantic> SurveyFieldSemantics { get; }
 
