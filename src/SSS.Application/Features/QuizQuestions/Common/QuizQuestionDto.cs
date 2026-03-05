@@ -1,4 +1,5 @@
-﻿using SSS.Domain.Enums;
+﻿using SSS.Application.Features.QuizQuestionOptions.Common;
+using SSS.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,5 +25,7 @@ namespace SSS.Application.Features.QuizQuestions.Common
         public int OrderNo { get; set; }
 
         public bool IsRequired { get; set; }
+
+        public List<QuizQuestionOptionDto> Options { get; set; } = new List<QuizQuestionOptionDto>();
     }
 }

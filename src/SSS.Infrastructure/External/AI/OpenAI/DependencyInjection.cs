@@ -34,7 +34,16 @@ namespace SSS.Infrastructure.External.AI.OpenAI
 
             services.AddHttpClient();
 
-            services.AddSingleton<IQdrantClient, QdrantClient>();
+            services.AddHttpClient(nameof(QdrantClient), (sp, client) =>
+            {
+                var cfg = sp.GetRequiredService<AiOptions>();
+
+                client.BaseAddress = new Uri(cfg.Qdrant.Endpoint.TrimEnd('/') + "/");
+                client.DefaultRequestHeaders.Add("api-key", cfg.Qdrant.ApiKey);
+                client.Timeout = TimeSpan.FromSeconds(60);
+            });
+
+            services.AddScoped<IQdrantClient, QdrantClient>();
             services.AddScoped<IPipeLine, RagPipeline>();
 
             return services;
