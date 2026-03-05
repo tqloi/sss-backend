@@ -20,6 +20,10 @@
 	  <Folder Include="Features\QuizAttempts\DeleteQuizAttempt\" />
 	  <Folder Include="Features\QuizAttempts\UpdateQuizAttempt\" />
 	  <Folder Include="Features\QuizQuestions\GetAllQuizQuestions\" />
+	  <Folder Include="Features\Surveys\SurveyTriggerTypes\GetSurveyTriggerTypeById\" />
+	  <Folder Include="Features\Surveys\SurveyTriggerTypes\CreateSurveyTriggerType\" />
+	  <Folder Include="Features\Surveys\SurveyTriggerTypes\DeleteSurveyTriggerType\" />
+	  <Folder Include="Features\Surveys\SurveyTriggerTypes\UpdateSurveyTriggerType\" />
 	</ItemGroup>
 
 </Project>

@@ -39,7 +39,9 @@ namespace SSS.Application.Features.Surveys.Common
             CreateMap<SurveyFieldSemantic, SurveyFieldSenmaticDto>();
 
             CreateMap<CreateSurveyTriggerMappingCommand, SurveyTriggerMapping>();
-            CreateMap<SurveyTriggerMapping, SurveyTriggerMappingDto>(); 
+            CreateMap<SurveyTriggerMapping, SurveyTriggerMappingDto>();
+
+            CreateMap<SurveyTriggerType, SurveyTriggerTypeDto>();
 
 
 
