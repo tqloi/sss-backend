@@ -3,8 +3,10 @@ using SSS.Domain.Entities.AI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http.Json;
-using System.Text;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.Vector
@@ -21,6 +23,42 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
             _client = client.CreateClient(nameof(QdrantClient));
             _client.BaseAddress = new Uri(_cfg.Qdrant.Endpoint.Trim('/') + "/");
         }
+
+        private static async Task EnsureSuccessWithBodyAsync(HttpResponseMessage res, CancellationToken ct)
+        {
+            if (res.IsSuccessStatusCode) return;
+
+            var body = await res.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(
+                $"Qdrant request failed. Status={(int)res.StatusCode} ({res.ReasonPhrase}). Body={body}",
+                null,
+                res.StatusCode);
+        }
+
+        private async Task EnsurePayloadIndexAsync(string collectionName, string fieldName, object fieldSchema, CancellationToken ct)
+        {
+            var body = new
+            {
+                field_name = fieldName,
+                field_schema = fieldSchema
+            };
+
+            using var res = await _client.PutAsJsonAsync($"collections/{collectionName}/index", body, ct);
+            if (res.IsSuccessStatusCode) return;
+
+            // If the index already exists, treat it as success.
+            if (res.StatusCode == HttpStatusCode.Conflict) return;
+
+            // Some Qdrant versions may return 400 with an "already exists" message.
+            if (res.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var text = await res.Content.ReadAsStringAsync(ct);
+                if (text.Contains("already exists", StringComparison.OrdinalIgnoreCase)) return;
+            }
+
+            res.EnsureSuccessStatusCode();
+        }
+
         public async Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default)
         {
             var baseName = _cfg.Qdrant.Collection;
@@ -30,29 +68,37 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
             _activeCollection = name;
             // check exists
             var check = await _client.GetAsync($"collections/{name}", ct);
-            if (check.IsSuccessStatusCode) return;
-            var body = new
+            if (!check.IsSuccessStatusCode)
             {
-                vectors = new { size = vectorSize, distance = "Cosine" }
+                var body = new
+                {
+                    vectors = new { size = vectorSize, distance = "Cosine" }
 
-            };
+                };
 
-            var resp = await _client.PutAsJsonAsync($"collections/{name}", body, ct);
-            resp.EnsureSuccessStatusCode();
+                var resp = await _client.PutAsJsonAsync($"collections/{name}", body, ct);
+                resp.EnsureSuccessStatusCode();
+            }
+
+            // Required for filtered searches like SearchByUserId.
+            await EnsurePayloadIndexAsync(name, fieldName: "user_id", fieldSchema: "uuid", ct);
+            await EnsurePayloadIndexAsync(name, fieldName: "data_type", fieldSchema: "keyword", ct);
         }
 
         public async Task<List<VecHit>> SearchAsync(float[] query, int topK, CancellationToken ct = default)
         {
+            await EnsureCollectionAsync(query.Length, ct);
+
             var name = _activeCollection ?? _cfg.Qdrant.Collection;
             var body = new
             {
                 vector = query,
-                top = topK,
+                limit = topK,
                 with_payload = true
             };
 
             var res = await _client.PostAsJsonAsync($"collections/{name}/points/search", body, ct);
-            res.EnsureSuccessStatusCode();
+            await EnsureSuccessWithBodyAsync(res, ct);
             var json = await res.Content.ReadFromJsonAsync<QdrantSearchResponse>(cancellationToken: ct);
 
             var result = new List<VecHit>();
@@ -65,6 +111,8 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
 
         public async Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string dataType, CancellationToken ct = default)
         {
+
+            await EnsureCollectionAsync(vector.Length, ct);
 
             var name = _activeCollection ?? _cfg.Qdrant.Collection;
 
@@ -97,7 +145,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
                 ct);
 
 
-            res.EnsureSuccessStatusCode();
+            await EnsureSuccessWithBodyAsync(res, ct);
 
             var json = await res.Content.ReadFromJsonAsync<QdrantSearchResponse>(ct);
 
@@ -112,11 +160,16 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
 
         public async Task UpsertAsync(IEnumerable<VectorPoint> points, CancellationToken ct = default)
         {
+            var pointList = points.ToList();
+            if (pointList.Count == 0) return;
+
+            await EnsureCollectionAsync(pointList[0].Vector.Length, ct);
+
             var name = _activeCollection ?? _cfg.Qdrant.Collection;
 
             var payload = new
             {
-                points = points.Select(v => new
+                points = pointList.Select(v => new
                 {
                     id = v.Id,
                     vector = v.Vector,
@@ -132,7 +185,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
             };
 
             var res = await _client.PutAsJsonAsync($"collections/{name}/points?wait=true", payload, ct);
-            res.EnsureSuccessStatusCode();
+            await EnsureSuccessWithBodyAsync(res, ct);
         }
     }
 }
