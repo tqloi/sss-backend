@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyTriggerTypes.GetSurveyTriggerTypeByCod
             Get("/api/surveys/surveytriggertype/{code}");
             Description(d => d.WithTags("SurveyTriggerTypes"));
             Summary(s => s.Summary = "Get a SurveyTriggerType by code");
-            Roles("Admin", "Analyst");
+            Roles("Analyst");
         }
 
         public override async Task HandleAsync(CancellationToken ct)

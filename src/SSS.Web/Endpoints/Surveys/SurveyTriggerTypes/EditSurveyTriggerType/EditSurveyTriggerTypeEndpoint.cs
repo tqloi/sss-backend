@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.Surveys.SurveyTriggerTypes.EditSurveyTriggerType
         {
             Put("/api/surveys/surveytriggertype/edit");
             Description(d => d.WithTags("SurveyTriggerTypes"));
-            Summary(s => s.Summary = "Update a SurveyTriggerType");
+            Summary(s => s.Summary = "Edit a SurveyTriggerType");
             Roles("Analyst");
         }
 
