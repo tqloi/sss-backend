@@ -33,7 +33,12 @@ namespace SSS.Application.Features.Content.Roadmap.GetById
                     Id = roadmap.Id,
                     SubjectId = roadmap.SubjectId,
                     Title = roadmap.Title,
-                    Description = roadmap.Description
+                    Description = roadmap.Description,
+                    CreatedAt = roadmap.CreatedAt,
+                    CreatedById = roadmap.CreateById,
+                    Status = roadmap.Status,
+                    IsLatest = roadmap.IsLatest,
+                    Version = roadmap.Version
                 },
                 Nodes = roadmap.Nodes.Select(n => new RoadmapNodeDTO
                 {
