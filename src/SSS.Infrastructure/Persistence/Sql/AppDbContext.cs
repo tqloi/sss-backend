@@ -41,6 +41,7 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<StudyPlanModule> StudyPlanModules => Set<StudyPlanModule>();
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
         public DbSet<StudySession> StudySessions => Set<StudySession>();
+        
 
         // Progress / Behavior
         public DbSet<UserSubjectStat> UserSubjectStats => Set<UserSubjectStat>();

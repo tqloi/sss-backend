@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -37,16 +37,18 @@ namespace SSS.Application.Features.StudyPlans.StudyPlans.CreateStudyPlan
             }
 
             // 2. Create aggregate
+            var sortedNodes = roadmap.Nodes.OrderBy(n => n.OrderNo ?? int.MaxValue).ToList();
+
             var studyPlan = new StudyPlan
             {
                 UserId = req.UserId,
                 RoadmapId = req.RoadmapId,
                 Status = StudyPlanStatus.Active,
                 CreatedAt = DateTime.UtcNow,
-                Modules = roadmap.Nodes.Select(node => new StudyPlanModule
+                Modules = sortedNodes.Select((node, index) => new StudyPlanModule
                 {
                     RoadmapNodeId = node.Id,
-                    Status = ModuleStatus.Locked
+                    Status = ModuleStatus.Active
                 }).ToList()
             };
 

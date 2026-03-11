@@ -13,15 +13,19 @@ public class StudySession
     public long? StudyPlanId { get; set; }
     public long? ModuleId { get; set; }
     public long? NodeId { get; set; }
+    public SessionStatus Status { get; set; } = SessionStatus.NotStarted;
     public DateTime StartAt { get; set; }
     public DateTime? EndAt { get; set; }
+    public DateTime? PausedAt { get; set; }
     public SessionEndedReason? EndedReason { get; set; }
+    public int? TasksCompletedCount { get; set; }
+    public int? TotalTasks { get; set; }
     public int? PlannedDurationSeconds { get; set; }
     public int? ActualDurationSeconds { get; set; }
     public int? ActiveSeconds { get; set; }
     public int? IdleSeconds { get; set; }
-    public int? PauseCount { get; set; }
-    public int? PauseSeconds { get; set; }
+    public int PauseCount { get; set; }
+    public int PauseSeconds { get; set; }
     public int? FocusScore { get; set; }
     public decimal? ConfidenceActiveLearning { get; set; }
     public int? FatigueScore { get; set; }
@@ -31,7 +35,7 @@ public class StudySession
     public DateTime? CreatedAt { get; set; } = DateTime.MinValue;
 
     // Navigation
-    public  virtual User User { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
     public virtual TaskItem? Task { get; set; }
     public virtual StudyPlan? StudyPlan { get; set; }
     public virtual StudyPlanModule? Module { get; set; }
