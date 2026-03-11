@@ -34,6 +34,10 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.NodeId)
             .HasColumnType("bigint");
 
+        builder.Property(e => e.Status)
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(e => e.StartAt)
             .HasColumnType("datetime(6)")
             .IsRequired();
@@ -41,8 +45,17 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.EndAt)
             .HasColumnType("datetime(6)");
 
+        builder.Property(e => e.PausedAt)
+            .HasColumnType("datetime(6)");
+
         builder.Property(e => e.EndedReason)
             .HasMaxLength(30);
+
+        builder.Property(e => e.TasksCompletedCount)
+            .HasColumnType("int");
+
+        builder.Property(e => e.TotalTasks)
+            .HasColumnType("int");
 
         builder.Property(e => e.PlannedDurationSeconds)
             .HasColumnType("int");
