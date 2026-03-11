@@ -34,7 +34,7 @@ namespace SSS.Application.Features.AI.CreateAiTaskItems
             var roadmapNodeJson = JsonSerializer.Serialize(
                 roadmapnode);
 
-            var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.UserId, roadmapJson, roadmapNodeJson, cancellationToken);
+            var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.UserId, module.StudyPlanId.ToString(), roadmapJson, roadmapNodeJson, cancellationToken);
 
             if (aiResponse == null) throw new NotImplementedException();
 
