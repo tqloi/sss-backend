@@ -40,6 +40,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<StudyPlanModule> StudyPlanModules { get; }
         DbSet<TaskItem> TaskItems { get; }
         DbSet<StudySession> StudySessions { get; }
+        
 
         // Progress / Behavior
         DbSet<UserSubjectStat> UserSubjectStats { get; }

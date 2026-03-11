@@ -82,6 +82,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
 
             // Required for filtered searches like SearchByUserId.
             await EnsurePayloadIndexAsync(name, fieldName: "user_id", fieldSchema: "uuid", ct);
+            await EnsurePayloadIndexAsync(name, fieldName: "studyplan_id", fieldSchema: "keyword", ct);
             await EnsurePayloadIndexAsync(name, fieldName: "data_type", fieldSchema: "keyword", ct);
         }
 
@@ -109,7 +110,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
             return result;
         }
 
-        public async Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string dataType, CancellationToken ct = default)
+        public async Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string studyplanId, string dataType, CancellationToken ct = default)
         {
 
             await EnsureCollectionAsync(vector.Length, ct);
@@ -129,6 +130,11 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
                 {
                     key = "user_id",
                     match = new { value = userId }
+                },
+                 new
+                {
+                    key = "studyplan_id",
+                    match = new { value = studyplanId }
                 },
                 new
                 {
@@ -178,6 +184,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
                         text = v.Text,
                         source = v.Source,
                         user_id = v.UserId,
+                        studyplan_id = v.StudyplanId,
                         data_type = v.DataType,
                         created_at = v.CreatedAt
                     }

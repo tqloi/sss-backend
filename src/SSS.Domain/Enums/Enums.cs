@@ -7,8 +7,20 @@
     public enum TaskStatus { Pending, Scheduled, InProgress, Completed, Skipped, Archived }
 
     // Sessions
-    public enum SessionEndedReason { Completed, Stopped, Timeout, Abandoned, Error }
+    public enum SessionStatus { NotStarted, InProgress, Paused, Completed, Cancelled }
+    public enum SessionEndedReason { Completed, TimedOut, Cancelled, SystemTerminated }
     public enum LocalTimeBlock { Morning, Afternoon, Evening, Night }
+    public enum SessionEventType
+    {
+        SessionStart,
+        SessionPause,
+        SessionResume,
+        SessionEnd,
+        TaskStart,
+        TaskComplete,
+        TaskSkip,
+        FeedbackSubmitted
+    }
 
     // Survey
     public enum SurveyStatus { Draft, Published, Archived }

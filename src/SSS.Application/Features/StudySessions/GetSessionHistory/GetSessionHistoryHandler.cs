@@ -1,0 +1,74 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Features.StudySessions.Common;
+using SSS.Domain.Enums;
+
+namespace SSS.Application.Features.StudySessions.GetSessionHistory
+{
+    public class GetSessionHistoryHandler(IAppDbContext context)
+        : IRequestHandler<GetSessionHistoryQuery, GetSessionHistoryResult>
+    {
+        public async Task<GetSessionHistoryResult> Handle(GetSessionHistoryQuery req, CancellationToken ct)
+        {
+            var query = context.StudySessions
+                .AsNoTracking()
+                .Include(s => s.Node)
+                .Include(s => s.StudyPlan)
+                    .ThenInclude(sp => sp!.Roadmap)
+                .Where(s => s.UserId == req.UserId);
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(req.Status) && Enum.TryParse<SessionStatus>(req.Status, true, out var status))
+                query = query.Where(s => s.Status == status);
+
+            // Filter by date range
+            if (!string.IsNullOrEmpty(req.StartDate) && DateTime.TryParse(req.StartDate, out var startDate))
+                query = query.Where(s => s.StartAt >= startDate);
+
+            if (!string.IsNullOrEmpty(req.EndDate) && DateTime.TryParse(req.EndDate, out var endDate))
+                query = query.Where(s => s.StartAt <= endDate.AddDays(1));
+
+            // Sorting
+            query = req.SortOrder?.ToLower() == "asc"
+                ? query.OrderBy(s => s.StartAt)
+                : query.OrderByDescending(s => s.StartAt);
+
+            var totalCount = await query.CountAsync(ct);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)req.PageSize);
+
+            var items = await query
+                .Skip((req.PageNumber - 1) * req.PageSize)
+                .Take(req.PageSize)
+                .Select(s => new SessionHistoryItemDto
+                {
+                    Id = s.Id,
+                    Date = s.StartAt.ToString("yyyy-MM-dd"),
+                    NodeTitle = s.Node != null ? s.Node.Title : null,
+                    PlanTitle = s.StudyPlan != null && s.StudyPlan.Roadmap != null ? s.StudyPlan.Roadmap.Title : null,
+                    DurationMinutes = (s.ActualDurationSeconds ?? 0) / 60,
+                    TasksCompleted = s.TasksCompletedCount ?? 0,
+                    TotalTasks = s.TotalTasks ?? 0,
+                    XpEarned = ((s.ActiveSeconds ?? 0) / 60) * 10 + (s.TasksCompletedCount ?? 0) * 25,
+                    Rating = s.SelfRating,
+                    Status = s.Status.ToString()
+                })
+                .ToListAsync(ct);
+
+            return new GetSessionHistoryResult
+            {
+                Success = true,
+                Data = new SessionHistoryData
+                {
+                    Items = items,
+                    PageNumber = req.PageNumber,
+                    PageSize = req.PageSize,
+                    TotalPages = totalPages,
+                    TotalCount = totalCount,
+                    HasPreviousPage = req.PageNumber > 1,
+                    HasNextPage = req.PageNumber < totalPages
+                }
+            };
+        }
+    }
+}

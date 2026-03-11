@@ -1406,11 +1406,14 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<long?>("NodeId")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("PauseCount")
+                    b.Property<int>("PauseCount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PauseSeconds")
+                    b.Property<int>("PauseSeconds")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("PausedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int?>("PlannedDurationSeconds")
                         .HasColumnType("int");
@@ -1421,15 +1424,26 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<DateTime>("StartAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<long?>("StudyPlanId")
                         .HasColumnType("bigint");
 
                     b.Property<long?>("TaskId")
                         .HasColumnType("bigint");
 
+                    b.Property<int?>("TasksCompletedCount")
+                        .HasColumnType("int");
+
                     b.Property<string>("Timezone")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<int?>("TotalTasks")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
