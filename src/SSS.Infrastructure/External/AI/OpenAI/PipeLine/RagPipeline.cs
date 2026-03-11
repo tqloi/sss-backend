@@ -20,7 +20,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             _config = config;
         }
 
-        public async Task IngestAsync(string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
+        public async Task IngestAsync(string studyplanId, string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
         {
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
@@ -28,7 +28,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId,
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
@@ -304,6 +304,7 @@ REQUIRED JSON SHAPE
         }
         public async Task<string> BuildStudyPlanContextAsync(
             string userId,
+            string studyPlanId,
             CancellationToken ct = default)
         {
             // 1. Vector đại diện cho "tạo study plan"
@@ -313,8 +314,9 @@ REQUIRED JSON SHAPE
             // 2. Lấy surveys của user
             var hits = await _vec.SearchByUserId(
                 vector: queryVector,
-                topK: 5,
+                topK: 3,
                 userId: userId,
+                studyplanId: studyPlanId,
                 dataType: "user_profile",
                 ct: ct);
 
@@ -328,12 +330,13 @@ REQUIRED JSON SHAPE
 
         public async Task<string> GenerateStudyPlanAsync(
     string userId,
+    string studyPlanId,
     object roadmap,
     object roadmapnode,
     CancellationToken ct = default)
         {
             // 1. Build context từ vector DB
-            var context = await BuildStudyPlanContextAsync(userId, ct);
+            var context = await BuildStudyPlanContextAsync(userId, studyPlanId, ct);
 
             var currrentDate = DateTime.UtcNow;
             var dayName = currrentDate.DayOfWeek.ToString();

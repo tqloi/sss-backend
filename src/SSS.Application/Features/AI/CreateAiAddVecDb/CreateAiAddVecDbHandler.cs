@@ -32,15 +32,16 @@ namespace SSS.Application.Features.AI.CreateAiAddVecDb
 
             var surveyResult = await pipeLine.GenerateSurveyResultAsync(targetDto, behaviorDto, cancellationToken);
 
-            var chunks = new List<(string Text, string? Source)>
-            {
-                (surveyResult, "user_profile")
-            };
             if (surveyResult is null)
             {
                 throw new Exception("Failed to generate survey result.");
             }
-           await pipeLine.IngestAsync(request.UserId, chunks, cancellationToken);
+
+            var chunks = new List<(string Text, string? Source)>
+            {
+                (surveyResult, "user_profile")
+            };
+           await pipeLine.IngestAsync(request.StudyPlanId, request.UserId, chunks, cancellationToken);
             return new CreateAiAddVecDbResponse
             {
                 Message = "Vector database updated successfully.",
