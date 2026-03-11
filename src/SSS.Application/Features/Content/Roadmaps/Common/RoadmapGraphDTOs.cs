@@ -33,6 +33,8 @@ public record RoadmapGraphUpdateMetadata
 {
     public string? Title { get; init; }
     public string? Description { get; init; }
+    public int? Version { get; set; }
+    public RoadmapStatus? Status { get; set; }
 }
 
 public record RoadmapNodeGraphItem

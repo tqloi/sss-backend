@@ -9,6 +9,4 @@ namespace SSS.Application.Features.AI.CreateAiRoadMap
         public string? Message { get; init; }
         public JsonElement? Rawroadmap { get; set; }
     }
-
-
 }
