@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
+using SSS.Infrastructure.Persistence.Mongo.Repositories;
 
 namespace SSS.Infrastructure.Persistence.Mongo
 {
@@ -27,6 +29,9 @@ namespace SSS.Infrastructure.Persistence.Mongo
                 var client = sp.GetRequiredService<IMongoClient>();
                 return new MongoContext(client, databaseName);
             });
+
+            // Mongo Repositories
+            services.AddScoped<IStudyEventRepository, StudyEventRepository>();
 
             return services;
         }

@@ -19,6 +19,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<RoadmapNode> RoadmapNodes { get; }
         DbSet<RoadmapEdge> RoadmapEdges { get; }
         DbSet<NodeContent> NodeContents { get; }
+        DbSet<ContentManagerSubject> ContentManagerSubjects { get; }
 
         // Survey & Profile
         DbSet<Survey> Surveys { get; }
@@ -40,6 +41,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<StudyPlanModule> StudyPlanModules { get; }
         DbSet<TaskItem> TaskItems { get; }
         DbSet<StudySession> StudySessions { get; }
+        
 
         // Progress / Behavior
         DbSet<UserSubjectStat> UserSubjectStats { get; }

@@ -54,7 +54,9 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
                 Description = roadmap.Description,
                 Version = roadmap.Version,
                 IsLatest = roadmap.IsLatest,
-                Status = request.Status // Placeholder, echo back for future compatibility
+                CreatedById = roadmap.CreateById,
+                CreatedAt = roadmap.CreatedAt,
+                Status = roadmap.Status 
             });
 
             return new GetAllRoadmapsResult(result);

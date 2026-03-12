@@ -78,6 +78,14 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
                 {
                     roadmap.Description = request.Roadmap.Description;
                 }
+                if (request.Roadmap.Status != null)
+                {
+                    roadmap.Status = request.Roadmap.Status.Value;
+                }
+                if (request.Roadmap.Version != null)
+                {
+                    roadmap.Version = request.Roadmap.Version.Value;
+                }
                 dbContext.Roadmaps.Update(roadmap);
             }
 
