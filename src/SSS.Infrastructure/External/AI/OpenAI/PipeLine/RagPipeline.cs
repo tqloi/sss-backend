@@ -92,7 +92,6 @@ NodeDifficulty:
 - Advanced
 
 ContentType:
-- Video
 - Article
 - Book
 - Course
@@ -215,7 +214,7 @@ CONTENT RULES
 For EACH node:
 - Include 2–5 contents.
 - Prefer the following distribution:
-  - Article / Video for theory
+  - Article for theory
   - Course for structured learning
   - Exercise / Project for practice
 - At least 30% of nodes MUST include:
@@ -270,7 +269,7 @@ REQUIRED JSON SHAPE
     {
       "clientId": string,
       "nodeClientId": string,
-      "contentType": "Video" | "Article" | "Book" | "Course" | "Exercise" | "Quiz" | "Project",
+      "contentType": "Article" | "Book" | "Course" | "Exercise" | "Quiz" | "Project",
       "title": string,
       "url": string | null,
       "description": string | null,
@@ -312,18 +311,33 @@ REQUIRED JSON SHAPE
             var queryVector = await _emp.EmbeddingAsync(query, ct);
 
             // 2. Lấy surveys của user
-            var hits = await _vec.SearchByUserId(
+            var hit_user_profile = await _vec.SearchByUserId(
                 vector: queryVector,
-                topK: 3,
+                topK: 1,
                 userId: userId,
                 studyplanId: studyPlanId,
                 dataType: "user_profile",
                 ct: ct);
 
+            var hit_user_behavior = await _vec.SearchByUserId(
+                vector: queryVector,
+                topK: 3,
+                userId: userId,
+                studyplanId: studyPlanId,
+                dataType: "user_behavior",
+                ct: ct);
+
             // 3. Ghép context
-            var context = string.Join(
-                "\n---\n",
-                hits.Select(h => h.Text));
+            //var context = string.Join(
+            //    "\n---\n",
+            //    hits.Select(h => h.Text));
+
+            var context = string.Join("\n---\n",
+                new[] { hit_user_profile.FirstOrDefault() }
+                .Concat(hit_user_behavior)
+                .Where(h => h != null)
+                .Select(h => h.Text)
+                );
 
             return context;
         }
