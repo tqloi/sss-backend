@@ -20,19 +20,21 @@ namespace SSS.Application.Features.AI.CreateAiTaskItems
             
             var module = await dbContext.StudyPlanModules
                 .AsNoTracking()
-                .FirstOrDefaultAsync(spm => spm.Id == request.studyPlanModuleId);
+                .FirstOrDefaultAsync(spm => spm.Id == request.studyPlanModuleId)
+                ?? throw new InvalidOperationException($"StudyPlanModule {request.studyPlanModuleId} not found");
 
             var roadmapnode = await dbContext.RoadmapNodes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(rm => rm.Id == module.RoadmapNodeId);
+                .FirstOrDefaultAsync(rm => rm.Id == module.RoadmapNodeId)
+                ?? throw new InvalidOperationException($"RoadmapNode {module.RoadmapNodeId} not found");
 
             var roadmap = await dbContext.Roadmaps
                 .AsNoTracking()
-                .FirstOrDefaultAsync(rm => rm.Id == roadmapnode.RoadmapId);
-            var roadmapJson = JsonSerializer.Serialize(roadmap);
+                .FirstOrDefaultAsync(rm => rm.Id == roadmapnode.RoadmapId)
+                ?? throw new InvalidOperationException($"Roadmap {roadmapnode.RoadmapId} not found");
 
-            var roadmapNodeJson = JsonSerializer.Serialize(
-                roadmapnode);
+            var roadmapJson = JsonSerializer.Serialize(roadmap);
+            var roadmapNodeJson = JsonSerializer.Serialize(roadmapnode);
 
             var aiResponse = await pipeLine.GenerateStudyPlanAsync(request.UserId, module.StudyPlanId.ToString(), roadmapJson, roadmapNodeJson, cancellationToken);
 

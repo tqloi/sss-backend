@@ -1,7 +1,7 @@
 ﻿namespace SSS.Domain.Enums
 {
     public enum RoadmapStatus { Draft, Active, Archived }
-    public enum StudyPlanStatus { Draft, Active, Archived }
+    public enum StudyPlanStatus { Draft, Active, Archived, GeneratingTasks, Ready, Failed }
     public enum StudyPlanStrategy { Balanced, Speed, Depth }
     public enum ModuleStatus { Locked, Active, Completed, Skipped }
     public enum TaskStatus { Pending, Scheduled, InProgress, Completed, Skipped, Archived }

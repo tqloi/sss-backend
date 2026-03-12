@@ -15,6 +15,7 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
         public DateTime StartedAt { get; init; }
         public DateTime? SubmittedAt { get; init; }
         public SurveyTriggerReason TriggerReason { get; init; }
+        public long? RoadmapId { get; init; }
         public List<SurveyAnswerInput> Answers { get; init; } = new();
     }
 

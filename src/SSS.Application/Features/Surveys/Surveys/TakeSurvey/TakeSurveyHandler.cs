@@ -1,13 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Exceptions;
+using SSS.Domain.Constants;
 using SSS.Domain.Entities.Assessment;
 using System.Text.Json;
 
 namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
 {
-    public class TakeSurveyHandler(IAppDbContext db) 
+    public class TakeSurveyHandler(IAppDbContext db, ISurveyJobDispatcher jobDispatcher) 
         : IRequestHandler<TakeSurveyCommand, TakeSurveyResponse>
     {
         public async Task<TakeSurveyResponse> Handle(
@@ -182,6 +184,20 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     status = "Completed";
 
                     await db.SaveChangesAsync(cancellationToken);
+
+                    // Dispatch background AI analysis job based on survey type
+                    if (survey.Code == SurveyCodes.LearningBehavior)
+                    {
+                        jobDispatcher.DispatchBehaviorAnalysis(response.Id);
+                    }
+                    else if (survey.Code == SurveyCodes.RoadmapLearningTarget)
+                    {
+                        if (!request.RoadmapId.HasValue)
+                            throw new InvalidOperationException(
+                                "RoadmapId is required when submitting a ROADMAP_LEARNING_TARGET survey.");
+
+                        jobDispatcher.DispatchTargetAnalysis(response.Id, request.RoadmapId.Value);
+                    }
                 }
 
                 await db.CommitTransactionAsync(cancellationToken);
