@@ -21,7 +21,7 @@ namespace SSS.Web.Endpoints.StudyPlans.TaskItems.Common
             // DTO to Entity
             CreateMap<TaskItemDtos, TaskItem>()
                 .ForMember(dest => dest.StudyPlanModule, opt => opt.Ignore())
-                .ForMember(dest => dest.StudySessions, opt => opt.Ignore());
+                .ForMember(dest => dest.SessionTasks, opt => opt.Ignore());
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using SSS.Application.Abstractions.Persistence.Sql;
@@ -41,7 +41,7 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<StudyPlanModule> StudyPlanModules => Set<StudyPlanModule>();
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
         public DbSet<StudySession> StudySessions => Set<StudySession>();
-        
+        public DbSet<SessionTask> SessionTasks => Set<SessionTask>();
 
         // Progress / Behavior
         public DbSet<UserSubjectStat> UserSubjectStats => Set<UserSubjectStat>();
