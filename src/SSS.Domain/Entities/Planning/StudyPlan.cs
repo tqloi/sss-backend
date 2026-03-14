@@ -19,5 +19,5 @@ public class StudyPlan
     public virtual User User { get; set; } = null!;
     public virtual Roadmap Roadmap { get; set; } = null!;
     public virtual ICollection<StudyPlanModule> Modules { get; set; } = new HashSet<StudyPlanModule>();
-    public virtual ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+
 }

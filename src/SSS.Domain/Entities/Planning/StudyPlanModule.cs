@@ -16,5 +16,5 @@ public class StudyPlanModule
     public virtual StudyPlan StudyPlan { get; set; } = null!;
     public virtual RoadmapNode RoadmapNode { get; set; } = null!;
     public virtual ICollection<TaskItem> Tasks { get; set; } = new HashSet<TaskItem>();
-    public virtual ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+
 }

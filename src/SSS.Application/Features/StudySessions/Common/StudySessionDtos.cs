@@ -143,6 +143,12 @@ namespace SSS.Application.Features.StudySessions.Common
         public bool IsCompleted { get; set; }
     }
 
+    public class EndSessionTaskDto
+    {
+        public long TaskId { get; set; }
+        public DateTime? EndTime { get; set; }
+    }
+
     // ─── Study Event ───
     public class StudyEventDto
     {

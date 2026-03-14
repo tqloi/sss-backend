@@ -15,9 +15,7 @@ namespace SSS.Application.Features.StudySessions.GetSessionById
         {
             var dto = await context.StudySessions
                 .AsNoTracking()
-                .Include(s => s.Node)
-                .Include(s => s.StudyPlan)
-                    .ThenInclude(sp => sp!.Roadmap)
+
                 .Where(s => s.Id == req.SessionId && s.UserId == req.UserId)
                 .ProjectTo<SessionDetailDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(ct);

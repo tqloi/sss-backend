@@ -1,4 +1,4 @@
-﻿namespace SSS.Domain.Enums
+namespace SSS.Domain.Enums
 {
     public enum RoadmapStatus { Draft, Active, Archived }
     public enum StudyPlanStatus { Draft, Active, Archived, GeneratingTasks, Ready, Failed }
@@ -73,7 +73,9 @@
     {
         Lesson = 1,
         Course = 2,
-        StudySession = 3
+        StudySession = 3,
+        Module = 4,
+        Task = 5
     }
 
     /* =======================

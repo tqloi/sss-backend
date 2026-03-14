@@ -9,10 +9,7 @@ public class StudySession
 {
     public string Id { get; set; } = null!;
     public string UserId { get; set; } = null!;
-    public long? TaskId { get; set; }
-    public long? StudyPlanId { get; set; }
-    public long? ModuleId { get; set; }
-    public long? NodeId { get; set; }
+
     public SessionStatus Status { get; set; } = SessionStatus.NotStarted;
     public DateTime StartAt { get; set; }
     public DateTime? EndAt { get; set; }
@@ -36,8 +33,5 @@ public class StudySession
 
     // Navigation
     public virtual User User { get; set; } = null!;
-    public virtual TaskItem? Task { get; set; }
-    public virtual StudyPlan? StudyPlan { get; set; }
-    public virtual StudyPlanModule? Module { get; set; }
-    public virtual RoadmapNode? Node { get; set; }
+    public virtual ICollection<SessionTask> SessionTasks { get; set; } = new List<SessionTask>();
 }

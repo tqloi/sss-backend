@@ -21,5 +21,5 @@ public class RoadmapNode
     public virtual ICollection<RoadmapEdge> OutgoingEdges { get; set; } = new HashSet<RoadmapEdge>();
     public virtual ICollection<RoadmapEdge> IncomingEdges { get; set; } = new HashSet<RoadmapEdge>();
     public virtual ICollection<StudyPlanModule> StudyPlanModules { get; set; } = new HashSet<StudyPlanModule>();
-    public virtual ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+
 }

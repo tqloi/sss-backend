@@ -24,49 +24,64 @@ namespace SSS.Application.Features.StudySessions.StartSession
             // Generate ID
             var sessionId = ObjectId.GenerateNewId();
 
-            // Snapshot total tasks at the start of the session
-            int initialTotalTasks = 0;
-            if (req.ModuleId.HasValue)
-            {
-                initialTotalTasks = await context.TaskItems
-                    .CountAsync(t => t.StudyPlanModuleId == req.ModuleId, ct);
-            }
-            // else if other levels like TaskId, we can expand later
-
             var session = new StudySession
             {
                 Id = sessionId,
                 UserId = req.UserId,
-                StudyPlanId = req.StudyPlanId,
-                NodeId = req.NodeId,
-                ModuleId = req.ModuleId,
-                TaskId = req.TaskId,
                 PlannedDurationSeconds = req.PlannedDurationSeconds,
                 Timezone = req.Timezone,
                 Status = SessionStatus.InProgress,
                 StartAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
                 TasksCompletedCount = 0,
-                TotalTasks = initialTotalTasks
+                TotalTasks = 0 // will update later
             };
+
+            // Create SessionTasks
+            var sessionTasks = new List<SessionTask>();
+            if (req.TaskIds is { Length: > 0 })
+            {
+                foreach (var tid in req.TaskIds)
+                {
+                    sessionTasks.Add(new SessionTask
+                    {
+                        StudySessionId = sessionId,
+                        TaskId = tid,
+                        Status = "INCOMPLETE"
+                    });
+                }
+            }       
+            
+
+            session.SessionTasks = sessionTasks;
+            session.TotalTasks = sessionTasks.Count;
 
             context.StudySessions.Add(session);
             await context.SaveChangesAsync(ct);
 
-            // Load related data for response
-            var savedSession = await context.StudySessions
-                .AsNoTracking()
-                .Include(s => s.Node)
-                .Include(s => s.Task)
-                .FirstAsync(s => s.Id == sessionId, ct);
+            // Return response details
+            SessionNodeDto? nodeDto = null;
+            if (req.NodeId.HasValue)
+            {
+                var node = await context.RoadmapNodes.FindAsync([req.NodeId.Value], ct);
+                if (node != null)
+                {
+                    nodeDto = new SessionNodeDto
+                    {
+                        Id = node.Id,
+                        Title = node.Title ?? "",
+                        Description = node.Description
+                    };
+                }
+            }
 
-            // Load tasks of the module/node if available
             var tasks = new List<SessionTaskDto>();
-            if (req.ModuleId.HasValue)
+            var targetTaskIds = sessionTasks.Select(st => st.TaskId).ToList();
+            if (targetTaskIds.Count > 0)
             {
                 tasks = await context.TaskItems
                     .AsNoTracking()
-                    .Where(t => t.StudyPlanModuleId == req.ModuleId)
+                    .Where(t => targetTaskIds.Contains(t.Id))
                     .Select(t => new SessionTaskDto
                     {
                         Id = t.Id,
@@ -88,12 +103,7 @@ namespace SSS.Application.Features.StudySessions.StartSession
                     SessionId = sessionId,
                     StartAt = session.StartAt,
                     Status = session.Status.ToString(),
-                    Node = savedSession.Node != null ? new SessionNodeDto
-                    {
-                        Id = savedSession.Node.Id,
-                        Title = savedSession.Node.Title ?? "",
-                        Description = savedSession.Node.Description
-                    } : null,
+                    Node = nodeDto,
                     Tasks = tasks
                 }
             };
