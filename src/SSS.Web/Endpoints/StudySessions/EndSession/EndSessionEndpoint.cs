@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using SSS.Application.Features.StudySessions.EndSession;
+using SSS.Application.Features.StudySessions.Common;
 using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.StudySessions.EndSession
@@ -14,9 +15,15 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
         public int? ActualDurationSeconds { get; set; }
         public int? ActiveSeconds { get; set; }
         public int? IdleSeconds { get; set; }
-        public long[]? TasksCompleted { get; set; }
+        public List<EndSessionTaskRequest>? Tasks { get; set; }
         public int? FocusScore { get; set; }
         public int? FatigueScore { get; set; }
+    }
+
+    public class EndSessionTaskRequest
+    {
+        public long TaskId { get; set; }
+        public DateTime? EndTime { get; set; }
     }
 
     public class EndSessionEndpoint(ISender sender, IHttpContextAccessor httpContext)
@@ -43,7 +50,11 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
                 ActualDurationSeconds = req.ActualDurationSeconds,
                 ActiveSeconds = req.ActiveSeconds,
                 IdleSeconds = req.IdleSeconds,
-                TasksCompleted = req.TasksCompleted,
+                Tasks = req.Tasks?.Select(t => new EndSessionTaskDto
+                {
+                    TaskId = t.TaskId,
+                    EndTime = t.EndTime
+                }).ToList(),
                 FocusScore = req.FocusScore,
                 FatigueScore = req.FatigueScore
             };

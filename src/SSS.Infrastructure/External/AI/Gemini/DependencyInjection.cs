@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SSS.Application.Abstractions.External.AI.LLM;
@@ -28,7 +28,7 @@ namespace SSS.Infrastructure.External.AI.Gemini
             });
 
             // Bind abstraction
-            services.AddScoped<ILlmChatProvider, GeminiChatProvider>();
+            services.AddScoped<ILlmChatProvider>(sp => sp.GetRequiredService<GeminiChatProvider>());
 
             return services;
         }

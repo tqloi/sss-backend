@@ -22,17 +22,7 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
             .HasColumnType("varchar(255)")
             .IsRequired();
 
-        builder.Property(e => e.TaskId)
-            .HasColumnType("bigint");
 
-        builder.Property(e => e.StudyPlanId)
-            .HasColumnType("bigint");
-
-        builder.Property(e => e.ModuleId)
-            .HasColumnType("bigint");
-
-        builder.Property(e => e.NodeId)
-            .HasColumnType("bigint");
 
         builder.Property(e => e.Status)
             .HasMaxLength(20)
@@ -101,28 +91,6 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.Task)
-            .WithMany(t => t.StudySessions)
-            .HasForeignKey(e => e.TaskId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(e => e.StudyPlan)
-            .WithMany(p => p.StudySessions)
-            .HasForeignKey(e => e.StudyPlanId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(e => e.Module)
-            .WithMany(m => m.StudySessions)
-            .HasForeignKey(e => e.ModuleId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(e => e.Node)
-            .WithMany(n => n.StudySessions)
-            .HasForeignKey(e => e.NodeId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.HasIndex(e => new { e.UserId, e.StartAt });
-        builder.HasIndex(e => e.TaskId);
-        builder.HasIndex(e => e.StudyPlanId);
     }
 }
