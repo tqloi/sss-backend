@@ -14,6 +14,7 @@ namespace SSS.Application.Features.StudySessions.EndSession
         public async Task<EndSessionResult> Handle(EndSessionCommand req, CancellationToken ct)
         {
             var session = await context.StudySessions
+                .Include(s => s.SessionTasks)
                 .FirstOrDefaultAsync(s => s.Id == req.SessionId && s.UserId == req.UserId, ct)
                 ?? throw new NotFoundException($"Session {req.SessionId} not found");
 
@@ -49,22 +50,34 @@ namespace SSS.Application.Features.StudySessions.EndSession
             // Mark tasks as completed
             var tasksCompletedCount = 0;
             var totalTasks = session.TotalTasks ?? 0;
-            if (session.ModuleId.HasValue)
+            if (req.Tasks is { Count: > 0 })
             {
-                // Optionally update total tasks if it changed, or stick to snapshot. The snapshot is preferred.
-                // We'll trust the snapshot for history. We still need to mark completed tasks.
-                if (req.TasksCompleted is { Length: > 0 })
-                {
-                    var tasksToUpdate = await context.TaskItems
-                        .Where(t => req.TasksCompleted.Contains(t.Id))
-                        .ToListAsync(ct);
+                var taskIds = req.Tasks.Select(t => t.TaskId).ToList();
+                var tasksToUpdate = await context.TaskItems
+                    .Where(t => taskIds.Contains(t.Id))
+                    .ToListAsync(ct);
 
-                    foreach (var task in tasksToUpdate)
+                foreach (var taskInfo in req.Tasks)
+                {
+                    var task = tasksToUpdate.FirstOrDefault(t => t.Id == taskInfo.TaskId);
+                    var sessionTask = session.SessionTasks.FirstOrDefault(st => st.TaskId == taskInfo.TaskId);
+
+                    if (sessionTask != null)
                     {
-                        task.Status = Domain.Enums.TaskStatus.Completed;
-                        task.CompletedAt = DateTime.UtcNow;
+                        sessionTask.EndTimeUtc = taskInfo.EndTime;
+                        
+                        // Nếu EndTime khác null -> Completed
+                        if (taskInfo.EndTime.HasValue)
+                        {
+                            sessionTask.Status = "COMPLETED";
+                            if (task != null)
+                            {
+                                task.Status = Domain.Enums.TaskStatus.Completed;
+                                task.CompletedAt = taskInfo.EndTime;
+                            }
+                            tasksCompletedCount++;
+                        }
                     }
-                    tasksCompletedCount = tasksToUpdate.Count;
                 }
             }
 

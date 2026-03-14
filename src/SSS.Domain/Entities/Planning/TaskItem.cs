@@ -15,5 +15,5 @@ public class TaskItem
 
     // Navigation
     public virtual StudyPlanModule StudyPlanModule { get; set; } = null!;
-    public virtual ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+    public virtual ICollection<SessionTask> SessionTasks { get; set; } = new HashSet<SessionTask>();
 }

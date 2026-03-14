@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.StudySessions.StartSession
         public long? StudyPlanId { get; set; }
         public long? NodeId { get; set; }
         public long? ModuleId { get; set; }
-        public long? TaskId { get; set; }
+        public long[]? TaskIds { get; set; }
         public int? PlannedDurationSeconds { get; set; }
         public string? Timezone { get; set; }
     }
@@ -35,7 +35,7 @@ namespace SSS.Web.Endpoints.StudySessions.StartSession
                 StudyPlanId = req.StudyPlanId,
                 NodeId = req.NodeId,
                 ModuleId = req.ModuleId,
-                TaskId = req.TaskId,
+                TaskIds = req.TaskIds,
                 PlannedDurationSeconds = req.PlannedDurationSeconds,
                 Timezone = req.Timezone
             };

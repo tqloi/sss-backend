@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Content;
@@ -40,7 +40,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<StudyPlanModule> StudyPlanModules { get; }
         DbSet<TaskItem> TaskItems { get; }
         DbSet<StudySession> StudySessions { get; }
-        
+        DbSet<SessionTask> SessionTasks { get; }
 
         // Progress / Behavior
         DbSet<UserSubjectStat> UserSubjectStats { get; }

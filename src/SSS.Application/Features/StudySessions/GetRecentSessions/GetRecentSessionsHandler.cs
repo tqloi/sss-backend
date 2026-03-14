@@ -13,7 +13,7 @@ namespace SSS.Application.Features.StudySessions.GetRecentSessions
         {
             var sessions = await context.StudySessions
                 .AsNoTracking()
-                .Include(s => s.Node)
+
                 .Where(s => s.UserId == req.UserId && s.Status == SessionStatus.Completed)
                 .OrderByDescending(s => s.StartAt)
                 .Take(req.Limit)
@@ -25,7 +25,7 @@ namespace SSS.Application.Features.StudySessions.GetRecentSessions
                     TotalTasks = s.TotalTasks ?? 0,
                     Date = s.StartAt.ToString("yyyy-MM-dd"),
                     Rating = s.SelfRating,
-                    NodeTitle = s.Node != null ? s.Node.Title : null
+                    NodeTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Title : null
                 })
                 .ToListAsync(ct);
 

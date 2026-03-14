@@ -13,9 +13,7 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
         {
             var query = context.StudySessions
                 .AsNoTracking()
-                .Include(s => s.Node)
-                .Include(s => s.StudyPlan)
-                    .ThenInclude(sp => sp!.Roadmap)
+
                 .Where(s => s.UserId == req.UserId);
 
             // Filter by status
@@ -44,8 +42,8 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
                 {
                     Id = s.Id,
                     Date = s.StartAt.ToString("yyyy-MM-dd"),
-                    NodeTitle = s.Node != null ? s.Node.Title : null,
-                    PlanTitle = s.StudyPlan != null && s.StudyPlan.Roadmap != null ? s.StudyPlan.Roadmap.Title : null,
+                    NodeTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Title : null,
+                    PlanTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Roadmap.Title : null,
                     DurationMinutes = (s.ActualDurationSeconds ?? 0) / 60,
                     TasksCompleted = s.TasksCompletedCount ?? 0,
                     TotalTasks = s.TotalTasks ?? 0,
