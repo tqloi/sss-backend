@@ -34,8 +34,68 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             }
             await _vec.UpsertAsync(list, ct);
         }
+        public async Task IngestBehaviorAsync(string studyplanId, string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
+        {
+            int dim = await _emp.GetDimAsync(ct);
+            await _vec.EnsureCollectionAsync(dim, ct);
+            var list = new List<VectorPoint>();
+            foreach (var (text, source) in chunks)
+            {
+                var vec = await _emp.EmbeddingAsync(text, ct);
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+            DataType: source ?? "unknown",
+            CreatedAt: DateTime.UtcNow));
+            }
+            await _vec.UpsertAsync(list, ct);
+        }
+        public async Task<string> GenerateBehaviorResultAsync(UserLearningBehaviorDto behavior, CancellationToken ct = default)
+        {
+            var systemPrompt = """
+You are an AI system that converts structured learning profile data into a single, concise, semantically rich English text.
 
-        
+Your task:
+- Transform the provided UserLearningBehavior data into ONE coherent paragraph.
+- Describe the user's learning behavior and study pattern based strictly on the provided fields.
+- Do NOT output JSON, markdown, or bullet points.
+- Output plain natural language text only.
+- Preserve all important signals related to learning goals, level, deadline, availability, learning style, and preferences.
+- Keep the tone factual, neutral, and embedding-friendly.
+
+Important rules:
+- Do NOT invent, assume, or infer information not present in the input.
+- Do NOT output JSON, bullet points, or markdown.
+- Output plain natural language text only.
+- Keep the tone factual, neutral, and descriptive.
+- Preserve all meaningful learning signals such as:
+  - study availability
+  - preferred study time
+  - session duration
+  - learning style tendencies (visual, reading, practice)
+
+The output will be stored in a vector database (Qdrant) and used later to generate personalized learning tasks in a roadmap.
+Therefore the text should be semantically clear, compact, and embedding-friendly.
+""";
+            var userPromptWithContext = $"""
+Convert the following UserLearningBehavior data into a concise description of the user's study behavior.
+UserLearningBehavior:
+- AvailableDays: {behavior.AvailableDaysJson}
+- PreferredTimeBlocks: {behavior.PreferredTimeBlocksJson}
+- SessionLengthPrefMinutes: {behavior.SessionLengthPrefMinutes}
+- LearningStyleWeights:
+  - Visual: {behavior.WVisual}
+  - Reading: {behavior.WReading}
+  - Practice: {behavior.WPractice}
+
+  Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
+Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
+""";
+
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
+            return response;
+        }
+
+
         public async Task<string> GenerateSurveyResultAsync(UserLearningTargetDto target, UserLearningBehaviorDto behavior, CancellationToken ct = default)
         {
             var systemPrompt = """
@@ -319,9 +379,8 @@ REQUIRED JSON SHAPE
                 dataType: "user_profile",
                 ct: ct);
 
-            var hit_user_behavior = await _vec.SearchByUserId(
-                vector: queryVector,
-                topK: 3,
+            var hit_user_behavior = await _vec.GetLatestUserBehavior(
+                limit: 3,
                 userId: userId,
                 studyplanId: studyPlanId,
                 dataType: "user_behavior",
@@ -338,6 +397,8 @@ REQUIRED JSON SHAPE
                 .Where(h => h != null)
                 .Select(h => h.Text)
                 );
+
+            Console.WriteLine(context);
 
             return context;
         }

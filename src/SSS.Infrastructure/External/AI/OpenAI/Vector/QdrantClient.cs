@@ -59,6 +59,14 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
             res.EnsureSuccessStatusCode();
         }
 
+        private async Task EnsureBehaviorQueryIndexesAsync(string collectionName, CancellationToken ct)
+        {
+            await EnsurePayloadIndexAsync(collectionName, fieldName: "user_id", fieldSchema: "uuid", ct);
+            await EnsurePayloadIndexAsync(collectionName, fieldName: "studyplan_id", fieldSchema: "keyword", ct);
+            await EnsurePayloadIndexAsync(collectionName, fieldName: "data_type", fieldSchema: "keyword", ct);
+            await EnsurePayloadIndexAsync(collectionName, fieldName: "created_at", fieldSchema: "datetime", ct);
+        }
+
         public async Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default)
         {
             var baseName = _cfg.Qdrant.Collection;
@@ -80,10 +88,8 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
                 resp.EnsureSuccessStatusCode();
             }
 
-            // Required for filtered searches like SearchByUserId.
-            await EnsurePayloadIndexAsync(name, fieldName: "user_id", fieldSchema: "uuid", ct);
-            await EnsurePayloadIndexAsync(name, fieldName: "studyplan_id", fieldSchema: "keyword", ct);
-            await EnsurePayloadIndexAsync(name, fieldName: "data_type", fieldSchema: "keyword", ct);
+            // Required for filtered searches and latest behavior sorting.
+            await EnsureBehaviorQueryIndexesAsync(name, ct);
         }
 
         public async Task<List<VecHit>> SearchAsync(float[] query, int topK, CancellationToken ct = default)
@@ -160,6 +166,110 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
             {
                 result.Add(new VecHit(item.Id, item.Score, item.Payload.Text, item.Payload.Source));
             }
+            return result;
+        }
+
+        public async Task<List<VecHit>> GetLatestUserBehavior(
+    int limit,
+    string userId,
+    string studyplanId,
+    string dataType,
+    CancellationToken ct = default)
+        {
+            var name = _activeCollection ?? _cfg.Qdrant.Collection;
+
+            await EnsureBehaviorQueryIndexesAsync(name, ct);
+
+            var body = new
+            {
+                limit = limit,
+                with_payload = true,
+                filter = new
+                {
+                    must = new object[]
+                    {
+                new
+                {
+                    key = "user_id",
+                    match = new { value = userId }
+                },
+                new
+                {
+                    key = "studyplan_id",
+                    match = new { value = studyplanId }
+                },
+                new
+                {
+                    key = "data_type",
+                    match = new { value = dataType }
+                }
+                    }
+                },
+                order_by = new
+                {
+                    key = "created_at",
+                    direction = "desc"
+                }
+            };
+
+            var res = await _client.PostAsJsonAsync(
+                $"collections/{name}/points/scroll",
+                body,
+                ct);
+
+            await EnsureSuccessWithBodyAsync(res, ct);
+
+            await using var stream = await res.Content.ReadAsStreamAsync(ct);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+
+            var result = new List<VecHit>();
+
+            if (!doc.RootElement.TryGetProperty("result", out var resultElement))
+            {
+                return result;
+            }
+
+            JsonElement pointsElement;
+            if (resultElement.ValueKind == JsonValueKind.Object
+                && resultElement.TryGetProperty("points", out var nestedPoints)
+                && nestedPoints.ValueKind == JsonValueKind.Array)
+            {
+                pointsElement = nestedPoints;
+            }
+            else if (resultElement.ValueKind == JsonValueKind.Array)
+            {
+                pointsElement = resultElement;
+            }
+            else
+            {
+                return result;
+            }
+
+            foreach (var item in pointsElement.EnumerateArray())
+            {
+                var id = item.TryGetProperty("id", out var idElement)
+                    ? (idElement.ValueKind == JsonValueKind.String ? idElement.GetString() : idElement.GetRawText())
+                    : string.Empty;
+
+                string text = string.Empty;
+                string? source = null;
+
+                if (item.TryGetProperty("payload", out var payloadElement) && payloadElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (payloadElement.TryGetProperty("text", out var textElement) && textElement.ValueKind == JsonValueKind.String)
+                    {
+                        text = textElement.GetString() ?? string.Empty;
+                    }
+
+                    if (payloadElement.TryGetProperty("source", out var sourceElement) && sourceElement.ValueKind == JsonValueKind.String)
+                    {
+                        source = sourceElement.GetString();
+                    }
+                }
+
+                result.Add(new VecHit(id ?? string.Empty, 0, text, source));
+            }
+
             return result;
         }
 

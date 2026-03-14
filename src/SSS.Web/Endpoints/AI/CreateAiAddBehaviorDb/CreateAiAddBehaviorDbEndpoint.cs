@@ -1,21 +1,22 @@
 ﻿using FastEndpoints;
 using MediatR;
+using SSS.Application.Features.AI.CreateAiAddBehaviorDb;
 using SSS.Application.Features.AI.CreateAiAddVecDb;
 
-namespace SSS.Web.Endpoints.AI.CreateAiAddVecDb
+namespace SSS.Web.Endpoints.AI.CreateAiAddBehaviorDb
 {
-    public class CreateAiAddVecDbEndpoint(ISender sender, IHttpContextAccessor httpContext)
-        : Endpoint<CreateAiAddVecDbCommand, CreateAiAddVecDbResponse>
+    public class CreateAiAddBehaviorDbEndpoint(ISender sender, IHttpContextAccessor httpContext)
+        : Endpoint<CreateAiAddBehaviorDbCommand, CreateAiAddBehaviorDbResult>
     {
         public override void Configure()
         {
-            Post("/ai/add-vec-db");
+            Post("/ai/add-behavior-db");
 
         }
-        public override async Task HandleAsync(CreateAiAddVecDbCommand req, CancellationToken ct)
+        public override async Task HandleAsync(CreateAiAddBehaviorDbCommand req, CancellationToken ct)
         {
             var userId = httpContext.HttpContext!.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            var command = new CreateAiAddVecDbCommand
+            var command = new CreateAiAddBehaviorDbCommand
             {
                 UserId = userId!.Value,
                 StudyPlanId = req.StudyPlanId
@@ -23,5 +24,6 @@ namespace SSS.Web.Endpoints.AI.CreateAiAddVecDb
             var response = await sender.Send(command, ct);
             await SendAsync(response, cancellation: ct);
         }
+
     }
 }

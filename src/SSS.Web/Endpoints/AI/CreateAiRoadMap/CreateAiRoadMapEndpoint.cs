@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.AI.CreateAiRoadMap
     {
         public override void Configure()
         {
-            Post("api/ai/create-road-map");
+            Post("/ai/create-road-map");
             Roles("Admin", "ContentManager");
         }
         public override async Task HandleAsync(CreateAiRoadMapCommand req, CancellationToken ct)
