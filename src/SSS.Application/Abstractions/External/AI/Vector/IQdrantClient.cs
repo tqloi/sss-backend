@@ -11,6 +11,12 @@ namespace SSS.Application.Abstractions.External.AI.Vector
         Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default);
         Task UpsertAsync(IEnumerable<VectorPoint> vectors, CancellationToken ct = default);
         Task<List<VecHit>> SearchAsync(float[] query, int topK, CancellationToken ct = default);
+        Task<List<VecHit>> GetLatestUserBehavior(
+    int limit,
+    string userId,
+    string studyplanId,
+    string dataType,
+    CancellationToken ct = default);
         Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string studyplanId, string dataType, CancellationToken ct = default);
     }
 

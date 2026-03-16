@@ -9,10 +9,10 @@ namespace SSS.Web.Endpoints.Quizzes.GetAllQuizzesByStudyPlanModuleId
     {
         public override void Configure()
         {
-            Get("/api/quizzes/studyplanmodule/{StudyPlanModuleId}");
+            Get("/api/quizzes/roadmapnode/{RoadmapNodeId}");
             Summary(s => s.Summary = "Get all quizzes by Study Plan Module Id with pagination");
             Description(d => d.WithTags("Quizzes"));
-            Roles("Admin", "User");
+            Roles("ContentManager");
         }
         public override async Task HandleAsync(GetAllQuizzesByRoadmapNodeIdQuery req, CancellationToken ct)
             => await SendAsync(await sender.Send(req, ct), cancellation: ct);

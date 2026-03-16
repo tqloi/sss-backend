@@ -13,9 +13,9 @@ namespace SSS.Web.Endpoints.Quizzes.CreateQuiz
                 .MaximumLength(200).WithMessage("Title cannot exceed 200 characters.");
             RuleFor(x => x.CreateQuizNode.Description)
                 .MaximumLength(1000).WithMessage("Description cannot exceed 1000 characters.");
-            RuleFor(x => x.CreateQuizNode.StudyPlanModuleId)
-                .NotNull().WithMessage("StudyPlanModuleId is required.")
-                .GreaterThan(0).WithMessage("StudyPlanModuleId must be greater than 0.");
+            RuleFor(x => x.CreateQuizNode.RoadmapNodeId)
+                .NotNull().WithMessage("RoadmapNodeId is required.")
+                .GreaterThan(0).WithMessage("RoadmapNodeId must be greater than 0.");
 
         }
     }

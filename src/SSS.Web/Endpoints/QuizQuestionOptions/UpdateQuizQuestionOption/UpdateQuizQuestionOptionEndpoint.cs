@@ -15,8 +15,9 @@ namespace SSS.Web.Endpoints.QuizQuestionOptions.UpdateQuizQuestionOption
                 s.Summary = "Update a quiz question option.";
                 s.Description = "Updates the details of an existing quiz question option identified by its ID.";
             });
-            AllowAnonymous();
+            Roles("ContentManager");
         }
+
         public override async Task HandleAsync(UpdateQuizQuestionOptionCommand req, CancellationToken ct)
         {
             var result = await sender.Send(req, ct);
