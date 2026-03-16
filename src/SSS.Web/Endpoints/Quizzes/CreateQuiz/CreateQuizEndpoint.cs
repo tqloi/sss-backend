@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Quizzes.CreateQuiz
             Post("/api/quiz");
             Summary(s => s.Summary = "Create a new quiz");
             Description(d => d.WithTags("Quizzes"));
-            Roles("Admin");
+            //Roles("Content-manager");
         }
         public override async Task HandleAsync(CreateQuizCommand req, CancellationToken ct)
         => await SendAsync(await sender.Send(req, ct), cancellation: ct);       

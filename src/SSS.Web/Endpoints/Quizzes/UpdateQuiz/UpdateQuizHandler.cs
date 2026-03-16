@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Quizzes.UpdateQuiz
             Put("/api/quiz/{QuizId}");
             Summary(s => s.Summary = "Update an existing quiz by its ID.");
             Description(d => d.WithTags("Quizzes"));
-            Roles("Admin");
+            Roles("ContentManager");
         }
         public override async Task HandleAsync(UpdateQuizCommand req, CancellationToken ct)
         {

@@ -12,6 +12,9 @@ namespace SSS.Application.Features.Quizzes.Common.MappingProfile
 
             CreateMap<Quiz, UpdateQuizDto>();
             CreateMap<UpdateQuizDto, Quiz>();
+
+            CreateMap<Quiz, QuizDto>();
+            CreateMap<QuizDto, Quiz>();
         }
     }
 }

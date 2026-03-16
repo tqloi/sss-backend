@@ -16,12 +16,12 @@ namespace SSS.Application.Features.QuizQuestions.UpdateQuizQuestion
     {
         public async Task<UpdateQuizQuestionResult> Handle(UpdateQuizQuestionCommand request, CancellationToken cancellationToken)
         {
-
-            var quizQuestion = await db.QuizQuestions.FirstOrDefaultAsync(q => q.Id == request.Id);
+            var quizQuestion = await db.QuizQuestions
+                .FirstOrDefaultAsync(q => q.Id == request.Id, cancellationToken);
 
             if (quizQuestion is null)
             {
-                throw new Exception($"QuizQuestion with Id {request.Id} not found.");
+                throw new KeyNotFoundException($"QuizQuestion with Id {request.Id} not found.");
             }
 
             mapper.Map(request.UpdateQuizQuestionDto, quizQuestion);
@@ -31,7 +31,6 @@ namespace SSS.Application.Features.QuizQuestions.UpdateQuizQuestion
 
             var updateQuizQuestionDto = mapper.Map<UpdateQuizQuestionDto>(quizQuestion);
             return new UpdateQuizQuestionResult(updateQuizQuestionDto);
-
         }
     }
 }
