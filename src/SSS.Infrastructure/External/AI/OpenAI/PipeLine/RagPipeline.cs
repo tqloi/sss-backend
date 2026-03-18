@@ -1,8 +1,10 @@
-﻿using SSS.Application.Abstractions.External.AI;
+﻿using MongoDB.Driver;
+using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Application.Features.AI.Common;
+using SSS.Domain.Entities.Planning;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
@@ -522,6 +524,81 @@ All tasks MUST use its roadmapNodeId.
 
 
             return response;
+        }
+
+        public async Task<string> GenerateQuizQuestionsAsync(
+            object roadmap,
+            object roadmapnode,
+            int questionCount,
+            CancellationToken ct = default)
+        {
+            var systemPrompt = """
+You are an AI that generates quiz questions and options in strict JSON format.
+Return ONLY valid JSON array. No markdown, no explanation.
+Each question must include options.
+For SingleChoice: exactly one option has isCorrect=true.
+For MultipleChoice: at least one option has isCorrect=true.
+Keep questions relevant to the provided roadmap and target roadmap node.
+
+Difficulty progression is mandatory:
+- Questions must become harder from first to last.
+- orderNo must represent ascending difficulty (lowest difficulty first).
+- The first questions should test fundamentals/recall.
+- Middle questions should test understanding/application.
+- Final questions should test analysis/problem-solving in realistic scenarios.
+- Do not mix a hard question before an easier one.
+- scoreWeight should be non-decreasing with orderNo.
+
+Each questionKey must be unique within the response and must look random, not sequential.
+Use uppercase letters, digits, or underscores only.
+Avoid simple keys like Q1, Q2, QUESTION_1, or sequential numbering.
+Example valid patterns: QUIZ_A7K2M9, NODE_X91PQ4, QQ_7F2KD8.
+""";
+
+            var userPrompt = $$"""
+Generate {{questionCount}} quiz questions for the target roadmap node.
+
+Roadmap:
+{{roadmap}}
+
+Target Roadmap Node:
+{{roadmapnode}}
+
+Return JSON array with this exact shape:
+[
+  {
+    "questionKey": "QUIZ_A7K2M9",
+    "prompt": "...",
+    "type": "SingleChoice",
+    "scoreWeight": 1,
+    "orderNo": 1,
+    "isRequired": true,
+    "options": [
+      {
+        "valueKey": "A",
+        "displayText": "...",
+        "isCorrect": false,
+        "scoreValue": 0,
+        "orderNo": 1
+      }
+    ]
+  }
+]
+
+Rules for questionKey:
+- must be unique for every question in the response
+- must be random-looking
+- must not be sequential
+- must not repeat existing examples exactly
+
+Rules for difficulty:
+- orderNo must start from 1 and increase continuously.
+- difficulty must increase with orderNo.
+- keep scoreWeight non-decreasing from first to last question.
+""";
+
+            var llm = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);
+            return await llm.AskAsync(systemPrompt, userPrompt, ct);
         }
 
         public async Task<string> AskAsync(string question, CancellationToken ct = default)
