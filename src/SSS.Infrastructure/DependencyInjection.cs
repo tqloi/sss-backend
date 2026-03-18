@@ -1,9 +1,14 @@
 ﻿using FastEndpoints;
 using FastEndpoints.Swagger;
+using Hangfire;
+using Hangfire.InMemory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SSS.Application.Abstractions.Background;
 using SSS.Application.Features.Auth.Login;
+using SSS.Infrastructure.Background;
+using SSS.Infrastructure.Background.Jobs;
 using SSS.Infrastructure.Caching.Redis;
 using SSS.Infrastructure.External.AI.Gemini;
 using SSS.Infrastructure.External.AI.OpenAI;
@@ -42,6 +47,27 @@ namespace SSS.Infrastructure
             services.AddMongo(config);
             services.AddRedis(config);
             services.AddGcsStorage(config);
+
+            // ── Hangfire ──────────────────────────────────────────────────────────
+            services.AddHangfire(cfg => cfg
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseInMemoryStorage());   // swap to .UseMySqlStorage(...) in production
+
+            services.AddHangfireServer(opts =>
+            {
+                opts.WorkerCount = 4;   // concurrent job workers
+            });
+
+            // Dispatcher (not auto-registered: suffix is not Service/Repository/Gateway/Router)
+            services.AddScoped<ISurveyJobDispatcher, HangfireSurveyJobDispatcher>();
+
+            // Jobs must be resolvable by Hangfire's DI activator
+            services.AddScoped<AnalyzeBehaviorJob>();
+            services.AddScoped<AnalyzeTargetJob>();
+            services.AddScoped<GenerateTasksJob>();
+            // ─────────────────────────────────────────────────────────────────────
             //services.AddPayOSService(config);
             //// Certificate background workers
             //services.AddSingleton<StudentCourseCompletionQueue>();

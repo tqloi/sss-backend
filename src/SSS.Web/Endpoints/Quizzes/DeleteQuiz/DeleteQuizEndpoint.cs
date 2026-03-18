@@ -15,7 +15,7 @@ namespace SSS.Web.Endpoints.Quizzes.DeleteQuiz
                 s.Summary = "Deletes a quiz by its ID.";
             });
             Description(d => d.WithTags("Quizzes"));
-            Roles("Admin");
+            Roles("ContentManager");
         }
 
         public override async Task HandleAsync(DeleteQuizCommand req, CancellationToken ct)

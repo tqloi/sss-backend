@@ -1,8 +1,10 @@
-﻿using SSS.Application.Abstractions.External.AI;
+﻿using MongoDB.Driver;
+using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.External.AI.Embedding;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Application.Features.AI.Common;
+using SSS.Domain.Entities.Planning;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
@@ -20,7 +22,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             _config = config;
         }
 
-        public async Task IngestAsync(string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
+        public async Task IngestAsync(string studyplanId, string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
         {
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
@@ -28,14 +30,74 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId,
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
         }
+        public async Task IngestBehaviorAsync(string studyplanId, string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
+        {
+            int dim = await _emp.GetDimAsync(ct);
+            await _vec.EnsureCollectionAsync(dim, ct);
+            var list = new List<VectorPoint>();
+            foreach (var (text, source) in chunks)
+            {
+                var vec = await _emp.EmbeddingAsync(text, ct);
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+            DataType: source ?? "unknown",
+            CreatedAt: DateTime.UtcNow));
+            }
+            await _vec.UpsertAsync(list, ct);
+        }
+        public async Task<string> GenerateBehaviorResultAsync(UserLearningBehaviorDto behavior, CancellationToken ct = default)
+        {
+            var systemPrompt = """
+You are an AI system that converts structured learning profile data into a single, concise, semantically rich English text.
 
-        
+Your task:
+- Transform the provided UserLearningBehavior data into ONE coherent paragraph.
+- Describe the user's learning behavior and study pattern based strictly on the provided fields.
+- Do NOT output JSON, markdown, or bullet points.
+- Output plain natural language text only.
+- Preserve all important signals related to learning goals, level, deadline, availability, learning style, and preferences.
+- Keep the tone factual, neutral, and embedding-friendly.
+
+Important rules:
+- Do NOT invent, assume, or infer information not present in the input.
+- Do NOT output JSON, bullet points, or markdown.
+- Output plain natural language text only.
+- Keep the tone factual, neutral, and descriptive.
+- Preserve all meaningful learning signals such as:
+  - study availability
+  - preferred study time
+  - session duration
+  - learning style tendencies (visual, reading, practice)
+
+The output will be stored in a vector database (Qdrant) and used later to generate personalized learning tasks in a roadmap.
+Therefore the text should be semantically clear, compact, and embedding-friendly.
+""";
+            var userPromptWithContext = $"""
+Convert the following UserLearningBehavior data into a concise description of the user's study behavior.
+UserLearningBehavior:
+- AvailableDays: {behavior.AvailableDaysJson}
+- PreferredTimeBlocks: {behavior.PreferredTimeBlocksJson}
+- SessionLengthPrefMinutes: {behavior.SessionLengthPrefMinutes}
+- LearningStyleWeights:
+  - Visual: {behavior.WVisual}
+  - Reading: {behavior.WReading}
+  - Practice: {behavior.WPractice}
+
+  Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
+Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
+""";
+
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
+            return response;
+        }
+
+
         public async Task<string> GenerateSurveyResultAsync(UserLearningTargetDto target, UserLearningBehaviorDto behavior, CancellationToken ct = default)
         {
             var systemPrompt = """
@@ -92,7 +154,6 @@ NodeDifficulty:
 - Advanced
 
 ContentType:
-- Video
 - Article
 - Book
 - Course
@@ -215,7 +276,7 @@ CONTENT RULES
 For EACH node:
 - Include 2–5 contents.
 - Prefer the following distribution:
-  - Article / Video for theory
+  - Article for theory
   - Course for structured learning
   - Exercise / Project for practice
 - At least 30% of nodes MUST include:
@@ -270,7 +331,7 @@ REQUIRED JSON SHAPE
     {
       "clientId": string,
       "nodeClientId": string,
-      "contentType": "Video" | "Article" | "Book" | "Course" | "Exercise" | "Quiz" | "Project",
+      "contentType": "Article" | "Book" | "Course" | "Exercise" | "Quiz" | "Project",
       "title": string,
       "url": string | null,
       "description": string | null,
@@ -304,6 +365,7 @@ REQUIRED JSON SHAPE
         }
         public async Task<string> BuildStudyPlanContextAsync(
             string userId,
+            string studyPlanId,
             CancellationToken ct = default)
         {
             // 1. Vector đại diện cho "tạo study plan"
@@ -311,29 +373,47 @@ REQUIRED JSON SHAPE
             var queryVector = await _emp.EmbeddingAsync(query, ct);
 
             // 2. Lấy surveys của user
-            var hits = await _vec.SearchByUserId(
+            var hit_user_profile = await _vec.SearchByUserId(
                 vector: queryVector,
-                topK: 5,
+                topK: 1,
                 userId: userId,
+                studyplanId: studyPlanId,
                 dataType: "user_profile",
                 ct: ct);
 
+            var hit_user_behavior = await _vec.GetLatestUserBehavior(
+                limit: 3,
+                userId: userId,
+                studyplanId: studyPlanId,
+                dataType: "user_behavior",
+                ct: ct);
+
             // 3. Ghép context
-            var context = string.Join(
-                "\n---\n",
-                hits.Select(h => h.Text));
+            //var context = string.Join(
+            //    "\n---\n",
+            //    hits.Select(h => h.Text));
+
+            var context = string.Join("\n---\n",
+                new[] { hit_user_profile.FirstOrDefault() }
+                .Concat(hit_user_behavior)
+                .Where(h => h != null)
+                .Select(h => h.Text)
+                );
+
+            Console.WriteLine(context);
 
             return context;
         }
 
         public async Task<string> GenerateStudyPlanAsync(
     string userId,
+    string studyPlanId,
     object roadmap,
     object roadmapnode,
     CancellationToken ct = default)
         {
             // 1. Build context từ vector DB
-            var context = await BuildStudyPlanContextAsync(userId, ct);
+            var context = await BuildStudyPlanContextAsync(userId, studyPlanId, ct);
 
             var currrentDate = DateTime.UtcNow;
             var dayName = currrentDate.DayOfWeek.ToString();
@@ -444,6 +524,81 @@ All tasks MUST use its roadmapNodeId.
 
 
             return response;
+        }
+
+        public async Task<string> GenerateQuizQuestionsAsync(
+            object roadmap,
+            object roadmapnode,
+            int questionCount,
+            CancellationToken ct = default)
+        {
+            var systemPrompt = """
+You are an AI that generates quiz questions and options in strict JSON format.
+Return ONLY valid JSON array. No markdown, no explanation.
+Each question must include options.
+For SingleChoice: exactly one option has isCorrect=true.
+For MultipleChoice: at least one option has isCorrect=true.
+Keep questions relevant to the provided roadmap and target roadmap node.
+
+Difficulty progression is mandatory:
+- Questions must become harder from first to last.
+- orderNo must represent ascending difficulty (lowest difficulty first).
+- The first questions should test fundamentals/recall.
+- Middle questions should test understanding/application.
+- Final questions should test analysis/problem-solving in realistic scenarios.
+- Do not mix a hard question before an easier one.
+- scoreWeight should be non-decreasing with orderNo.
+
+Each questionKey must be unique within the response and must look random, not sequential.
+Use uppercase letters, digits, or underscores only.
+Avoid simple keys like Q1, Q2, QUESTION_1, or sequential numbering.
+Example valid patterns: QUIZ_A7K2M9, NODE_X91PQ4, QQ_7F2KD8.
+""";
+
+            var userPrompt = $$"""
+Generate {{questionCount}} quiz questions for the target roadmap node.
+
+Roadmap:
+{{roadmap}}
+
+Target Roadmap Node:
+{{roadmapnode}}
+
+Return JSON array with this exact shape:
+[
+  {
+    "questionKey": "QUIZ_A7K2M9",
+    "prompt": "...",
+    "type": "SingleChoice",
+    "scoreWeight": 1,
+    "orderNo": 1,
+    "isRequired": true,
+    "options": [
+      {
+        "valueKey": "A",
+        "displayText": "...",
+        "isCorrect": false,
+        "scoreValue": 0,
+        "orderNo": 1
+      }
+    ]
+  }
+]
+
+Rules for questionKey:
+- must be unique for every question in the response
+- must be random-looking
+- must not be sequential
+- must not repeat existing examples exactly
+
+Rules for difficulty:
+- orderNo must start from 1 and increase continuously.
+- difficulty must increase with orderNo.
+- keep scoreWeight non-decreasing from first to last question.
+""";
+
+            var llm = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);
+            return await llm.AskAsync(systemPrompt, userPrompt, ct);
         }
 
         public async Task<string> AskAsync(string question, CancellationToken ct = default)

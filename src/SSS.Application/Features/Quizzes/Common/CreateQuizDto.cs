@@ -8,7 +8,7 @@ namespace SSS.Application.Features.Quizzes.Common
 {
     public sealed record CreateQuizDto
     (
-        long StudyPlanModuleId,
+        long RoadmapNodeId,
         string? Title,
         string? Description,
         decimal? TotalScore

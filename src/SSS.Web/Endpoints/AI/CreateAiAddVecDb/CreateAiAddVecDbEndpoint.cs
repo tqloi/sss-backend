@@ -9,7 +9,7 @@ namespace SSS.Web.Endpoints.AI.CreateAiAddVecDb
     {
         public override void Configure()
         {
-            Post("ai/add-vec-db");
+            Post("/ai/add-vec-db");
 
         }
         public override async Task HandleAsync(CreateAiAddVecDbCommand req, CancellationToken ct)
@@ -17,7 +17,8 @@ namespace SSS.Web.Endpoints.AI.CreateAiAddVecDb
             var userId = httpContext.HttpContext!.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             var command = new CreateAiAddVecDbCommand
             {
-                UserId = userId!.Value
+                UserId = userId!.Value,
+                StudyPlanId = req.StudyPlanId
             };
             var response = await sender.Send(command, ct);
             await SendAsync(response, cancellation: ct);

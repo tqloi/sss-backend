@@ -3,11 +3,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.QuizQuestions.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SSS.Application.Features.QuizQuestions.GetAllQuizQuestionsByQuizId
 {
@@ -16,15 +11,14 @@ namespace SSS.Application.Features.QuizQuestions.GetAllQuizQuestionsByQuizId
     {
         public async Task<GetAllQuizQuestionsByQuizIdResult> Handle(GetAllQuizQuestionsByQuizIdQuery req, CancellationToken cancellationToken)
         {
-            var quizQuestions = await db.QuizQuestions.Where(q => q.QuizId == req.quizId).Include(q => q.Options).ToListAsync();
+            var quizQuestions = await db.QuizQuestions
+                .Where(q => q.QuizId == req.quizId)
+                .Include(q => q.Options)
+                .OrderBy(q => q.OrderNo)
+                .ToListAsync(cancellationToken);
 
-            if (quizQuestions is null)
-            {
-                throw new ArgumentNullException("Null!"); 
-            }
             var quizQuestionDtos = mapper.Map<List<QuizQuestionDto>>(quizQuestions);
             return new GetAllQuizQuestionsByQuizIdResult(quizQuestionDtos);
-
         }
     }
 }

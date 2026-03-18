@@ -1,11 +1,9 @@
 ﻿using FastEndpoints;
 using FastEndpoints.Swagger;
+using Hangfire;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
 using SSS.Middleware;
-//using Microsoft.AspNetCore.Identity;
-//using SSS.Domain.Entities.Identity;
-//using SSS.Infrastructure.Persistence.Sql;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -77,6 +75,10 @@ app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ── Hangfire dashboard (dev only) ─────────────────────────────────────────────
+if (app.Environment.IsDevelopment())
+    app.UseHangfireDashboard("/hangfire");
 
 app.MapControllers();
 app.UseFastEndpoints(c =>

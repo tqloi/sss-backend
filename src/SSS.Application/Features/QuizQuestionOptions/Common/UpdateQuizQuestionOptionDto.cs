@@ -8,8 +8,6 @@ namespace SSS.Application.Features.QuizQuestionOptions.Common
 {
     public class UpdateQuizQuestionOptionDto
     {
-        public long Id { get; set; }
-
         public string ValueKey { get; set; } = null!;
 
         public string DisplayText { get; set; } = null!;

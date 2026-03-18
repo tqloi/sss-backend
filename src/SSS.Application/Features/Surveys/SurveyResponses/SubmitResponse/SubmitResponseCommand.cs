@@ -1,12 +1,6 @@
 ﻿using MediatR;
-using SSS.Application.Features.Surveys.SurveyResponses.CreateSurveyResponse;
 using SSS.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace SSS.Application.Features.Surveys.SurveyResponses.SubmitResponse
 {
@@ -21,5 +15,11 @@ namespace SSS.Application.Features.Surveys.SurveyResponses.SubmitResponse
         public DateTime SubmittedAt { get; init; } = DateTime.UtcNow;
 
         public SurveyTriggerReason TriggerReason { get; init; }
+
+        /// <summary>
+        /// Required only when submitting a ROADMAP_LEARNING_TARGET survey.
+        /// The roadmap the user is targeting — used to create the StudyPlan.
+        /// </summary>
+        public long? RoadmapId { get; init; }
     }
 }

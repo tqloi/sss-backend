@@ -11,10 +11,16 @@ namespace SSS.Application.Abstractions.External.AI.Vector
         Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default);
         Task UpsertAsync(IEnumerable<VectorPoint> vectors, CancellationToken ct = default);
         Task<List<VecHit>> SearchAsync(float[] query, int topK, CancellationToken ct = default);
-        Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string dataType, CancellationToken ct = default);
+        Task<List<VecHit>> GetLatestUserBehavior(
+    int limit,
+    string userId,
+    string studyplanId,
+    string dataType,
+    CancellationToken ct = default);
+        Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string studyplanId, string dataType, CancellationToken ct = default);
     }
 
-    public record VectorPoint(string Id, float[] Vector, string Text, string? Source, string UserId, string DataType, DateTime CreatedAt);
+    public record VectorPoint(string Id, float[] Vector, string Text, string? Source, string UserId, string StudyplanId, string DataType, DateTime CreatedAt);
     public record VecHit(string Id, float Score, string Text, string? Source);
 
     public class QdrantSearchResponse

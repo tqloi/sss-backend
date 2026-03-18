@@ -13,7 +13,7 @@ namespace SSS.Web.Endpoints.Content.Roadmap.GetRoadMapByManager
             Get("/api/roadmaps/manager");
             Summary(s => s.Summary = "Get roadmaps created by logged-in manager with advanced filtering");
             Description(d => d.WithTags("Roadmaps"));
-            Roles("Admin", "Manager");
+            Roles("Admin", "ContentManager");
         }
 
         public override async Task HandleAsync(

@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.Content.NodeContents.GetAll
             Get("/api/roadmaps/{roadmapId}/nodes/{nodeId}/contents");
             Summary(s => s.Summary = "Get all contents for a node ordered by OrderNo");
             Description(d => d.WithTags("NodeContents"));
-            AllowAnonymous();
+            Roles();
         }
 
         public override async Task HandleAsync(

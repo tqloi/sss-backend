@@ -1,4 +1,5 @@
 using MediatR;
+using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
 {
@@ -8,7 +9,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
         int PageSize,
         long? SubjectId = null,
         string? Keyword = null,
-        string? Status = null,
+        RoadmapStatus? Status = null,
         int? Version = null,
         bool? IsLatest = null
     ) : IRequest<GetRoadMapByManagerResult>;

@@ -8,7 +8,7 @@ namespace SSS.Application.Features.Quizzes.Common
 {
     public class UpdateQuizDto
     {
-        public long StudyPlanModuleId { get; set; } = default!;
+        public long RoadmapNodeId { get; set; } = default!;
         public string? Title { get; set; }
         public string? Description { get; set; }
         public decimal? TotalScore { get; set; }

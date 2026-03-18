@@ -10,6 +10,7 @@ namespace SSS.Application.Features.Content.Roadmap.Common
         public string? Description { get; set; }
         public string? CreatedById { get; set; }
         public DateTime CreatedAt { get; set; }
+        public RoadmapStatus Status { get; set; }
         public int Version { get; set; }
         public bool IsLatest { get; set; }
     }
@@ -20,9 +21,11 @@ namespace SSS.Application.Features.Content.Roadmap.Common
         public long SubjectId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
+        public string? CreatedById { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public RoadmapStatus? Status { get; set; }
         public int Version { get; set; }
-        public bool IsLatest { get; set; }
-        public string? Status { get; set; } // Placeholder for future
+        public bool IsLatest { get; set; }  
     }
 
     public sealed class RoadmapNodeDTO
