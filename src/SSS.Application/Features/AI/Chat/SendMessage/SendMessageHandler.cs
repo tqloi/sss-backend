@@ -6,6 +6,7 @@ using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Domain.Entities.AI;
 using SSS.Domain.Enums;
+using System.Text;
 using System.Text.Json;
 
 namespace SSS.Application.Features.AI.Chat.SendMessage
@@ -16,6 +17,8 @@ namespace SSS.Application.Features.AI.Chat.SendMessage
         private readonly IAiConversationRepository _conversationRepo;
         private readonly IAiChatMessageRepository _chatMessageRepo;
         private readonly ILlmRouter _llmRouter;
+
+        private const int MaxHistoryMessages = 10;
 
         public SendMessageHandler(
             IAppDbContext sqlDb,
@@ -33,8 +36,8 @@ namespace SSS.Application.Features.AI.Chat.SendMessage
         {
             var userId = request.UserId;
 
-            // 1. Resolve or Create Conversation
-            AiConversation conversation = null!;
+            // 1. Resolve or Create Conversation (scoped to roadmap)
+            AiConversation conversation;
             if (!string.IsNullOrEmpty(request.ConversationId))
             {
                 conversation = await _conversationRepo.GetByIdAsync(request.ConversationId);
@@ -43,55 +46,90 @@ namespace SSS.Application.Features.AI.Chat.SendMessage
             }
             else
             {
-                conversation = new AiConversation
+                // Try to find existing active conversation for this user + roadmap
+                conversation = await _conversationRepo.GetByUserAndRoadmapAsync(userId, request.RoadmapId);
+
+                if (conversation == null)
                 {
-                    Id = Guid.NewGuid().ToString("N")[..24],
-                    UserId = userId,
-                    Title = request.MessageContent.Length > 30 ? request.MessageContent.Substring(0, 30) + "..." : request.MessageContent,
-                    RelatedType = request.RelatedType,
-                    RelatedId = request.RelatedId,
-                    CreatedAt = DateTime.UtcNow,
-                    LastMessageAt = DateTime.UtcNow,
-                    IsActive = true
-                };
-                await _conversationRepo.AddAsync(conversation);
+                    // Create new conversation for this roadmap
+                    var roadmapTitle = await _sqlDb.Roadmaps
+                        .Where(r => r.Id == request.RoadmapId)
+                        .Select(r => r.Title)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    conversation = new AiConversation
+                    {
+                        Id = Guid.NewGuid().ToString("N")[..24],
+                        UserId = userId,
+                        RoadmapId = request.RoadmapId,
+                        Title = roadmapTitle ?? $"Roadmap {request.RoadmapId}",
+                        CreatedAt = DateTime.UtcNow,
+                        LastMessageAt = DateTime.UtcNow,
+                        IsActive = true
+                    };
+                    await _conversationRepo.AddAsync(conversation);
+                }
             }
 
-            // 2. Fetch context from SQL DB if provided
-            string contextInfo = string.Empty;
-            if (request.RelatedType.HasValue && !string.IsNullOrEmpty(request.RelatedId))
+            // 2. Build context from selected modules and tasks
+            var contextBuilder = new StringBuilder();
+            var hasModules = request.ModuleIds != null && request.ModuleIds.Count > 0;
+            var hasTasks = request.TaskIds != null && request.TaskIds.Count > 0;
+
+            if (hasModules)
             {
-                var relatedIdLong = long.TryParse(request.RelatedId, out var l) ? l : 0;
-                var relatedIdInt = int.TryParse(request.RelatedId, out var i) ? i : 0;
-                
-                if (request.RelatedType == RelatedEntityType.Module)
+                var modules = await _sqlDb.StudyPlanModules
+                    .Include(m => m.RoadmapNode)
+                    .Include(m => m.Tasks)
+                    .AsNoTracking()
+                    .Where(m => request.ModuleIds!.Contains(m.Id))
+                    .ToListAsync(cancellationToken);
+
+                if (modules.Any())
                 {
-                    var module = await _sqlDb.StudyPlanModules
-                        .Include(m => m.RoadmapNode)
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(m => m.Id == relatedIdInt, cancellationToken);
-                    if (module != null)
+                    contextBuilder.AppendLine("[MODULES CONTEXT]");
+                    foreach (var module in modules)
                     {
-                        var options = new JsonSerializerOptions
+                        contextBuilder.AppendLine($"- Module: '{module.RoadmapNode?.Title ?? "Unknown"}' (ID: {module.Id}), Status: {module.Status}");
+                        if (module.Tasks.Any())
                         {
-                            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-                        };
-                        contextInfo = $"User is asking about a StudyPlanModule titled '{module.RoadmapNode?.Title}'. Additional module info: {JsonSerializer.Serialize(module, options)}";
-                    }
-                }
-                else if (request.RelatedType == RelatedEntityType.Task)
-                {
-                    var task = await _sqlDb.TaskItems
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(t => t.Id == relatedIdLong, cancellationToken);
-                    if (task != null)
-                    {
-                        contextInfo = $"User is asking about a TaskItem titled '{task.Title}'. Description: '{task.Description}'. Status: {task.Status}.";
+                            foreach (var task in module.Tasks)
+                            {
+                                contextBuilder.AppendLine($"  - Task: '{task.Title}', Status: {task.Status}, Description: '{task.Description}'");
+                            }
+                        }
                     }
                 }
             }
 
-            // 3. Keep user message
+            if (hasTasks)
+            {
+                var tasks = await _sqlDb.TaskItems
+                    .AsNoTracking()
+                    .Where(t => request.TaskIds!.Contains(t.Id))
+                    .ToListAsync(cancellationToken);
+
+                if (tasks.Any())
+                {
+                    contextBuilder.AppendLine("[TASKS CONTEXT]");
+                    foreach (var task in tasks)
+                    {
+                        contextBuilder.AppendLine($"- Task: '{task.Title}' (ID: {task.Id}), Status: {task.Status}, Description: '{task.Description}', EstimatedDuration: {task.EstimatedDurationSeconds}s");
+                    }
+                }
+            }
+
+            var contextInfo = contextBuilder.ToString().TrimEnd();
+
+            // 3. Save user message with context
+            var messageContext = (hasModules || hasTasks)
+                ? new MessageContext
+                {
+                    ModuleIds = request.ModuleIds ?? new List<long>(),
+                    TaskIds = request.TaskIds ?? new List<long>()
+                }
+                : null;
+
             var userMessage = new AiChatMessage
             {
                 Id = Guid.NewGuid().ToString("N")[..24],
@@ -99,29 +137,60 @@ namespace SSS.Application.Features.AI.Chat.SendMessage
                 UserId = userId,
                 Role = AiMessageRole.User,
                 MessageContent = request.MessageContent,
-                Context = string.IsNullOrEmpty(contextInfo) ? null : contextInfo,
+                Context = messageContext,
                 Timestamp = DateTime.UtcNow
             };
             await _chatMessageRepo.AddAsync(userMessage);
 
-            // 4. Construct Prompt
+            // 4. Fetch recent chat history for context continuity
+            var recentMessages = await _chatMessageRepo.GetByConversationIdAsync(conversation.Id);
+            var historyMessages = recentMessages
+                .OrderByDescending(m => m.Timestamp)
+                .Skip(1) // skip current user message (just added)
+                .Take(MaxHistoryMessages)
+                .OrderBy(m => m.Timestamp)
+                .ToList();
+
+            // 5. Construct prompt with history and context
             var systemPrompt = """
-You are an intelligent Study Assistant helping a student.
-Be friendly, concise, and educational.
-If the student asks a question related to their current learning module or task, use the provided context to guide your answer.
-Do NOT invent details about their tasks that aren't mentioned in the context.
-""";
-            var userPrompt = request.MessageContent;
-            if (!string.IsNullOrEmpty(contextInfo))
+                You are an intelligent Study Assistant helping a student with their learning roadmap.
+                Be friendly, concise, and educational.
+                If the student asks a question related to their current learning modules or tasks, use the provided context to guide your answer.
+                Do NOT invent details about their tasks that aren't mentioned in the context.
+                If conversation history is provided, use it to maintain continuity in the conversation.
+                """;
+
+            var userPromptBuilder = new StringBuilder();
+
+            // Add chat history
+            if (historyMessages.Any())
             {
-                userPrompt = $"[CONTEXT] {contextInfo}\n[USER MESSAGE] {userPrompt}";
+                userPromptBuilder.AppendLine("[CONVERSATION HISTORY]");
+                foreach (var msg in historyMessages)
+                {
+                    var role = msg.Role == AiMessageRole.User ? "User" : "Assistant";
+                    userPromptBuilder.AppendLine($"{role}: {msg.MessageContent}");
+                }
+                userPromptBuilder.AppendLine();
             }
 
-            // 5. Query LLM (Gemini)
-            var llmChatProvider = _llmRouter.Resolve(LlmTask.SimpleChat);
-            var aiResponseContent = await llmChatProvider.AskAsync(systemPrompt, userPrompt, cancellationToken);
+            // Add context
+            if (!string.IsNullOrEmpty(contextInfo))
+            {
+                userPromptBuilder.AppendLine(contextInfo);
+                userPromptBuilder.AppendLine();
+            }
 
-            // 6. Keep AI message
+            userPromptBuilder.AppendLine($"[USER MESSAGE] {request.MessageContent}");
+
+            // 6. Query LLM
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.SimpleChat);
+            var aiResponseContent = await llmChatProvider.AskAsync(
+                systemPrompt,
+                userPromptBuilder.ToString(),
+                cancellationToken);
+
+            // 7. Save AI response
             var aiMessage = new AiChatMessage
             {
                 Id = Guid.NewGuid().ToString("N")[..24],
@@ -133,7 +202,7 @@ Do NOT invent details about their tasks that aren't mentioned in the context.
             };
             await _chatMessageRepo.AddAsync(aiMessage);
 
-            // 7. Update conversation last touched
+            // 8. Update conversation last touched
             conversation.LastMessageAt = DateTime.UtcNow;
             await _conversationRepo.UpdateAsync(conversation);
 

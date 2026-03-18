@@ -1,4 +1,4 @@
-﻿using SSS.Domain.Enums;
+using SSS.Domain.Enums;
 
 namespace SSS.Domain.Entities.AI
 {
@@ -9,7 +9,7 @@ namespace SSS.Domain.Entities.AI
         public string UserId { get; set; } = null!;
         public AiMessageRole Role { get; set; }
         public string MessageContent { get; set; } = null!;
-        public object? Context { get; set; }
+        public MessageContext? Context { get; set; }
         public DateTime Timestamp { get; set; }
     }
 }

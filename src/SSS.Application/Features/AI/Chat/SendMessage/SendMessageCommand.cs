@@ -1,5 +1,4 @@
 using MediatR;
-using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.AI.Chat.SendMessage
 {
@@ -7,9 +6,10 @@ namespace SSS.Application.Features.AI.Chat.SendMessage
     {
         public string UserId { get; set; } = null!;
         public string? ConversationId { get; set; }
+        public long RoadmapId { get; set; }
         public string MessageContent { get; set; } = null!;
-        public RelatedEntityType? RelatedType { get; set; }
-        public string? RelatedId { get; set; }
+        public List<long>? ModuleIds { get; set; }
+        public List<long>? TaskIds { get; set; }
     }
 
     public class SendMessageResult
@@ -20,3 +20,4 @@ namespace SSS.Application.Features.AI.Chat.SendMessage
         public DateTime Timestamp { get; set; }
     }
 }
+

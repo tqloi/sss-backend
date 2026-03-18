@@ -11,6 +11,7 @@ namespace SSS.Application.Features.StudySessions.Common
             CreateMap<StudySession, SessionDetailDto>()
                 .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.EndedReason, o => o.MapFrom(s => s.EndedReason != null ? s.EndedReason.ToString() : null))
+                .ForMember(d => d.ModuleId, o => o.MapFrom(s => s.StudyPlanModuleId))
                 .ForMember(d => d.Node, o => o.MapFrom(s => s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode : null))
                 .ForMember(d => d.Plan, o => o.MapFrom(s => s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Roadmap.StudyPlans.FirstOrDefault() : null));
 
