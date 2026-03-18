@@ -1,8 +1,7 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MongoDB.Driver;
 using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
 using SSS.Domain.Entities.AI;
-using SSS.Domain.Enums;
 using SSS.Infrastructure.Persistence.Mongo.Documents;
 
 namespace SSS.Infrastructure.Persistence.Mongo.Repositories
@@ -37,14 +36,25 @@ namespace SSS.Infrastructure.Persistence.Mongo.Repositories
             return doc == null ? null : _mapper.Map<AiConversation>(doc);
         }
 
-        public async Task<IEnumerable<AiConversation>> GetByRelatedEntityAsync(
-            RelatedEntityType type, string relatedId)
+        public async Task<AiConversation?> GetByUserAndRoadmapAsync(string userId, long roadmapId)
+        {
+            var doc = await _collection
+                .Find(x => x.UserId == userId && x.RoadmapId == roadmapId && x.IsActive)
+                .SortByDescending(x => x.LastMessageAt)
+                .FirstOrDefaultAsync();
+
+            return doc == null ? null : _mapper.Map<AiConversation>(doc);
+        }
+
+        public async Task<IEnumerable<AiConversation>> GetByUserAndRoadmapListAsync(string userId, long roadmapId)
         {
             var docs = await _collection
-                .Find(x => x.RelatedType == type && x.RelatedId == relatedId)
+                .Find(x => x.UserId == userId && x.RoadmapId == roadmapId)
+                .SortByDescending(x => x.LastMessageAt)
                 .ToListAsync();
 
             return _mapper.Map<IEnumerable<AiConversation>>(docs);
         }
     }
 }
+

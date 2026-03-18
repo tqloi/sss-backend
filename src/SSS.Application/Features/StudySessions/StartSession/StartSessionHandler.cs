@@ -28,6 +28,8 @@ namespace SSS.Application.Features.StudySessions.StartSession
             {
                 Id = sessionId,
                 UserId = req.UserId,
+                StudyPlanId = req.StudyPlanId,
+                StudyPlanModuleId = req.ModuleId,
                 PlannedDurationSeconds = req.PlannedDurationSeconds,
                 Timezone = req.Timezone,
                 Status = SessionStatus.InProgress,

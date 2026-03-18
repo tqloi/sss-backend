@@ -17,8 +17,15 @@ namespace SSS.Application.Features.AI.Chat.GetConversations
         public async Task<IEnumerable<AiConversation>> Handle(GetConversationsQuery request, CancellationToken cancellationToken)
         {
             var userId = request.UserId;
-            var conversations = await _conversationRepo.GetByUserIdAsync(userId);
-            return conversations.OrderByDescending(c => c.LastMessageAt);
+
+            if (request.RoadmapId.HasValue)
+            {
+                var conversations = await _conversationRepo.GetByUserAndRoadmapListAsync(userId, request.RoadmapId.Value);
+                return conversations.OrderByDescending(c => c.LastMessageAt);
+            }
+
+            var allConversations = await _conversationRepo.GetByUserIdAsync(userId);
+            return allConversations.OrderByDescending(c => c.LastMessageAt);
         }
     }
 }

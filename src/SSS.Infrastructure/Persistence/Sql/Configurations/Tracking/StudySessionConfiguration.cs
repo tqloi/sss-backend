@@ -86,6 +86,12 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)");
 
+        builder.Property(e => e.StudyPlanId)
+            .HasColumnType("bigint");
+
+        builder.Property(e => e.StudyPlanModuleId)
+            .HasColumnType("bigint");
+
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)

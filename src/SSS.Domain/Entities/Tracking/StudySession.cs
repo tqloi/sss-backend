@@ -31,6 +31,9 @@ public class StudySession
     public string? Timezone { get; set; }
     public DateTime? CreatedAt { get; set; } = DateTime.MinValue;
 
+    public long? StudyPlanId { get; set; }
+    public long? StudyPlanModuleId { get; set; }
+
     // Navigation
     public virtual User User { get; set; } = null!;
     public virtual ICollection<SessionTask> SessionTasks { get; set; } = new List<SessionTask>();

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using SSS.Domain.Entities.AI;
 using SSS.Domain.Entities.Tracking;
 using SSS.Infrastructure.Persistence.Mongo.Documents;
@@ -11,6 +11,7 @@ namespace SSS.Infrastructure.Persistence.Mongo.Mappings
         {
             CreateMap<AiConversation, AiConversationDocument>().ReverseMap();
             CreateMap<AiChatMessage, AiChatMessageDocument>().ReverseMap();
+            CreateMap<MessageContext, MessageContextDocument>().ReverseMap();
             CreateMap<AiContextLog, AiContextLogDocument>().ReverseMap();
             CreateMap<AiRecommendation, AiRecommendationDocument>().ReverseMap();
             CreateMap<StudyEvent, StudyEventDocument>().ReverseMap();

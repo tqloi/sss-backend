@@ -11,7 +11,7 @@ namespace SSS.Web.Endpoints.AI.Chat
     {
         public override void Configure()
         {
-            Get("ai/chat/conversations");
+            Get("ai/chat/conversations/{RoadmapId?}");
             
         }
 
@@ -25,3 +25,4 @@ namespace SSS.Web.Endpoints.AI.Chat
         }
     }
 }
+
