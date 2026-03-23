@@ -11,6 +11,11 @@ public class Quiz
     public decimal? TotalScore { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public string Level{ get; set; }
+    public decimal PassingScore { get; set; }
+
+
+
     // Navigation
     public virtual RoadmapNode RoadmapNode { get; set; } = null!;
     public virtual ICollection<QuizQuestion> Questions { get; set; } = new HashSet<QuizQuestion>();
