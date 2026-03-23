@@ -395,7 +395,7 @@ REQUIRED JSON SHAPE
                 .Select(h => h.Text)
                 );
 
-            Console.WriteLine(context);
+
 
             return context;
         }
@@ -409,7 +409,7 @@ REQUIRED JSON SHAPE
         {
             // 1. Build context từ vector DB
             var context = await BuildStudyPlanContextAsync(userId, studyPlanId, ct);
-
+            Console.WriteLine(context);
             var currrentDate = DateTime.UtcNow;
             var dayName = currrentDate.DayOfWeek.ToString();
 
@@ -432,6 +432,7 @@ CRITICAL RULES (MUST FOLLOW)
 5. ALL tasks MUST use the SAME roadmapNodeId provided
 6. Do NOT infer or expand to other roadmap nodes
 7. Decisions MUST be driven by the user's survey context
+8. If behavior signals are present in context, adapt plan pacing and duration accordingly
 
 ======================
 INPUT GUARANTEES
@@ -439,11 +440,14 @@ INPUT GUARANTEES
 
 You will receive:
 - User survey context
+- User behavior context (if available)
 - A roadmap (FOR CONTEXT ONLY)
 - EXACTLY ONE roadmap node (TARGET NODE)
 
 The roadmap is provided ONLY to understand progression and difficulty.
 The roadmap node is the ONLY entity you are allowed to generate tasks for.
+
+If behavior context exists, it has higher priority than generic pacing assumptions.
 
 ======================
 OUTPUT SCHEMA (STRICT)
@@ -472,6 +476,24 @@ TASK DESIGN RULES
 - scheduledDate MUST be based on CURRENT DATETIME above
 - scheduledDate MUST be >= current datetime
 - scheduledDate MUST increase progressively
+
+======================
+BEHAVIOR-ADAPTIVE RULES
+======================
+
+When behavior context indicates the learner is often late, inconsistent, or skips tasks:
+- Generate 2-3 tasks (not 4-5)
+- Increase estimatedDurationSeconds per task by around 15-30% compared to normal expectation
+- Add more spacing between tasks (prefer gaps of at least 1 day)
+
+When behavior context indicates strong on-time and consistent completion:
+- You may generate 3-5 tasks
+- Keep estimatedDurationSeconds in normal range for node difficulty
+- Use moderate spacing (can be denser than late-profile scheduling)
+
+When behavior evidence is weak or unavailable:
+- Use neutral pacing (3-4 tasks) with balanced spacing
+- Do not overfit assumptions
 
 ======================
 TIME DISTRIBUTION RULES
