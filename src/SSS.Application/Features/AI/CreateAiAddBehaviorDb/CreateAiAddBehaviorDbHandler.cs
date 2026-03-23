@@ -1,29 +1,74 @@
-﻿using AutoMapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.Persistence.Sql;
-using SSS.Application.Features.AI.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SSS.Domain.Enums;
+using System.Text.Json;
 
 namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
 {
-    public class CreateAiAddBehaviorDbHandler(IPipeLine pipeLine, IAppDbContext db, IMapper mapper)
+    public class CreateAiAddBehaviorDbHandler(IPipeLine pipeLine, IAppDbContext db)
         : IRequestHandler<CreateAiAddBehaviorDbCommand, CreateAiAddBehaviorDbResult>
     {
         public async Task<CreateAiAddBehaviorDbResult> Handle(CreateAiAddBehaviorDbCommand req, CancellationToken ct)
         {
-            var behavior = await db.UserLearningBehaviors
-               .AsNoTracking()
-               .FirstOrDefaultAsync(x => x.UserId == req.UserId, ct);
+            long? studyPlanId = null;
+            if (long.TryParse(req.StudyplanmoduleId, out var parsedStudyPlanId))
+            {
+                studyPlanId = parsedStudyPlanId;
+            }
 
-            var behaviorDto = mapper.Map<UserLearningBehaviorDto>(behavior);
+            var module = await db.StudyPlanModules
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == studyPlanId, ct);
 
-            var result = await pipeLine.GenerateBehaviorResultAsync(behaviorDto, ct);
+            var sessionsQuery = db.StudySessions
+                .AsNoTracking()
+                .Include(s => s.SessionTasks)
+                    .ThenInclude(st => st.TaskItem)
+                        .ThenInclude(t => t.StudyPlanModule)
+                .Where(s => s.UserId == req.UserId && s.Status == SessionStatus.Completed);
+
+            if (studyPlanId.HasValue)
+            {
+                sessionsQuery = sessionsQuery.Where(s => s.SessionTasks
+                    .Any(st => st.TaskItem.StudyPlanModule.StudyPlanId == studyPlanId.Value));
+            }
+
+            var sessions = await sessionsQuery
+                .OrderByDescending(s => s.EndAt ?? s.StartAt)
+                .Take(20)
+                .ToListAsync(ct);
+
+            var behaviorContext = sessions.Select(s => new
+            {
+                s.Id,
+                s.StartAt,
+                s.EndAt,
+                s.Status,
+                s.TasksCompletedCount,
+                s.TotalTasks,
+                s.FocusScore,
+                s.FatigueScore,
+                s.SelfRating,
+                Tasks = s.SessionTasks.Select(st => new
+                {
+                    st.TaskId,
+                    SessionTaskStatus = st.Status,
+                    st.StartTimeUtc,
+                    st.EndTimeUtc,
+                    TaskTitle = st.TaskItem.Title,
+                    TaskStatus = st.TaskItem.Status,
+                    st.TaskItem.ScheduledDate,
+                    st.TaskItem.CompletedAt,
+                    st.TaskItem.EstimatedDurationSeconds,
+                    StudyPlanId = st.TaskItem.StudyPlanModule.StudyPlanId
+                }).ToList()
+            }).ToList();
+
+            var behaviorContextJson = JsonSerializer.Serialize(behaviorContext);
+
+            var result = await pipeLine.GenerateBehaviorResultAsync(behaviorContextJson, ct);
 
             if (result is null)
             {
@@ -35,7 +80,7 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
                 (result, "user_behavior")
             };
 
-            await pipeLine.IngestBehaviorAsync(req.StudyPlanId, req.UserId, chunks, ct);
+            await pipeLine.IngestBehaviorAsync(req.StudyplanId, req.UserId, req.StudyplanmoduleId, chunks, ct);
 
             return new CreateAiAddBehaviorDbResult
             {

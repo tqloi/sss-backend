@@ -30,13 +30,13 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,"",
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
         }
-        public async Task IngestBehaviorAsync(string studyplanId, string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
+        public async Task IngestBehaviorAsync(string studyplanId, string userId, string studyplanmoduleId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
         {
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
@@ -44,52 +44,47 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId, studyplanmoduleId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
         }
-        public async Task<string> GenerateBehaviorResultAsync(UserLearningBehaviorDto behavior, CancellationToken ct = default)
+        public async Task<string> GenerateBehaviorResultAsync(string studyBehaviorContextJson, CancellationToken ct = default)
         {
             var systemPrompt = """
-You are an AI system that converts structured learning profile data into a single, concise, semantically rich English text.
+You are an AI system that analyzes study execution behavior from StudySession, SessionTask, and TaskItem data.
 
 Your task:
-- Transform the provided UserLearningBehavior data into ONE coherent paragraph.
-- Describe the user's learning behavior and study pattern based strictly on the provided fields.
-- Do NOT output JSON, markdown, or bullet points.
-- Output plain natural language text only.
-- Preserve all important signals related to learning goals, level, deadline, availability, learning style, and preferences.
-- Keep the tone factual, neutral, and embedding-friendly.
+- Generate ONE concise paragraph in English.
+- Evaluate whether the user tends to complete tasks on time or late.
+- Mention completion consistency, missed/skipped tasks, and schedule discipline.
+- Base conclusions strictly on provided data only.
 
 Important rules:
-- Do NOT invent, assume, or infer information not present in the input.
-- Do NOT output JSON, bullet points, or markdown.
+- Do NOT invent any facts.
+- Do NOT output JSON, markdown, or bullet points.
 - Output plain natural language text only.
-- Keep the tone factual, neutral, and descriptive.
-- Preserve all meaningful learning signals such as:
-  - study availability
-  - preferred study time
-  - session duration
-  - learning style tendencies (visual, reading, practice)
+- Keep tone factual, neutral, embedding-friendly.
 
-The output will be stored in a vector database (Qdrant) and used later to generate personalized learning tasks in a roadmap.
-Therefore the text should be semantically clear, compact, and embedding-friendly.
+On-time interpretation guidance:
+- A task is on-time if completion/end time is on or before scheduled date.
+- If only date-level signals are available, make a conservative statement.
+- If data is insufficient, explicitly say evidence is limited.
+
+The output will be stored in Qdrant for later retrieval; keep it compact and semantically rich.
 """;
             var userPromptWithContext = $"""
-Convert the following UserLearningBehavior data into a concise description of the user's study behavior.
-UserLearningBehavior:
-- AvailableDays: {behavior.AvailableDaysJson}
-- PreferredTimeBlocks: {behavior.PreferredTimeBlocksJson}
-- SessionLengthPrefMinutes: {behavior.SessionLengthPrefMinutes}
-- LearningStyleWeights:
-  - Visual: {behavior.WVisual}
-  - Reading: {behavior.WReading}
-  - Practice: {behavior.WPractice}
+Analyze the following study execution dataset and generate one paragraph behavior summary:
 
-  Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
-Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
+StudyExecutionData:
+{studyBehaviorContextJson}
+
+Focus on:
+- On-time completion trend
+- Late completion tendency
+- Completion vs skip/incomplete balance
+- Overall schedule discipline
 """;
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);

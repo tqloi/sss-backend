@@ -20,7 +20,7 @@ namespace SSS.Application.Abstractions.External.AI.Vector
         Task<List<VecHit>> SearchByUserId(float[] vector, int topK, string userId, string studyplanId, string dataType, CancellationToken ct = default);
     }
 
-    public record VectorPoint(string Id, float[] Vector, string Text, string? Source, string UserId, string StudyplanId, string DataType, DateTime CreatedAt);
+    public record VectorPoint(string Id, float[] Vector, string Text, string? Source, string UserId, string StudyplanId, string studyplanmoduleId, string DataType, DateTime CreatedAt);
     public record VecHit(string Id, float Score, string Text, string? Source);
 
     public class QdrantSearchResponse
