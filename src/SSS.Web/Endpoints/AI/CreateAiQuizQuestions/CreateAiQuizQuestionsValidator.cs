@@ -17,6 +17,10 @@ namespace SSS.Web.Endpoints.AI.CreateAiQuizQuestions
             RuleFor(x => x.RoadmapNodeId)
                 .GreaterThan(0).WithMessage("RoadmapNodeId must be greater than 0.");
 
+            RuleFor(x => x.Level)
+                .NotEmpty().WithMessage("Level is required.")
+                .MaximumLength(50).WithMessage("Level cannot exceed 50 characters.");
+
             RuleFor(x => x.QuestionCount)
                 .InclusiveBetween(1, 20).WithMessage("QuestionCount must be between 1 and 20.");
         }

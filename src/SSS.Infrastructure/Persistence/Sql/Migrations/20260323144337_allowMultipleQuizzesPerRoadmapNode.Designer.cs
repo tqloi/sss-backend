@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SSS.Infrastructure.Persistence.Sql;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Migrations
+namespace SSS.Infrastructure.Persistence.Sql.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323144337_allowMultipleQuizzesPerRoadmapNode")]
+    partial class allowMultipleQuizzesPerRoadmapNode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -267,11 +270,6 @@ namespace SSS.Infrastructure.Migrations
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Level")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("OrderNo")
                         .HasColumnType("int");

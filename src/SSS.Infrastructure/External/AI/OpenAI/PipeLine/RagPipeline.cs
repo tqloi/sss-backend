@@ -524,6 +524,7 @@ All tasks MUST use its roadmapNodeId.
         public async Task<string> GenerateQuizQuestionsAsync(
             object roadmap,
             object roadmapnode,
+            string level,
             int questionCount,
             CancellationToken ct = default)
         {
@@ -533,7 +534,14 @@ Return ONLY valid JSON array. No markdown, no explanation.
 Each question must include options.
 For SingleChoice: exactly one option has isCorrect=true.
 For MultipleChoice: at least one option has isCorrect=true.
-Keep questions relevant to the provided roadmap and target roadmap node.
+Keep questions relevant to the provided TARGET ROADMAP NODE only.
+
+Scope rules (mandatory):
+- Generate questions ONLY from the "Target Roadmap Node" content.
+- Do NOT generate broad roadmap-wide topics.
+- Do NOT include topics from other nodes/phases even if related.
+- Use "Roadmap" only as lightweight background metadata (title/description).
+- If a topic is not clearly inferable from the target node, exclude it.
 
 Difficulty progression is mandatory:
 - Questions must become harder from first to last.
@@ -552,6 +560,9 @@ Example valid patterns: QUIZ_A7K2M9, NODE_X91PQ4, QQ_7F2KD8.
 
             var userPrompt = $$"""
 Generate {{questionCount}} quiz questions for the target roadmap node.
+
+Target level for all generated questions:
+{{level}}
 
 Roadmap:
 {{roadmap}}
@@ -590,6 +601,11 @@ Rules for difficulty:
 - orderNo must start from 1 and increase continuously.
 - difficulty must increase with orderNo.
 - keep scoreWeight non-decreasing from first to last question.
+- overall complexity must align with the target level.
+
+Scope validation before output:
+- Every question must be directly traceable to target node title/description/difficulty.
+- Remove any question that could belong to the roadmap in general but not specifically to the target node.
 """;
 
             var llm = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);

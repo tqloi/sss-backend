@@ -11,6 +11,8 @@ namespace SSS.Application.Features.Quizzes.Common
         long RoadmapNodeId,
         string? Title,
         string? Description,
-        decimal? TotalScore
+        decimal? TotalScore,
+        string Level,
+        decimal PassingScore
     );
 }
