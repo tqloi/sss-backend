@@ -8,6 +8,8 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
     {
         [JsonIgnore]
         public string UserId { get; set; } = null!;
-        public string StudyPlanId { get; set; }
+        public string StudyplanmoduleId { get; set; }
+
+        public string StudyplanId { get; set; }
     }
 }

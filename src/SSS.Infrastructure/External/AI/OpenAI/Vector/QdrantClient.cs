@@ -295,6 +295,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.Vector
                         source = v.Source,
                         user_id = v.UserId,
                         studyplan_id = v.StudyplanId,
+                        studyplanmodule_id = v.studyplanmoduleId,
                         data_type = v.DataType,
                         created_at = v.CreatedAt
                     }
