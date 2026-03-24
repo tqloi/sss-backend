@@ -16,7 +16,7 @@ public class RoadmapNode
 
     // Navigation
     public virtual Roadmap Roadmap { get; set; } = null!;
-    public virtual Quiz? Quiz { get; set; }
+    public virtual ICollection<Quiz> Quizzes { get; set; } = new HashSet<Quiz>();
     public virtual ICollection<NodeContent> Contents { get; set; } = new HashSet<NodeContent>();
     public virtual ICollection<RoadmapEdge> OutgoingEdges { get; set; } = new HashSet<RoadmapEdge>();
     public virtual ICollection<RoadmapEdge> IncomingEdges { get; set; } = new HashSet<RoadmapEdge>();

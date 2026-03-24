@@ -14,5 +14,7 @@ namespace SSS.Application.Features.Quizzes.Common
         public string? Description { get; set; } = default!;
         public decimal? TotalScore { get; set; } = default!;
         public DateTime CreatedAt { get; set; } = default!;
+        public string Level { get; set; } = null!;
+        public decimal PassingScore { get; set; }
     }
 }

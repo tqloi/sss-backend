@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SSS.Infrastructure.Persistence.Sql;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Migrations
+namespace SSS.Infrastructure.Persistence.Sql.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323140722_addQuizPassingScore")]
+    partial class addQuizPassingScore
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,11 +164,10 @@ namespace SSS.Infrastructure.Migrations
 
                     b.Property<string>("Level")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("longtext");
 
                     b.Property<decimal>("PassingScore")
-                        .HasColumnType("decimal(6,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<long>("RoadmapNodeId")
                         .HasColumnType("bigint");
@@ -179,7 +181,8 @@ namespace SSS.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoadmapNodeId");
+                    b.HasIndex("RoadmapNodeId")
+                        .IsUnique();
 
                     b.ToTable("As_Quizzes", (string)null);
                 });
@@ -267,11 +270,6 @@ namespace SSS.Infrastructure.Migrations
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Level")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("OrderNo")
                         .HasColumnType("int");
@@ -1658,8 +1656,8 @@ namespace SSS.Infrastructure.Migrations
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.Quiz", b =>
                 {
                     b.HasOne("SSS.Domain.Entities.Content.RoadmapNode", "RoadmapNode")
-                        .WithMany("Quizzes")
-                        .HasForeignKey("RoadmapNodeId")
+                        .WithOne("Quiz")
+                        .HasForeignKey("SSS.Domain.Entities.Assessment.Quiz", "RoadmapNodeId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("RoadmapNode");
@@ -2184,7 +2182,7 @@ namespace SSS.Infrastructure.Migrations
 
                     b.Navigation("OutgoingEdges");
 
-                    b.Navigation("Quizzes");
+                    b.Navigation("Quiz");
 
                     b.Navigation("StudyPlanModules");
                 });

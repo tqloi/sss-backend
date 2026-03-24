@@ -9,7 +9,7 @@ namespace SSS.Web.Endpoints.Quizzes.UpdateQuiz
     {
         public override void Configure()
         {
-            Put("/api/quiz/{QuizId}");
+            Put("/api/quiz/{Id}");
             Summary(s => s.Summary = "Update an existing quiz by its ID.");
             Description(d => d.WithTags("Quizzes"));
             Roles("ContentManager");

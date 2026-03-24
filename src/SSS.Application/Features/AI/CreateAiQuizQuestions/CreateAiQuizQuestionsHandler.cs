@@ -41,12 +41,29 @@ namespace SSS.Application.Features.AI.CreateAiQuizQuestions
                 throw new InvalidOperationException("Quiz does not belong to the provided roadmap node.");
             }
 
-            var roadmapJson = JsonSerializer.Serialize(roadmap);
-            var roadmapNodeJson = JsonSerializer.Serialize(roadmapNode);
+            var level = request.Level.Trim();
+
+            var roadmapJson = JsonSerializer.Serialize(new
+            {
+                roadmap.Id,
+                roadmap.Title,
+                roadmap.Description
+            });
+
+            var roadmapNodeJson = JsonSerializer.Serialize(new
+            {
+                roadmapNode.Id,
+                roadmapNode.RoadmapId,
+                roadmapNode.Title,
+                roadmapNode.Description,
+                roadmapNode.Difficulty,
+                roadmapNode.OrderNo
+            });
 
             var aiResponse = await pipeLine.GenerateQuizQuestionsAsync(
                 roadmapJson,
                 roadmapNodeJson,
+                level,
                 request.QuestionCount,
                 cancellationToken);
 
@@ -64,6 +81,7 @@ namespace SSS.Application.Features.AI.CreateAiQuizQuestions
             var previewQuestions = aiQuestions.Select((q, index) => new CreateQuizQuestionWithOptionsDto
             {
                 QuizId = quiz.Id,
+                Level = level,
                 QuestionKey = string.IsNullOrWhiteSpace(q.QuestionKey)
                     ? $"QQ_{Guid.NewGuid():N}"[..11]
                     : q.QuestionKey,

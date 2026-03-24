@@ -16,6 +16,10 @@ namespace SSS.Web.Endpoints.QuizQuestions.CreateQuizQuestions
                 question.RuleFor(q => q.QuizId)
                     .GreaterThan(0).WithMessage("QuizId must be greater than 0.");
 
+                question.RuleFor(q => q.Level)
+                    .NotEmpty().WithMessage("Level is required.")
+                    .MaximumLength(50).WithMessage("Level cannot exceed 50 characters.");
+
                 question.RuleFor(q => q.QuestionKey)
                     .NotEmpty().WithMessage("QuestionKey is required.")
                     .MaximumLength(100).WithMessage("QuestionKey cannot exceed 100 characters.");
