@@ -42,6 +42,9 @@ namespace SSS.Application.Features.Auth.GoogleCallBack
                     throw new InvalidOperationException(add.Errors.First().Description);
             }
 
+            if (user.IsActive == false)
+                throw new UnauthorizedAccessException("Account is blocked");
+
             return await jwtService.IssueAsync(user, req.RequestIp, ct);
         }
     }

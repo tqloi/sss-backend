@@ -21,6 +21,18 @@ namespace SSS.Application.Features.UserManagement.DeactivateUser
             user.LockoutEnabled = true;
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
 
+            var now = DateTime.UtcNow;
+            var activeRefreshTokens = await dbContext.RefreshTokens
+                .Where(x => x.UserId == user.Id && x.RevokedAtUtc == null)
+                .ToListAsync(ct);
+
+            foreach (var token in activeRefreshTokens)
+            {
+                token.IsUsed = true;
+                token.RevokedAtUtc = now;
+                token.RevokedByIp = "admin-block";
+            }
+
             await dbContext.SaveChangesAsync(ct);
             return true;
         }

@@ -105,6 +105,40 @@ namespace SSS.Application.Features.UserManagement.GetAllUsers
                     : new List<string>();
             }
 
+            var assignmentRows = await dbContext.ContentManagerSubjects
+                .AsNoTracking()
+                .Where(x => x.IsActive && userIds.Contains(x.ContentManagerId))
+                .Join(
+                    dbContext.LearningSubjects.AsNoTracking(),
+                    cms => cms.SubjectId,
+                    s => s.Id,
+                    (cms, s) => new
+                    {
+                        cms.ContentManagerId,
+                        cms.SubjectId,
+                        SubjectName = s.Name,
+                        cms.AssignedAt
+                    })
+                .ToListAsync(ct);
+
+            var assignmentByUserId = assignmentRows
+                .GroupBy(x => x.ContentManagerId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g
+                        .OrderByDescending(x => x.AssignedAt)
+                        .First()
+                );
+
+            foreach (var user in users)
+            {
+                if (assignmentByUserId.TryGetValue(user.Id, out var assignment))
+                {
+                    user.AssignedSubjectId = assignment.SubjectId;
+                    user.AssignedSubjectName = assignment.SubjectName;
+                }
+            }
+
             return new GetAllUsersResponse
             {
                 Users = new PaginatedResponse<UserDto>(

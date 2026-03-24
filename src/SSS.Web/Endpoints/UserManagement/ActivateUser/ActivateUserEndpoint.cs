@@ -25,7 +25,7 @@ namespace SSS.Web.Endpoints.UserManagement.ActivateUser
 
             if (string.IsNullOrWhiteSpace(req.Id))
             {
-                await SendBadRequestAsync(ct);
+                await SendAsync(new { message = "Invalid user id" }, StatusCodes.Status400BadRequest, ct);
                 return;
             }
 
