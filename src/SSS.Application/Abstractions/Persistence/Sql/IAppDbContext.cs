@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.AspNetCore.Identity;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Identity;
@@ -61,6 +62,9 @@ namespace SSS.Application.Abstractions.Persistence.Sql
 
         // Security
         DbSet<RefreshToken> RefreshTokens { get; }
+        DbSet<User> Users { get; }
+        DbSet<IdentityRole> Roles { get; }
+        DbSet<IdentityUserRole<string>> UserRoles { get; }
         Task<int> SaveChangesAsync(CancellationToken ct = default);
         Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
         Task CommitTransactionAsync(CancellationToken ct = default);

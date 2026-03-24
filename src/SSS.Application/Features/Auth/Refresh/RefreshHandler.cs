@@ -44,6 +44,9 @@ namespace SSS.Application.Features.Auth.Refresh
             if (user is null)
                 throw new UnauthorizedAccessException("User not found");
 
+            if (user.IsActive == false)
+                throw new UnauthorizedAccessException("Account is blocked");
+
             // rotate: revoke token cũ + phát hành token mới
             rt.IsUsed = true;
             rt.RevokedAtUtc = DateTime.Now;
