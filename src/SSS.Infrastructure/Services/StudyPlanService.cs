@@ -30,7 +30,7 @@ namespace SSS.Infrastructure.Services
                 RoadmapId = roadmapId,
                 ProfileVersion = 1,
                 Strategy = StudyPlanStrategy.Balanced,
-                Status = StudyPlanStatus.GeneratingTasks,
+                Status = StudyPlanStatus.Ready,
                 CreatedAt = DateTime.UtcNow
             };
 
