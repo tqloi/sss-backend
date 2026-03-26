@@ -26,6 +26,7 @@ namespace SSS.Application.Features.StudySessions.LogStudyEvent
         public string? ContentMode { get; set; }
 
         public long? TaskId { get; set; }
+        public string? StudyPlanModuleId { get; set; }
         public Dictionary<string, object>? Metadata { get; set; }
     }
 }
