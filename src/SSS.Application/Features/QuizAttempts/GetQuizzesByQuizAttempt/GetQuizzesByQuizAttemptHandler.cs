@@ -21,6 +21,25 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
                 throw new KeyNotFoundException($"Quiz attempt with id {req.AttemptId} not found.");
             }
 
+            var quiz = await db.Quizzes
+                .AsNoTracking()
+                .Where(q => q.Id == quizAttempt.QuizId)
+                .Select(q => new QuizBasicInfoDto
+                {
+                    QuizId = q.Id,
+                    Title = q.Title,
+                    Description = q.Description,
+                    Level = q.Level,
+                    TotalScore = q.TotalScore,
+                    PassingScore = q.PassingScore
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (quiz is null)
+            {
+                throw new KeyNotFoundException($"Quiz with id {quizAttempt.QuizId} not found.");
+            }
+
             var quizAnswers = await db.QuizAnswers
                 .AsNoTracking()
                 .Where(qa => qa.AttemptId == req.AttemptId)
@@ -62,7 +81,7 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
                     .ToList()
             }).ToList();
 
-            return new GetQuizzesByQuizAttemptResult(result);
+            return new GetQuizzesByQuizAttemptResult(quiz, result);
         }
     }
 }
