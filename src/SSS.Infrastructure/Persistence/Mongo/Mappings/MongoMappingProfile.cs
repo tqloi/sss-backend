@@ -20,6 +20,7 @@ namespace SSS.Infrastructure.Persistence.Mongo.Mappings
             CreateMap<StudyEvent, StudyEventDocument>().ReverseMap();
 
             CreateMap<PostHogEvent, PostHogEventDocument>().ReverseMap();
+            CreateMap<PostHogEventProperties, PostHogEventPropertiesDocument>().ReverseMap();
         }
 
        
