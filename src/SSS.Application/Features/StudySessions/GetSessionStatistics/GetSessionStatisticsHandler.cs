@@ -51,7 +51,7 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                 : 0;
 
             // Total XP
-            var totalXp = completedSessions.Sum(s => ((s.ActiveSeconds ?? 0) / 60) * 10);
+            var totalXp = completedSessions.Sum(s => ((s.ActualDurationSeconds ?? 0) / 60) * 10);
 
             return new GetSessionStatisticsResult
             {

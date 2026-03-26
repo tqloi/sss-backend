@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace SSS.Infrastructure.Persistence.Mongo.Documents
 {
     [BsonCollection("ai_conversations")]
+    [BsonIgnoreExtraElements]
     public class AiConversationDocument : MongoDocument
     {
         public string UserId { get; set; } = null!;

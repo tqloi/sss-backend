@@ -14,10 +14,6 @@ namespace SSS.Application.Features.StudySessions.EndSession
         public int? SelfRating { get; set; }
         public string? Notes { get; set; }
         public int? ActualDurationSeconds { get; set; }
-        public int? ActiveSeconds { get; set; }
-        public int? IdleSeconds { get; set; }
         public List<EndSessionTaskDto>? Tasks { get; set; }
-        public int? FocusScore { get; set; }
-        public int? FatigueScore { get; set; }
     }
 }

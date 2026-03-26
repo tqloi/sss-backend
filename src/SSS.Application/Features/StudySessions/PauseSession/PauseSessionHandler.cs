@@ -25,7 +25,6 @@ namespace SSS.Application.Features.StudySessions.PauseSession
 
             // Calculate active seconds so far (total elapsed - total pause time)
             var totalElapsed = (int)(DateTime.UtcNow - session.StartAt).TotalSeconds;
-            var activeSeconds = totalElapsed - session.PauseSeconds;
 
             await context.SaveChangesAsync(ct);
 
@@ -38,7 +37,6 @@ namespace SSS.Application.Features.StudySessions.PauseSession
                     SessionId = session.Id,
                     Status = session.Status.ToString(),
                     PauseCount = session.PauseCount,
-                    ActiveSeconds = activeSeconds,
                     PauseSeconds = session.PauseSeconds
                 }
             };
