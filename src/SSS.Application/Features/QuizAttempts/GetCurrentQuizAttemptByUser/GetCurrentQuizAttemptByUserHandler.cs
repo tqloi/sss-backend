@@ -13,6 +13,7 @@ namespace SSS.Application.Features.QuizAttempts.GetCurrentQuizAttemptByUser
             GetCurrentQuizAttemptByUserQuery req, 
             CancellationToken ct)
         {
+
             var studyPlanModule = await db.StudyPlanModules
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == req.ModuleId, ct);

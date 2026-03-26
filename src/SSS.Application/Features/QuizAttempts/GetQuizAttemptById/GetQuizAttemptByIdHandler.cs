@@ -15,7 +15,7 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizAttemptById
     {
         public async Task<GetQuizAttemptByIdResult> Handle(GetQuizAttemptByIdQuery req, CancellationToken cancellationToken)
         {          
-            var quizAttempt = await db.QuizAttempts.FirstOrDefaultAsync(q => q.Id == req.Id);
+            var quizAttempt = await db.QuizAttempts.FirstOrDefaultAsync(q => q.Id == req.Id, cancellationToken);
             if (quizAttempt is null)
             {
                 throw new KeyNotFoundException($"Quiz attempt with id {req.Id} not found.");
