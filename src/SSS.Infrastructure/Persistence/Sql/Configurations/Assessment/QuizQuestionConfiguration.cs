@@ -20,6 +20,11 @@ public class QuizQuestionConfiguration : IEntityTypeConfiguration<QuizQuestion>
             .HasColumnType("bigint")
             .IsRequired();
 
+        builder.Property(e => e.Level)
+            .HasColumnType("varchar(50)")
+            .HasMaxLength(50)
+            .IsRequired();
+
         builder.Property(e => e.QuestionKey)
             .HasMaxLength(100)
             .IsRequired();

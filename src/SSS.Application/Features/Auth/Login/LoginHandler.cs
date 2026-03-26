@@ -29,6 +29,9 @@ namespace SSS.Application.Features.Auth.Login
             if (user is null)
                 throw new UnauthorizedAccessException("User does not exist");
 
+            if (user.IsActive == false)
+                throw new UnauthorizedAccessException("Account is blocked");
+
             if (!await _userManager.IsEmailConfirmedAsync(user))
                 throw new UnauthorizedAccessException("Email not confirmed");
 

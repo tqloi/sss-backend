@@ -14,6 +14,8 @@ namespace SSS.Application.Features.QuizQuestions.Common
 
         public long QuizId { get; set; }
 
+        public string Level { get; set; } = null!;
+
         public string QuestionKey { get; set; } = null!;
 
         public string Prompt { get; set; } = null!;

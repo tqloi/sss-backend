@@ -6,6 +6,7 @@ public class QuizQuestion
 {
     public long Id { get; set; }
     public long QuizId { get; set; }
+    public string Level { get; set; } = null!;
     public string QuestionKey { get; set; } = null!;
     public string Prompt { get; set; } = null!;
     public QuizQuestionType Type { get; set; } = QuizQuestionType.Scale;

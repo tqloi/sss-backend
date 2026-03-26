@@ -29,16 +29,25 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.Property(e => e.TotalScore)
             .HasColumnType("decimal(6,2)");
 
+        builder.Property(e => e.Level)
+            .HasColumnType("varchar(50)")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(e => e.PassingScore)
+            .HasColumnType("decimal(6,2)")
+            .IsRequired();
+
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)")
             .IsRequired();
 
         builder.HasOne(e => e.RoadmapNode)
-            .WithOne(m => m.Quiz)
-            .HasForeignKey<Quiz>(e => e.RoadmapNodeId)
+            .WithMany(m => m.Quizzes)
+            .HasForeignKey(e => e.RoadmapNodeId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(e => e.RoadmapNodeId).IsUnique();
+        builder.HasIndex(e => e.RoadmapNodeId);
     }
 }
