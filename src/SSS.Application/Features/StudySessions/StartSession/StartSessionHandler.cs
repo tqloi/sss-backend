@@ -13,13 +13,14 @@ namespace SSS.Application.Features.StudySessions.StartSession
     {
         public async Task<StartSessionResult> Handle(StartSessionCommand req, CancellationToken ct)
         {
-            // Business rule: user không được có session đang InProgress/Paused
+            // Business rule: user không được có session đang InProgress/Paused trong cùng một roadmap (StudyPlan)
             var hasActive = await context.StudySessions.AnyAsync(
                 s => s.UserId == req.UserId &&
+                     s.StudyPlanId == req.StudyPlanId &&
                      (s.Status == SessionStatus.InProgress || s.Status == SessionStatus.Paused), ct);
 
             if (hasActive)
-                throw new ConflictException("User already has an active session. Please end it before starting a new one.");
+                throw new ConflictException("You already have an active study session for this roadmap. Please end it before starting a new one.");
 
             // Generate ID
             var sessionId = ObjectId.GenerateNewId();

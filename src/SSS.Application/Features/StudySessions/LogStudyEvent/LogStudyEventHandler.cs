@@ -22,9 +22,20 @@ namespace SSS.Application.Features.StudySessions.LogStudyEvent
             if (!sessionExists)
                 throw new NotFoundException($"Session {req.SessionId} not found");
 
-            // Parse event type
-            if (!Enum.TryParse<SessionEventType>(req.EventType, true, out var eventType))
-                throw new ConflictException($"Invalid event type: {req.EventType}");
+            // Parse event type — dùng StudyEventType: View, Click, Start, Submit, Complete
+            if (!Enum.TryParse<StudyEventType>(req.EventType, true, out var eventType))
+                throw new ConflictException(
+                    $"Invalid event type: '{req.EventType}'. " +
+                    $"Valid values: {string.Join(", ", Enum.GetNames<StudyEventType>())}");
+
+            // Parse optional fields với giá trị mặc định
+            var eventCategory = Enum.TryParse<StudyEventCategory>(req.EventCategory, true, out var cat)
+                ? cat
+                : StudyEventCategory.Learning;
+
+            var contentMode = Enum.TryParse<ContentMode>(req.ContentMode, true, out var mode)
+                ? mode
+                : ContentMode.Text;
 
             // Convert metadata from JsonElement to native .NET types for MongoDB serialization
             var payload = ConvertMetadata(req.Metadata);
@@ -32,9 +43,9 @@ namespace SSS.Application.Features.StudySessions.LogStudyEvent
             var studyEvent = new StudyEvent
             {
                 SessionId = req.SessionId,
-                EventType = (StudyEventType)(int)eventType,
-                EventCategory = StudyEventCategory.Learning,
-                ContentMode = ContentMode.Text,
+                EventType = eventType,
+                EventCategory = eventCategory,
+                ContentMode = contentMode,
                 EventTimestamp = DateTime.UtcNow,
                 Payload = payload,
                 DeviceInfo = new Dictionary<string, object>()
