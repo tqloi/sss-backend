@@ -10,6 +10,8 @@ namespace SSS.Web.Endpoints.StudySessions.LogStudyEvent
         public string Id { get; set; } = null!;
         public string EventType { get; set; } = null!;
         public long? TaskId { get; set; }
+        public string? UserId { get; set; }
+        public string? StudyPlanModuleId { get; set; }
         public Dictionary<string, object>? Metadata { get; set; }
     }
 
@@ -25,7 +27,7 @@ namespace SSS.Web.Endpoints.StudySessions.LogStudyEvent
 
         public override async Task HandleAsync(LogStudyEventRequest req, CancellationToken ct)
         {
-            var userId = httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = req.UserId ?? httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var command = new LogStudyEventCommand
             {
@@ -33,6 +35,7 @@ namespace SSS.Web.Endpoints.StudySessions.LogStudyEvent
                 SessionId = req.Id,
                 EventType = req.EventType,
                 TaskId = req.TaskId,
+                StudyPlanModuleId = req.StudyPlanModuleId,
                 Metadata = req.Metadata
             };
 

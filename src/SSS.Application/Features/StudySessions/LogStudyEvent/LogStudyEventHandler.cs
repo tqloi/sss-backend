@@ -43,6 +43,8 @@ namespace SSS.Application.Features.StudySessions.LogStudyEvent
             var studyEvent = new StudyEvent
             {
                 SessionId = req.SessionId,
+                UserId = req.UserId,
+                StudyPlanModuleId = req.StudyPlanModuleId,
                 EventType = eventType,
                 EventCategory = eventCategory,
                 ContentMode = contentMode,

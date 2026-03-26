@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
@@ -32,6 +32,9 @@ namespace SSS.Infrastructure.Persistence.Mongo
 
             // Mongo Repositories
             services.AddScoped<IStudyEventRepository, StudyEventRepository>();
+            services.AddScoped<IPostHogEventRepository, PostHogEventRepository>();
+
+            services.AddHostedService<MongoIndexCreationService>();
 
             return services;
         }

@@ -1,4 +1,4 @@
-﻿using MongoDB.Bson;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using SSS.Domain.Enums;
 
@@ -8,6 +8,8 @@ namespace SSS.Infrastructure.Persistence.Mongo.Documents
     public class StudyEventDocument : MongoDocument
     {
         public string SessionId { get; set; } = null!;
+        public string UserId { get; set; } = null!;
+        public string? StudyPlanModuleId { get; set; }
 
         [BsonRepresentation(BsonType.String)]
         public StudyEventType EventType { get; set; } = StudyEventType.Start;

@@ -48,7 +48,7 @@ namespace SSS.Application.Features.StudyPlans.StudyPlans.CreateStudyPlan
                 Modules = sortedNodes.Select((node, index) => new StudyPlanModule
                 {
                     RoadmapNodeId = node.Id,
-                    Status = ModuleStatus.Active
+                    Status = index == 0 ? ModuleStatus.Active : ModuleStatus.Locked,
                 }).ToList()
             };
 
