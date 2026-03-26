@@ -14,5 +14,6 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
         public string? StartDate { get; set; }
         public string? EndDate { get; set; }
         public string? Status { get; set; }
+        public long? PlanId { get; set; }
     }
 }

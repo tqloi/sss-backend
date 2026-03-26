@@ -16,7 +16,6 @@ namespace SSS.Application.Features.StudySessions.Common
         public string SessionId { get; set; } = null!;
         public string Status { get; set; } = null!;
         public int PauseCount { get; set; }
-        public int ActiveSeconds { get; set; }
         public int PauseSeconds { get; set; }
     }
 
@@ -33,7 +32,6 @@ namespace SSS.Application.Features.StudySessions.Common
         public int TotalDurationMinutes { get; set; }
         public int TasksCompleted { get; set; }
         public int TotalTasks { get; set; }
-        public int? FocusScore { get; set; }
         public int XpEarned { get; set; }
     }
 
@@ -51,13 +49,9 @@ namespace SSS.Application.Features.StudySessions.Common
         public string? EndedReason { get; set; }
         public int? PlannedDurationSeconds { get; set; }
         public int? ActualDurationSeconds { get; set; }
-        public int? ActiveSeconds { get; set; }
-        public int? IdleSeconds { get; set; }
         public int PauseCount { get; set; }
         public int PauseSeconds { get; set; }
-        public int? FocusScore { get; set; }
         public int? SelfRating { get; set; }
-        public int? FatigueScore { get; set; }
         public string? Timezone { get; set; }
         public DateTime? CreatedAt { get; set; }
         public SessionNodeDto? Node { get; set; }
@@ -75,6 +69,7 @@ namespace SSS.Application.Features.StudySessions.Common
         public long? NodeId { get; set; }
         public string? NodeTitle { get; set; }
         public string? PlanTitle { get; set; }
+        public IEnumerable<SessionTaskDto> Tasks { get; set; } = [];
     }
 
     // ─── Session History Item ───

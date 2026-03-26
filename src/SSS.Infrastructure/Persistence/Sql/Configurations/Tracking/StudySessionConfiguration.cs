@@ -53,25 +53,10 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.ActualDurationSeconds)
             .HasColumnType("int");
 
-        builder.Property(e => e.ActiveSeconds)
-            .HasColumnType("int");
-
-        builder.Property(e => e.IdleSeconds)
-            .HasColumnType("int");
-
         builder.Property(e => e.PauseCount)
             .HasColumnType("int");
 
         builder.Property(e => e.PauseSeconds)
-            .HasColumnType("int");
-
-        builder.Property(e => e.FocusScore)
-            .HasColumnType("int");
-
-        builder.Property(e => e.ConfidenceActiveLearning)
-            .HasColumnType("decimal(5,4)");
-
-        builder.Property(e => e.FatigueScore)
             .HasColumnType("int");
 
         builder.Property(e => e.SelfRating)

@@ -1415,14 +1415,8 @@ namespace SSS.Infrastructure.Migrations
                         .HasColumnType("char(24)")
                         .IsFixedLength();
 
-                    b.Property<int?>("ActiveSeconds")
-                        .HasColumnType("int");
-
                     b.Property<int?>("ActualDurationSeconds")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("ConfidenceActiveLearning")
-                        .HasColumnType("decimal(5,4)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -1433,15 +1427,6 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<string>("EndedReason")
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
-
-                    b.Property<int?>("FatigueScore")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("FocusScore")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("IdleSeconds")
-                        .HasColumnType("int");
 
                     b.Property<string>("LocalTimeBlock")
                         .HasMaxLength(20)

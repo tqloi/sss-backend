@@ -7,5 +7,6 @@ namespace SSS.Application.Features.StudySessions.GetActiveSession
     {
         [JsonIgnore]
         public string UserId { get; set; } = null!;
+        public long? PlanId { get; set; }
     }
 }

@@ -13,16 +13,17 @@ namespace SSS.Application.Features.StudySessions.StartSession
     {
         public async Task<StartSessionResult> Handle(StartSessionCommand req, CancellationToken ct)
         {
-            // Business rule: user không được có session đang InProgress/Paused
+            // Business rule: user không được có session đang InProgress/Paused trong cùng một roadmap (StudyPlan)
             var hasActive = await context.StudySessions.AnyAsync(
                 s => s.UserId == req.UserId &&
+                     s.StudyPlanId == req.StudyPlanId &&
                      (s.Status == SessionStatus.InProgress || s.Status == SessionStatus.Paused), ct);
 
             if (hasActive)
-                throw new ConflictException("User already has an active session. Please end it before starting a new one.");
+                throw new ConflictException("You already have an active study session for this roadmap. Please end it before starting a new one.");
 
             // Generate ID
-            var sessionId = ObjectId.GenerateNewId();
+            var sessionId = StudySessionHelpers.GenerateSessionId();
 
             var session = new StudySession
             {
@@ -52,8 +53,7 @@ namespace SSS.Application.Features.StudySessions.StartSession
                         Status = "INCOMPLETE"
                     });
                 }
-            }       
-            
+            }
 
             session.SessionTasks = sessionTasks;
             session.TotalTasks = sessionTasks.Count;
@@ -109,22 +109,6 @@ namespace SSS.Application.Features.StudySessions.StartSession
                     Tasks = tasks
                 }
             };
-        }
-    }
-
-    // Simple ObjectId generator (24-char hex string)
-    internal static class ObjectId
-    {
-        public static string GenerateNewId()
-        {
-            var timestamp = BitConverter.GetBytes((int)(DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
-            if (BitConverter.IsLittleEndian) Array.Reverse(timestamp);
-            var random = new byte[8];
-            Random.Shared.NextBytes(random);
-            var bytes = new byte[12];
-            Array.Copy(timestamp, 0, bytes, 0, 4);
-            Array.Copy(random, 0, bytes, 4, 8);
-            return Convert.ToHexString(bytes).ToLowerInvariant();
         }
     }
 }
