@@ -42,7 +42,7 @@ namespace SSS.Domain.Enums
 
     // Quiz
     public enum QuizQuestionType { SingleChoice, MultipleChoice, Scale, ShortAnswer }
-    public enum QuizAttemptStatus { InProgress, Submitted, Graded }
+    public enum QuizAttemptStatus { InProgress, Passed, Failed }
 
     // Roadmap / Content
     public enum NodeDifficulty { Beginner, Intermediate, Advanced }

@@ -1,9 +1,7 @@
-﻿namespace SSS.Application.Features.QuizAnswers.Common
+namespace SSS.Application.Features.QuizAttempts.Common
 {
-    public class CreateQuizAnswerDto
+    public class SubmitQuizAttemptAnswerDto
     {
-        
-        public long AttemptId { get; set; }
         public long QuestionId { get; set; }
         public long? OptionId { get; set; }
         public string? TextValue { get; set; }
