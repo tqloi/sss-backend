@@ -16,6 +16,11 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
 
                 .Where(s => s.UserId == req.UserId);
 
+            if (req.PlanId.HasValue)
+            {
+                query = query.Where(s => s.StudyPlanId == req.PlanId.Value);
+            }
+
             // Filter by status
             if (!string.IsNullOrEmpty(req.Status) && Enum.TryParse<SessionStatus>(req.Status, true, out var status))
                 query = query.Where(s => s.Status == status);
@@ -42,12 +47,16 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
                 {
                     Id = s.Id,
                     Date = s.StartAt.ToString("yyyy-MM-dd"),
-                    NodeTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Title : null,
-                    PlanTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Roadmap.Title : null,
+                    NodeTitle = s.SessionTasks.FirstOrDefault() != null
+                        ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Title
+                        : null,
+                    PlanTitle = s.SessionTasks.FirstOrDefault() != null
+                        ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Roadmap.Title
+                        : null,
                     DurationMinutes = (s.ActualDurationSeconds ?? 0) / 60,
                     TasksCompleted = s.TasksCompletedCount ?? 0,
                     TotalTasks = s.TotalTasks ?? 0,
-                    XpEarned = ((s.ActiveSeconds ?? 0) / 60) * 10 + (s.TasksCompletedCount ?? 0) * 25,
+                    XpEarned = ((s.ActualDurationSeconds ?? 0) / 60) * 10 + (s.TasksCompletedCount ?? 0) * 25,
                     Rating = s.SelfRating,
                     Status = s.Status.ToString()
                 })

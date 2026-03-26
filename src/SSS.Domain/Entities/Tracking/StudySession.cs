@@ -19,13 +19,8 @@ public class StudySession
     public int? TotalTasks { get; set; }
     public int? PlannedDurationSeconds { get; set; }
     public int? ActualDurationSeconds { get; set; }
-    public int? ActiveSeconds { get; set; }
-    public int? IdleSeconds { get; set; }
     public int PauseCount { get; set; }
     public int PauseSeconds { get; set; }
-    public int? FocusScore { get; set; }
-    public decimal? ConfidenceActiveLearning { get; set; }
-    public int? FatigueScore { get; set; }
     public int? SelfRating { get; set; }
     public LocalTimeBlock? LocalTimeBlock { get; set; }
     public string? Timezone { get; set; }

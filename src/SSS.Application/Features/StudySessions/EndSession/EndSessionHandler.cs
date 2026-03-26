@@ -2,13 +2,12 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Exceptions;
-using SSS.Application.Abstractions.Caching;
 using SSS.Application.Features.StudySessions.Common;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.StudySessions.EndSession
 {
-    public class EndSessionHandler(IAppDbContext context, ICacheService cacheService)
+    public class EndSessionHandler(IAppDbContext context)
         : IRequestHandler<EndSessionCommand, EndSessionResult>
     {
         public async Task<EndSessionResult> Handle(EndSessionCommand req, CancellationToken ct)
@@ -25,9 +24,6 @@ namespace SSS.Application.Features.StudySessions.EndSession
             session.Status = SessionStatus.Completed;
             session.EndAt = DateTime.UtcNow;
             session.SelfRating = req.SelfRating;
-            session.FocusScore = req.FocusScore;
-            session.FatigueScore = req.FatigueScore;
-            session.IdleSeconds = req.IdleSeconds;
 
             // Parse ended reason
             if (Enum.TryParse<SessionEndedReason>(req.EndedReason, true, out var reason))
@@ -38,7 +34,6 @@ namespace SSS.Application.Features.StudySessions.EndSession
             // Calculate durations
             var totalSeconds = (int)(session.EndAt.Value - session.StartAt).TotalSeconds;
             session.ActualDurationSeconds = req.ActualDurationSeconds ?? totalSeconds;
-            session.ActiveSeconds = req.ActiveSeconds ?? (totalSeconds - session.PauseSeconds - (req.IdleSeconds ?? 0));
 
             // If session was paused when ended, accumulate remaining pause time
             if (session.PausedAt.HasValue)
@@ -86,7 +81,7 @@ namespace SSS.Application.Features.StudySessions.EndSession
             session.TotalTasks = totalTasks; // Ensures it's explicitly set if it was missed
 
             // Calculate XP: floor(seconds/60) * 10 + tasksCompleted * 25
-            var activeMinutes = (session.ActiveSeconds ?? 0) / 60;
+            var activeMinutes = (session.ActualDurationSeconds ?? 0) / 60;
             var xpEarned = activeMinutes * 10 + tasksCompletedCount * 25;
 
             await context.SaveChangesAsync(ct);
@@ -101,7 +96,6 @@ namespace SSS.Application.Features.StudySessions.EndSession
                     TotalDurationMinutes = (session.ActualDurationSeconds ?? 0) / 60,
                     TasksCompleted = tasksCompletedCount,
                     TotalTasks = totalTasks,
-                    FocusScore = session.FocusScore,
                     XpEarned = xpEarned
                 }
             };

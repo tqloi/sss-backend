@@ -13,11 +13,7 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
         public int? SelfRating { get; set; }
         public string? Notes { get; set; }
         public int? ActualDurationSeconds { get; set; }
-        public int? ActiveSeconds { get; set; }
-        public int? IdleSeconds { get; set; }
         public List<EndSessionTaskRequest>? Tasks { get; set; }
-        public int? FocusScore { get; set; }
-        public int? FatigueScore { get; set; }
     }
 
     public class EndSessionTaskRequest
@@ -48,15 +44,11 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
                 SelfRating = req.SelfRating,
                 Notes = req.Notes,
                 ActualDurationSeconds = req.ActualDurationSeconds,
-                ActiveSeconds = req.ActiveSeconds,
-                IdleSeconds = req.IdleSeconds,
                 Tasks = req.Tasks?.Select(t => new EndSessionTaskDto
                 {
                     TaskId = t.TaskId,
                     EndTime = t.EndTime
-                }).ToList(),
-                FocusScore = req.FocusScore,
-                FatigueScore = req.FatigueScore
+                }).ToList()
             };
 
             var result = await sender.Send(command, ct);

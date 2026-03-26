@@ -14,6 +14,7 @@ namespace SSS.Web.Endpoints.StudySessions.GetSessionHistory
         [QueryParam] public string? StartDate { get; set; }
         [QueryParam] public string? EndDate { get; set; }
         [QueryParam] public string? Status { get; set; }
+        [QueryParam] public long? PlanId { get; set; }
     }
 
     public class GetSessionHistoryEndpoint(ISender sender, IHttpContextAccessor httpContext)
@@ -39,7 +40,8 @@ namespace SSS.Web.Endpoints.StudySessions.GetSessionHistory
                 SortOrder = req.SortOrder,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                Status = req.Status
+                Status = req.Status,
+                PlanId = req.PlanId
             };
 
             var result = await sender.Send(query, ct);

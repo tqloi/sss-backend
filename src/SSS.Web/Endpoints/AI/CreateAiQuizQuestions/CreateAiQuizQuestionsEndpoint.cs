@@ -10,8 +10,6 @@ namespace SSS.Web.Endpoints.AI.CreateAiQuizQuestions
         public override void Configure()
         {
             Post("/api/ai/create-quiz-questions");
-            Description(d => d.WithTags("AI"));
-
         }
 
         public override async Task HandleAsync(CreateAiQuizQuestionsCommand req, CancellationToken ct)
