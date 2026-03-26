@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace SSS.Application.Features.QuizAttempts.Common
 {
     public class CreateQuizAttemptDto
     {
+        public long StudyPlanModuleId { get; set; }
 
+        public string Level { get; set; } = null!;
+
+        [JsonIgnore]
+        public string UserId { get; set; } = null!;
     }
 }
