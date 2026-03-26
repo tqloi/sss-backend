@@ -37,6 +37,20 @@ namespace SSS.Application.Features.QuizAttempts.CreateQuizAttempt
                     $"No quiz found for module id {dto.StudyPlanModuleId} and level {normalizedLevel}.");
             }
 
+            var hasActiveOrPassedAttempt = await db.QuizAttempts
+                .AsNoTracking()
+                .AnyAsync(a =>
+                    a.QuizId == quiz.Id
+                    && a.UserId == dto.UserId
+                    && (a.Status == Domain.Enums.QuizAttemptStatus.InProgress
+                        || a.Status == Domain.Enums.QuizAttemptStatus.Passed), ct);
+
+            if (hasActiveOrPassedAttempt)
+            {
+                throw new InvalidOperationException(
+                    "A quiz attempt for this module and level already exists with status InProgress or Passed.");
+            }
+
             var quizAttempt = new QuizAttempt
             {
                 QuizId = quiz.Id,
@@ -53,26 +67,22 @@ namespace SSS.Application.Features.QuizAttempts.CreateQuizAttempt
             var randomQuestions = quiz.Questions
                 .OrderBy(_ => Guid.NewGuid())
                 .Take(10)
-                .Select(question => new CreateQuizAttemptQuestionDto
+                .ToList();
+
+            var quizAnswers = randomQuestions
+                .Select(question => new QuizAnswer
                 {
+                    AttemptId = quizAttempt.Id,
                     QuestionId = question.Id,
-                    Prompt = question.Prompt,
-                    Type = question.Type,
-                    OrderNo = question.OrderNo,
-                    Options = question.Options
-                        .OrderBy(o => o.OrderNo)
-                        .Select(option => new CreateQuizAttemptQuestionOptionDto
-                        {
-                            OptionId = option.Id,
-                            ValueKey = option.ValueKey,
-                            DisplayText = option.DisplayText,
-                            OrderNo = option.OrderNo
-                        })
-                        .ToList()
+                    OptionId = null,
+                    AnsweredAt = DateTime.UtcNow
                 })
                 .ToList();
 
-            return new CreateQuizAttemptResult(resultDto, randomQuestions);
+            await db.QuizAnswers.AddRangeAsync(quizAnswers, ct);
+            await db.SaveChangesAsync(ct);
+
+            return new CreateQuizAttemptResult(true, "Quiz attempt created successfully", resultDto);
         }
 
         private static string NormalizeLevel(string level)

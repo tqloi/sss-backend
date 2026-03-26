@@ -14,16 +14,45 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
         public async Task<SubmitQuizAttemptResult> Handle(SubmitQuizAttemptCommand req, CancellationToken ct)
         {
             var dto = req.SubmitQuizAttempt;
+            var submittedQuestionIds = dto.Answers
+                .Select(a => a.QuestionId)
+                .Distinct()
+                .ToList();
 
             var quizAttempt = await db.QuizAttempts
-                .Include(qa => qa.Quiz)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.Options)
                 .FirstOrDefaultAsync(qa => qa.Id == dto.Id, ct);
 
             if (quizAttempt is null)
             {
                 throw new KeyNotFoundException($"Quiz attempt with id {dto.Id} not found.");
+            }
+
+            var quiz = await db.Quizzes
+                .AsNoTracking()
+                .Select(q => new { q.Id, q.PassingScore })
+                .FirstOrDefaultAsync(q => q.Id == quizAttempt.QuizId, ct);
+
+            if (quiz is null)
+            {
+                throw new KeyNotFoundException($"Quiz with id {quizAttempt.QuizId} not found.");
+            }
+
+            var attemptQuestions = await db.QuizQuestions
+                .AsNoTracking()
+                .Where(q => q.QuizId == quizAttempt.QuizId && submittedQuestionIds.Contains(q.Id))
+                .Include(q => q.Options)
+                .OrderBy(q => q.OrderNo)
+                .ToListAsync(ct);
+
+            if (attemptQuestions.Count != submittedQuestionIds.Count)
+            {
+                var loadedQuestionIds = attemptQuestions.Select(q => q.Id).ToHashSet();
+                var invalidQuestionIds = submittedQuestionIds
+                    .Where(questionId => !loadedQuestionIds.Contains(questionId))
+                    .ToList();
+
+                throw new InvalidOperationException(
+                    $"Submitted questions do not belong to quiz attempt: {string.Join(", ", invalidQuestionIds)}");
             }
 
             decimal totalScore = 0;
@@ -33,22 +62,14 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                 .GroupBy(a => a.QuestionId)
                 .ToDictionary(g => g.Key, g => g.Last());
 
-            var existingAnswers = await db.QuizAnswers
+            await db.QuizAnswers
                 .Where(a => a.AttemptId == quizAttempt.Id)
-                .ToListAsync(ct);
-
-            if (existingAnswers.Count > 0)
-            {
-                db.QuizAnswers.RemoveRange(existingAnswers);
-            }
+                .ExecuteDeleteAsync(ct);
 
             var questionReviews = new List<QuizAttemptQuestionReviewDto>();
+            var answerEntities = new List<QuizAnswer>(attemptQuestions.Count);
 
-            var quizQuestions = quizAttempt.Quiz.Questions
-                .OrderBy(q => q.OrderNo)
-                .ToList();
-
-            foreach (var question in quizQuestions)
+            foreach (var question in attemptQuestions)
             {
                 submittedAnswers.TryGetValue(question.Id, out var answerDto);
 
@@ -82,7 +103,7 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                             ? selectedOptionScore : 0m
                     };
 
-                    await db.QuizAnswers.AddAsync(quizAnswer, ct);
+                            answerEntities.Add(quizAnswer);
                 }
 
                 questionReviews.Add(new QuizAttemptQuestionReviewDto
@@ -97,13 +118,17 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                 });
             }
 
+            if (answerEntities.Count > 0)
+            {
+                await db.QuizAnswers.AddRangeAsync(answerEntities, ct);
+            }
+
             quizAttempt.SubmittedAt = submittedAt;
             quizAttempt.Score = totalScore;
-            quizAttempt.Status = totalScore >= quizAttempt.Quiz.PassingScore
+            quizAttempt.Status = totalScore >= quiz.PassingScore
                 ? QuizAttemptStatus.Passed
                 : QuizAttemptStatus.Failed;
 
-            db.QuizAttempts.Update(quizAttempt);
             await db.SaveChangesAsync(ct);
 
             var resultDto = mapper.Map<QuizAttemptDto>(quizAttempt);
