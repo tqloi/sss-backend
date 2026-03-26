@@ -11,7 +11,7 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
     {
         public async Task<GetSessionStatisticsResult> Handle(GetSessionStatisticsQuery req, CancellationToken ct)
         {
-            var query = context.StudySessions
+            var baseQuery = context.StudySessions
                 .AsNoTracking()
                 .Where(s => s.UserId == req.UserId);
 
@@ -25,9 +25,19 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
             };
 
             if (periodStart.HasValue)
-                query = query.Where(s => s.StartAt >= periodStart.Value);
+                baseQuery = baseQuery.Where(s => s.StartAt >= periodStart.Value);
 
-            var sessions = await query.ToListAsync(ct);
+            // Project only needed fields — avoid loading full entity graph
+            var sessions = await baseQuery
+                .Select(s => new
+                {
+                    s.Status,
+                    s.StartAt,
+                    s.ActualDurationSeconds,
+                    s.SelfRating,
+                    s.TasksCompletedCount
+                })
+                .ToListAsync(ct);
 
             var completedSessions = sessions.Where(s => s.Status == SessionStatus.Completed).ToList();
             var totalMinutes = completedSessions.Sum(s => (s.ActualDurationSeconds ?? 0)) / 60;
@@ -41,8 +51,15 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                 .Where(s => s.Status == SessionStatus.Completed)
                 .Sum(s => (s.ActualDurationSeconds ?? 0)) / 60;
 
-            // Streak calculation (consecutive days with completed sessions)
-            var currentStreak = CalculateStreak(completedSessions, now);
+            // Streak calculations
+            var completedDates = completedSessions
+                .Select(s => s.StartAt.Date)
+                .Distinct()
+                .OrderByDescending(d => d)
+                .ToList();
+
+            var currentStreak = CalculateCurrentStreak(completedDates, now);
+            var longestStreak = CalculateLongestStreak(completedDates);
 
             // Average rating
             var ratedSessions = completedSessions.Where(s => s.SelfRating.HasValue).ToList();
@@ -63,7 +80,7 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                     AverageSessionLength = avgLength,
                     CompletionRate = Math.Round(completionRate, 2),
                     CurrentStreak = currentStreak,
-                    LongestStreak = currentStreak, // simplified
+                    LongestStreak = longestStreak,
                     SessionsThisWeek = thisWeekSessions.Count,
                     MinutesThisWeek = minutesThisWeek,
                     TotalXpEarned = totalXp,
@@ -72,20 +89,14 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
             };
         }
 
-        private static int CalculateStreak(List<Domain.Entities.Tracking.StudySession> sessions, DateTime now)
+        private static int CalculateCurrentStreak(List<DateTime> orderedDates, DateTime now)
         {
-            if (sessions.Count == 0) return 0;
-
-            var dates = sessions
-                .Select(s => s.StartAt.Date)
-                .Distinct()
-                .OrderByDescending(d => d)
-                .ToList();
+            if (orderedDates.Count == 0) return 0;
 
             var streak = 0;
             var checkDate = now.Date;
 
-            foreach (var date in dates)
+            foreach (var date in orderedDates)
             {
                 if (date == checkDate || date == checkDate.AddDays(-1))
                 {
@@ -96,6 +107,32 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
             }
 
             return streak;
+        }
+
+        private static int CalculateLongestStreak(List<DateTime> orderedDates)
+        {
+            if (orderedDates.Count == 0) return 0;
+
+            // orderedDates is descending, reverse for ascending traversal
+            var ascending = orderedDates.AsEnumerable().Reverse().ToList();
+
+            var longest = 1;
+            var current = 1;
+
+            for (var i = 1; i < ascending.Count; i++)
+            {
+                if ((ascending[i] - ascending[i - 1]).Days == 1)
+                {
+                    current++;
+                    if (current > longest) longest = current;
+                }
+                else
+                {
+                    current = 1;
+                }
+            }
+
+            return longest;
         }
     }
 }
