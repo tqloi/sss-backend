@@ -12,5 +12,7 @@ namespace SSS.Application.Features.Quizzes.Common
         public string? Title { get; set; }
         public string? Description { get; set; }
         public decimal? TotalScore { get; set; }
+        public string Level { get; set; } = null!;
+        public decimal PassingScore { get; set; }
     }
 }

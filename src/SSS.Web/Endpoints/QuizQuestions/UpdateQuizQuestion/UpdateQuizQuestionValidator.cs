@@ -15,6 +15,10 @@ namespace SSS.Web.Endpoints.QuizQuestions.UpdateQuizQuestion
                 .NotEmpty().WithMessage("QuestionKey is required")
                 .MaximumLength(100).WithMessage("QuestionKey cannot exceed 100 characters.");
 
+            RuleFor(x => x.UpdateQuizQuestionDto.Level)
+                .NotEmpty().WithMessage("Level is required")
+                .MaximumLength(50).WithMessage("Level cannot exceed 50 characters.");
+
             RuleFor(x => x.UpdateQuizQuestionDto.Prompt)
                 .NotEmpty().WithMessage("Prompt is required");
 

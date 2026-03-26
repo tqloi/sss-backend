@@ -19,7 +19,8 @@ namespace SSS.Web.Endpoints.AI.CreateAiAddBehaviorDb
             var command = new CreateAiAddBehaviorDbCommand
             {
                 UserId = userId!.Value,
-                StudyPlanId = req.StudyPlanId
+                StudyplanId = req.StudyplanId,
+                StudyplanmoduleId = req.StudyplanmoduleId
             };
             var response = await sender.Send(command, ct);
             await SendAsync(response, cancellation: ct);

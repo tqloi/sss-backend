@@ -30,13 +30,13 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,"",
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
         }
-        public async Task IngestBehaviorAsync(string studyplanId, string userId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
+        public async Task IngestBehaviorAsync(string studyplanId, string userId, string studyplanmoduleId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
         {
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
@@ -44,52 +44,47 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId, studyplanmoduleId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
         }
-        public async Task<string> GenerateBehaviorResultAsync(UserLearningBehaviorDto behavior, CancellationToken ct = default)
+        public async Task<string> GenerateBehaviorResultAsync(string studyBehaviorContextJson, CancellationToken ct = default)
         {
             var systemPrompt = """
-You are an AI system that converts structured learning profile data into a single, concise, semantically rich English text.
+You are an AI system that analyzes study execution behavior from StudySession, SessionTask, and TaskItem data.
 
 Your task:
-- Transform the provided UserLearningBehavior data into ONE coherent paragraph.
-- Describe the user's learning behavior and study pattern based strictly on the provided fields.
-- Do NOT output JSON, markdown, or bullet points.
-- Output plain natural language text only.
-- Preserve all important signals related to learning goals, level, deadline, availability, learning style, and preferences.
-- Keep the tone factual, neutral, and embedding-friendly.
+- Generate ONE concise paragraph in English.
+- Evaluate whether the user tends to complete tasks on time or late.
+- Mention completion consistency, missed/skipped tasks, and schedule discipline.
+- Base conclusions strictly on provided data only.
 
 Important rules:
-- Do NOT invent, assume, or infer information not present in the input.
-- Do NOT output JSON, bullet points, or markdown.
+- Do NOT invent any facts.
+- Do NOT output JSON, markdown, or bullet points.
 - Output plain natural language text only.
-- Keep the tone factual, neutral, and descriptive.
-- Preserve all meaningful learning signals such as:
-  - study availability
-  - preferred study time
-  - session duration
-  - learning style tendencies (visual, reading, practice)
+- Keep tone factual, neutral, embedding-friendly.
 
-The output will be stored in a vector database (Qdrant) and used later to generate personalized learning tasks in a roadmap.
-Therefore the text should be semantically clear, compact, and embedding-friendly.
+On-time interpretation guidance:
+- A task is on-time if completion/end time is on or before scheduled date.
+- If only date-level signals are available, make a conservative statement.
+- If data is insufficient, explicitly say evidence is limited.
+
+The output will be stored in Qdrant for later retrieval; keep it compact and semantically rich.
 """;
             var userPromptWithContext = $"""
-Convert the following UserLearningBehavior data into a concise description of the user's study behavior.
-UserLearningBehavior:
-- AvailableDays: {behavior.AvailableDaysJson}
-- PreferredTimeBlocks: {behavior.PreferredTimeBlocksJson}
-- SessionLengthPrefMinutes: {behavior.SessionLengthPrefMinutes}
-- LearningStyleWeights:
-  - Visual: {behavior.WVisual}
-  - Reading: {behavior.WReading}
-  - Practice: {behavior.WPractice}
+Analyze the following study execution dataset and generate one paragraph behavior summary:
 
-  Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
-Write a single paragraph describing the user's study availability, preferred learning time, typical session length, and dominant learning styles.
+StudyExecutionData:
+{studyBehaviorContextJson}
+
+Focus on:
+- On-time completion trend
+- Late completion tendency
+- Completion vs skip/incomplete balance
+- Overall schedule discipline
 """;
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
@@ -400,7 +395,7 @@ REQUIRED JSON SHAPE
                 .Select(h => h.Text)
                 );
 
-            Console.WriteLine(context);
+
 
             return context;
         }
@@ -414,7 +409,7 @@ REQUIRED JSON SHAPE
         {
             // 1. Build context từ vector DB
             var context = await BuildStudyPlanContextAsync(userId, studyPlanId, ct);
-
+            Console.WriteLine(context);
             var currrentDate = DateTime.UtcNow;
             var dayName = currrentDate.DayOfWeek.ToString();
 
@@ -437,6 +432,7 @@ CRITICAL RULES (MUST FOLLOW)
 5. ALL tasks MUST use the SAME roadmapNodeId provided
 6. Do NOT infer or expand to other roadmap nodes
 7. Decisions MUST be driven by the user's survey context
+8. If behavior signals are present in context, adapt plan pacing and duration accordingly
 
 ======================
 INPUT GUARANTEES
@@ -444,11 +440,14 @@ INPUT GUARANTEES
 
 You will receive:
 - User survey context
+- User behavior context (if available)
 - A roadmap (FOR CONTEXT ONLY)
 - EXACTLY ONE roadmap node (TARGET NODE)
 
 The roadmap is provided ONLY to understand progression and difficulty.
 The roadmap node is the ONLY entity you are allowed to generate tasks for.
+
+If behavior context exists, it has higher priority than generic pacing assumptions.
 
 ======================
 OUTPUT SCHEMA (STRICT)
@@ -477,6 +476,24 @@ TASK DESIGN RULES
 - scheduledDate MUST be based on CURRENT DATETIME above
 - scheduledDate MUST be >= current datetime
 - scheduledDate MUST increase progressively
+
+======================
+BEHAVIOR-ADAPTIVE RULES
+======================
+
+When behavior context indicates the learner is often late, inconsistent, or skips tasks:
+- Generate 2-3 tasks (not 4-5)
+- Increase estimatedDurationSeconds per task by around 15-30% compared to normal expectation
+- Add more spacing between tasks (prefer gaps of at least 1 day)
+
+When behavior context indicates strong on-time and consistent completion:
+- You may generate 3-5 tasks
+- Keep estimatedDurationSeconds in normal range for node difficulty
+- Use moderate spacing (can be denser than late-profile scheduling)
+
+When behavior evidence is weak or unavailable:
+- Use neutral pacing (3-4 tasks) with balanced spacing
+- Do not overfit assumptions
 
 ======================
 TIME DISTRIBUTION RULES
@@ -529,6 +546,7 @@ All tasks MUST use its roadmapNodeId.
         public async Task<string> GenerateQuizQuestionsAsync(
             object roadmap,
             object roadmapnode,
+            string level,
             int questionCount,
             CancellationToken ct = default)
         {
@@ -538,7 +556,14 @@ Return ONLY valid JSON array. No markdown, no explanation.
 Each question must include options.
 For SingleChoice: exactly one option has isCorrect=true.
 For MultipleChoice: at least one option has isCorrect=true.
-Keep questions relevant to the provided roadmap and target roadmap node.
+Keep questions relevant to the provided TARGET ROADMAP NODE only.
+
+Scope rules (mandatory):
+- Generate questions ONLY from the "Target Roadmap Node" content.
+- Do NOT generate broad roadmap-wide topics.
+- Do NOT include topics from other nodes/phases even if related.
+- Use "Roadmap" only as lightweight background metadata (title/description).
+- If a topic is not clearly inferable from the target node, exclude it.
 
 Difficulty progression is mandatory:
 - Questions must become harder from first to last.
@@ -557,6 +582,9 @@ Example valid patterns: QUIZ_A7K2M9, NODE_X91PQ4, QQ_7F2KD8.
 
             var userPrompt = $$"""
 Generate {{questionCount}} quiz questions for the target roadmap node.
+
+Target level for all generated questions:
+{{level}}
 
 Roadmap:
 {{roadmap}}
@@ -595,6 +623,11 @@ Rules for difficulty:
 - orderNo must start from 1 and increase continuously.
 - difficulty must increase with orderNo.
 - keep scoreWeight non-decreasing from first to last question.
+- overall complexity must align with the target level.
+
+Scope validation before output:
+- Every question must be directly traceable to target node title/description/difficulty.
+- Remove any question that could belong to the roadmap in general but not specifically to the target node.
 """;
 
             var llm = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);
