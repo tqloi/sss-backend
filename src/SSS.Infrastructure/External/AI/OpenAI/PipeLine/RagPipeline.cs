@@ -53,12 +53,19 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         public async Task<string> GenerateBehaviorResultAsync(string studyBehaviorContextJson, CancellationToken ct = default)
         {
             var systemPrompt = """
-You are an AI system that analyzes study execution behavior from StudySession, SessionTask, and TaskItem data.
+You are an AI system that analyzes user learning behavior from:
+- Module data
+- StudySession and SessionTask data
+- QuizAttempt data
+- StudyEvents (click/interaction logs with payload and timestamp)
+- StudyEventSummary (aggregated interaction counts)
 
 Your task:
 - Generate ONE concise paragraph in English.
-- Evaluate whether the user tends to complete tasks on time or late.
-- Mention completion consistency, missed/skipped tasks, and schedule discipline.
+- Evaluate completion discipline (on-time vs late tendency) from module/session/task signals.
+- Evaluate assessment behavior from quiz attempts (consistency, completion, potential struggle signals).
+- Evaluate engagement behavior from study events (interaction frequency, category/type patterns, content mode usage).
+- Mention consistency, missed/skipped/incomplete patterns, and overall study discipline.
 - Base conclusions strictly on provided data only.
 
 Important rules:
@@ -67,24 +74,26 @@ Important rules:
 - Output plain natural language text only.
 - Keep tone factual, neutral, embedding-friendly.
 
-On-time interpretation guidance:
+Reasoning guidance:
 - A task is on-time if completion/end time is on or before scheduled date.
-- If only date-level signals are available, make a conservative statement.
-- If data is insufficient, explicitly say evidence is limited.
+- For StudyEvents, infer engagement only from observed frequency, recency, and distribution across event types/categories/content modes.
+- Treat Payload fields (e.g., contentId, contentTitle, contentType, nodeId, studyPlanId) as contextual evidence of learning interaction.
+- If evidence is weak or sparse in any area, explicitly state that evidence is limited.
 
 The output will be stored in Qdrant for later retrieval; keep it compact and semantically rich.
 """;
             var userPromptWithContext = $"""
-Analyze the following study execution dataset and generate one paragraph behavior summary:
+Analyze the following user learning behavior dataset and generate one paragraph behavior summary:
 
 StudyExecutionData:
 {studyBehaviorContextJson}
 
 Focus on:
-- On-time completion trend
-- Late completion tendency
+- Completion discipline (on-time/late)
+- Quiz behavior quality and consistency
+- Learning engagement from StudyEvents and StudyEventSummary
 - Completion vs skip/incomplete balance
-- Overall schedule discipline
+- Overall study discipline
 """;
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
@@ -470,7 +479,14 @@ TASK DESIGN RULES
 
 - Generate 2–5 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
-- estimatedDurationSeconds: 900–7200
+- estimatedDurationSeconds MUST be a NUMBER (integer)
+- Range: More than 900 seconds (15 minutes)
+- Duration MUST be estimated dynamically based on:
+- Complexity of the task
+- Type of task (analysis, coding, testing, etc.)
+- User behavior patterns (e.g., speed, past performance if available)
+- Simpler tasks → shorter duration
+- Complex or implementation-heavy tasks → longer duration
 - scheduledDate must be realistic and progressive
 - Do NOT generate tasks for any other node
 - scheduledDate MUST be based on CURRENT DATETIME above
