@@ -2,13 +2,12 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Exceptions;
-using SSS.Application.Abstractions.Caching;
 using SSS.Application.Features.StudySessions.Common;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.StudySessions.EndSession
 {
-    public class EndSessionHandler(IAppDbContext context, ICacheService cacheService)
+    public class EndSessionHandler(IAppDbContext context)
         : IRequestHandler<EndSessionCommand, EndSessionResult>
     {
         public async Task<EndSessionResult> Handle(EndSessionCommand req, CancellationToken ct)
