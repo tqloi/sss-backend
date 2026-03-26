@@ -4,7 +4,7 @@ using SSS.Application.Abstractions.External.Storage.Gcs;
 namespace SSS.WebApi.Endpoints.Storage.GetSignedReadUrl
 {
     public sealed class GetSignedReadUrlEndpoint(IGcsStorageService storage)
-        : Endpoint<GetSignedReadUrlRequest, GetSignedReadUrlResponse>
+        : EndpointWithoutRequest<GetSignedReadUrlResponse>
     {
         public override void Configure()
         {
@@ -17,9 +17,18 @@ namespace SSS.WebApi.Endpoints.Storage.GetSignedReadUrl
             });
         }
 
-        public override Task HandleAsync(GetSignedReadUrlRequest req, CancellationToken ct)
+        public override Task HandleAsync(CancellationToken ct)
         {
-            var url = storage.GetSignedReadUrl(req.ObjectName, TimeSpan.FromSeconds(req.TtlSeconds));
+            var objectName = Query<string>("objectName");
+            var ttlSeconds = Query<int?>("ttlSeconds") ?? 300;
+
+            if (string.IsNullOrWhiteSpace(objectName) || ttlSeconds <= 0 || ttlSeconds > 3600)
+            {
+                AddError(r => r, "objectName is required and ttlSeconds must be between 1 and 3600.");
+                return SendErrorsAsync(cancellation: ct);
+            }
+
+            var url = storage.GetSignedReadUrl(objectName, TimeSpan.FromSeconds(ttlSeconds));
             return SendOkAsync(new GetSignedReadUrlResponse { Success = true, Url = url }, ct);
         }
     }
