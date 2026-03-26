@@ -106,4 +106,3 @@ namespace SSS.Application.Features.StudySessions.LogStudyEvent
         }
     }
 }
-
