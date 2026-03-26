@@ -47,8 +47,12 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
                 {
                     Id = s.Id,
                     Date = s.StartAt.ToString("yyyy-MM-dd"),
-                    NodeTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Title : null,
-                    PlanTitle = s.SessionTasks.FirstOrDefault() != null ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Roadmap.Title : null,
+                    NodeTitle = s.SessionTasks.FirstOrDefault() != null
+                        ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Title
+                        : null,
+                    PlanTitle = s.SessionTasks.FirstOrDefault() != null
+                        ? s.SessionTasks.FirstOrDefault()!.TaskItem.StudyPlanModule.RoadmapNode.Roadmap.Title
+                        : null,
                     DurationMinutes = (s.ActualDurationSeconds ?? 0) / 60,
                     TasksCompleted = s.TasksCompletedCount ?? 0,
                     TotalTasks = s.TotalTasks ?? 0,
