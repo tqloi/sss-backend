@@ -2,13 +2,14 @@ using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
 using SSS.Application.Features.QuizAttempts.Common;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 {
-    public class SubmitQuizAttemptHandler(IAppDbContext db, IMapper mapper)
+    public class SubmitQuizAttemptHandler(IAppDbContext db, IMapper mapper, IModuleService moduleService)
         : IRequestHandler<SubmitQuizAttemptCommand, SubmitQuizAttemptResult>
     {
         public async Task<SubmitQuizAttemptResult> Handle(SubmitQuizAttemptCommand req, CancellationToken ct)
@@ -29,10 +30,10 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 
             var quiz = await db.Quizzes
                 .AsNoTracking()
-                .Select(q => new { q.Id, q.PassingScore })
+                .Select(q => new { q.Id, q.PassingScore, q.RoadmapNodeId })
                 .FirstOrDefaultAsync(q => q.Id == quizAttempt.QuizId, ct);
 
-            if (quiz is null)
+            if (quiz is null)   
             {
                 throw new KeyNotFoundException($"Quiz with id {quizAttempt.QuizId} not found.");
             }
@@ -130,6 +131,23 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                 : QuizAttemptStatus.Failed;
 
             await db.SaveChangesAsync(ct);
+
+            if (quizAttempt.Status == QuizAttemptStatus.Passed)
+            {
+                var studyPlanModuleId = await db.StudyPlanModules
+                    .AsNoTracking()
+                    .Where(m =>
+                        m.RoadmapNodeId == quiz.RoadmapNodeId
+                        && m.StudyPlan.UserId == quizAttempt.UserId)
+                    .OrderByDescending(m => m.Id)
+                    .Select(m => (long?)m.Id)
+                    .FirstOrDefaultAsync(ct);
+
+                if (studyPlanModuleId.HasValue)
+                {
+                    await moduleService.CompleteModuleAsync((int)studyPlanModuleId.Value, ct);
+                }
+            }
 
             var resultDto = mapper.Map<QuizAttemptDto>(quizAttempt);
 
