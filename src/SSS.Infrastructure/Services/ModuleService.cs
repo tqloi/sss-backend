@@ -1,10 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using iText.Commons.Bouncycastle.Cert.Ocsp;
+using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Ocsp;
 using SSS.Application.Abstractions.Caching;
+using SSS.Application.Abstractions.External.AI.PipeLine;
+using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
+using SSS.Application.Features.AI.CreateAiAddBehaviorDb;
+using SSS.Domain.Entities.Planning;
 using SSS.Domain.Enums;
 using SSS.Infrastructure.Persistence.Sql;
+using System.Text.Json;
 
 namespace SSS.Infrastructure.Services
 {
@@ -12,11 +20,17 @@ namespace SSS.Infrastructure.Services
     {
         private readonly IAppDbContext _context;
         private readonly ICacheService _cacheService;
+        private readonly IStudyEventRepository _studyEventRepository;
+        private readonly IMapper mapper;
+        private readonly IPipeLine pipeLine;
 
-        public ModuleService(AppDbContext context, ICacheService cacheService)
+        public ModuleService(AppDbContext context, ICacheService cacheService, IStudyEventRepository studyEvent, IMapper mapper, IPipeLine pipeLine)
         {
             _context = context;
             _cacheService = cacheService;
+            _studyEventRepository = studyEvent;
+            this.mapper = mapper;
+            this.pipeLine = pipeLine;
         }
 
         public async Task CompleteModuleAsync(int moduleId, CancellationToken ct)
@@ -42,6 +56,97 @@ namespace SSS.Infrastructure.Services
             module.Status = ModuleStatus.Completed;
 
             await _context.SaveChangesAsync(ct);
+
+            var studyEvents = (await _studyEventRepository.GetByUserIdAsync(userId, moduleId.ToString()))
+                .OrderByDescending(e => e.EventTimestamp)
+                .Take(100)
+                .ToList();
+
+            var quizAttempts = await _context.QuizAttempts
+               .AsNoTracking()
+               .Include(a => a.Quiz)
+               .Include(a => a.Answers)
+               .Where(a => a.UserId == userId && a.Quiz.RoadmapNodeId == module.RoadmapNodeId)
+               .OrderByDescending(a => a.SubmittedAt ?? a.StartedAt)
+               .Take(20)
+               .ToListAsync(ct);
+
+            var sessions = await _context.StudySessions
+                .AsNoTracking()
+                .Include(s => s.SessionTasks)
+                    .ThenInclude(st => st.TaskItem)
+                .Where(s => s.UserId == userId &&
+                            (s.StudyPlanModuleId == moduleId ||
+                             s.SessionTasks.Any(st => st.TaskItem.StudyPlanModuleId == moduleId)))
+                .OrderByDescending(s => s.EndAt ?? s.StartAt)
+                .Take(20)
+                .ToListAsync(ct);
+
+            var completedTaskCount = module.Tasks.Count(t => t.Status == SSS.Domain.Enums.TaskStatus.Completed || t.CompletedAt.HasValue);
+            var completedQuizCount = quizAttempts.Count(a => a.Status != QuizAttemptStatus.InProgress || a.SubmittedAt.HasValue);
+
+            var moduleDto = mapper.Map<BehaviorModuleDto>(module);
+            var sessionDtos = mapper.Map<List<BehaviorSessionDto>>(sessions);
+
+            foreach (var sessionDto in sessionDtos)
+            {
+                sessionDto.Tasks = sessionDto.Tasks
+                    .Where(t => t.StudyPlanModuleId == moduleId)
+                    .ToList();
+            }
+            var quizAttemptDtos = mapper.Map<List<BehaviorQuizAttemptDto>>(quizAttempts);
+
+            var studyEventDetails = studyEvents.Select(e => new
+            {
+                e.SessionId,
+                EventType = e.EventType.ToString(),
+                EventCategory = e.EventCategory.ToString(),
+                ContentMode = e.ContentMode.ToString(),
+                e.EventTimestamp,
+                e.Payload,
+                e.DeviceInfo
+            }).ToList();
+
+            var studyEventSummary = new
+            {
+                TotalEvents = studyEvents.Count,
+                EventTypeCounts = studyEvents
+                    .GroupBy(e => e.EventType.ToString())
+                    .ToDictionary(g => g.Key, g => g.Count()),
+                EventCategoryCounts = studyEvents
+                    .GroupBy(e => e.EventCategory.ToString())
+                    .ToDictionary(g => g.Key, g => g.Count()),
+                ContentModeCounts = studyEvents
+                    .GroupBy(e => e.ContentMode.ToString())
+                    .ToDictionary(g => g.Key, g => g.Count())
+            };
+
+            var behaviorContext = new
+            {
+                Module = moduleDto,
+                Sessions = sessionDtos,
+                QuizAttempts = quizAttemptDtos,
+                StudyEvents = studyEventDetails,
+                StudyEventSummary = studyEventSummary,
+
+            };
+
+            var behaviorContextJson = JsonSerializer.Serialize(behaviorContext);
+
+            var result = await pipeLine.GenerateBehaviorResultAsync(behaviorContextJson, ct);
+
+            if (result is null)
+            {
+                throw new Exception("Failed to generate behavior result.");
+            }
+
+            var chunks = new List<(string Text, string? Source)>
+            {
+                (result, "user_behavior")
+            };
+
+            var vectorStudyPlanId = plan?.ToString() ?? module.StudyPlanId.ToString();
+            await pipeLine.IngestBehaviorAsync(vectorStudyPlanId, userId, moduleId.ToString(), chunks, ct);
 
             // 3️⃣ Invalidate cache toàn bộ study plan
             var cacheKey1 = $"studyplan:roadmap:{userId}:{roadmapId}";
