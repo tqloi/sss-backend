@@ -1,15 +1,23 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
-using SSS.Domain.Constants;
 using SSS.Domain.Entities.Assessment;
+using SSS.Domain.Enums;
+using SurveyCodeConstants = SSS.Domain.Constants.SurveyCodes;
+using SurveyTriggerTypeCodes = SSS.Domain.Constants.SurveyTriggerTypes;
 using System.Text.Json;
 
 namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
 {
-    public class TakeSurveyHandler(IAppDbContext db, ISurveyJobDispatcher jobDispatcher) 
+    public class TakeSurveyHandler(
+        IAppDbContext db,
+        ISurveyJobDispatcher jobDispatcher,
+        INotificationService notificationService,
+        ILogger<TakeSurveyHandler> logger) 
         : IRequestHandler<TakeSurveyCommand, TakeSurveyResponse>
     {
         public async Task<TakeSurveyResponse> Handle(
@@ -128,6 +136,8 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
 
                 if (request.SubmittedAt.HasValue)
                 {
+                    var shouldSendFirstOnRegisterCompletionNotification = false;
+
                     // Validate required questions
                     var requiredQuestions = survey.Questions.Where(q => q.IsRequired).ToList();
                     var answeredQuestionIds = await db.SurveyAnswers
@@ -183,14 +193,60 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     response.SnapshotJson = snapshotJson;
                     status = "Completed";
 
+                    // Send a congratulation notification only for the first completion
+                    // of a survey mapped to ON_REGISTER trigger.
+                    var isOnRegisterSurvey = await db.SurveyTriggerMappings
+                        .AsNoTracking()
+                        .AnyAsync(m =>
+                            m.SurveyId == request.SurveyId
+                            && m.IsActive
+                            && m.TriggerType == SurveyTriggerTypeCodes.OnRegister,
+                            cancellationToken);
+
+                    if (isOnRegisterSurvey)
+                    {
+                        var completedCount = await db.SurveyResponses
+                            .AsNoTracking()
+                            .Where(r =>
+                                r.UserId == request.UserId
+                                && r.SurveyId == request.SurveyId
+                                && r.SubmittedAt != null
+                                && r.Id != response.Id)
+                            .CountAsync(cancellationToken);
+
+                        shouldSendFirstOnRegisterCompletionNotification = completedCount == 0;
+                    }
+
                     await db.SaveChangesAsync(cancellationToken);
 
+                    if (shouldSendFirstOnRegisterCompletionNotification)
+                    {
+                        // Notification failure must not block survey submission.
+                        try
+                        {
+                            await notificationService.CreateAndDispatchAsync(
+                                request.UserId,
+                                "Ban da hoan thanh khao sat dau tien",
+                                "Cam on ban da hoan thanh khao sat ON_REGISTER. Ho so hoc tap se duoc toi uu tot hon.",
+                                NotificationType.Achievement,
+                                ct: cancellationToken);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(
+                                ex,
+                                "[TakeSurvey] Failed to send first ON_REGISTER completion notification. UserId={UserId}, SurveyId={SurveyId}",
+                                request.UserId,
+                                request.SurveyId);
+                        }
+                    }
+
                     // Dispatch background AI analysis job based on survey type
-                    if (survey.Code == SurveyCodes.LearningBehavior)
+                    if (survey.Code == SurveyCodeConstants.LearningBehavior)
                     {
                         jobDispatcher.DispatchBehaviorAnalysis(response.Id);
                     }
-                    else if (survey.Code == SurveyCodes.RoadmapLearningTarget)
+                    else if (survey.Code == SurveyCodeConstants.RoadmapLearningTarget)
                     {
                         if (!request.RoadmapId.HasValue)
                             throw new InvalidOperationException(

@@ -3,6 +3,7 @@ using FastEndpoints.Swagger;
 using Hangfire;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
+using SSS.Infrastructure.Realtime;
 using SSS.Middleware;
 using System.Text.Json.Serialization;
 
@@ -81,6 +82,7 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 app.UseFastEndpoints(c =>
 {
     c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
