@@ -30,7 +30,7 @@ namespace SSS.Infrastructure.Services
                 RoadmapId = roadmapId,
                 ProfileVersion = 1,
                 Strategy = StudyPlanStrategy.Balanced,
-                Status = StudyPlanStatus.GeneratingTasks,
+                Status = StudyPlanStatus.Ready,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -40,11 +40,11 @@ namespace SSS.Infrastructure.Services
             // One module per roadmap node — all locked until tasks are generated
             if (nodes.Count > 0)
             {
-                var modules = nodes.Select(node => new StudyPlanModule
+                var modules = nodes.Select((node, index) => new StudyPlanModule
                 {
                     StudyPlanId = plan.Id,
                     RoadmapNodeId = node.Id,
-                    Status = ModuleStatus.Locked,
+                    Status = index == 0 ? ModuleStatus.Active : ModuleStatus.Locked,
                     isTaskGenerated = false
                 }).ToList();
 

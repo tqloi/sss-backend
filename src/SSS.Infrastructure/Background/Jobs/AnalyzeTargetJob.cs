@@ -1,7 +1,11 @@
 using Hangfire;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
+using SSS.Application.Features.AI.Common;
 
 namespace SSS.Infrastructure.Background.Jobs
 {
@@ -13,6 +17,8 @@ namespace SSS.Infrastructure.Background.Jobs
     public class AnalyzeTargetJob(
         ISurveyAnalysisService surveyAnalysis,
         IStudyPlanService studyPlanService,
+        IPipeLine pipeLine,
+        IMapper mapper,
         IAppDbContext db,
         ILogger<AnalyzeTargetJob> logger)
     {
@@ -24,6 +30,12 @@ namespace SSS.Infrastructure.Background.Jobs
             var target = await surveyAnalysis.AnalyzeTargetAsync(responseId, ct);
             target.RoadmapId = roadmapId;
 
+            //var roadmapTitle = await db.Roadmaps
+            //    .Where(x => x.Id == roadmapId)
+            //    .Select(x => x.Title)
+            //    .FirstOrDefaultAsync();
+            //target.TargetRole = target.TargetRole + roadmapTitle;
+
             db.UserLearningTargets.Add(target);
             await db.SaveChangesAsync(ct);
 
@@ -32,10 +44,51 @@ namespace SSS.Infrastructure.Background.Jobs
             // 2. Create StudyPlan + one module per RoadmapNode (status = GeneratingTasks)
             var plan = await studyPlanService.CreatePlanWithModulesAsync(target.UserId, roadmapId, ct);
 
+            // Ingest QDrant
+            var behavior = await db.UserLearningBehaviors
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.UserId == target.UserId, ct);
+
+            var studyplanId = await db.StudyPlans
+                .Where(x =>
+                    x.UserId == target.UserId &&
+                    x.RoadmapId == target.RoadmapId)
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync();
+
+            if (behavior is null)
+            {
+                logger.LogWarning("[AnalyzeTargetJob] UserLearningBehavior not found for userId={UserId}. Skipping profile ingestion.", target.UserId);
+            }
+            else
+            {
+                var behaviorDto = mapper.Map<UserLearningBehaviorDto>(behavior);
+                var targetDto = mapper.Map<UserLearningTargetDto>(target);
+
+                var surveyResult = await pipeLine.GenerateSurveyResultAsync(targetDto, behaviorDto, ct);
+
+                if (surveyResult is null)
+                {
+                    throw new Exception("Failed to generate survey result.");
+                }
+
+                var chunks = new List<(string Text, string? Source)>
+                {
+                    (surveyResult, "user_profile")
+                };
+
+                await pipeLine.IngestAsync(
+                    studyplanId.ToString(),
+                    target.UserId,
+                    chunks,
+                    ct);
+            }
+
             logger.LogInformation("[AnalyzeTargetJob] StudyPlan {PlanId} created with modules. Enqueueing GenerateTasksJob.", plan.Id);
 
             // 3. Chain task-generation job — runs after this job succeeds
-            BackgroundJob.Enqueue<GenerateTasksJob>(j => j.ExecuteAsync(plan.Id, CancellationToken.None));
+            //BackgroundJob.Enqueue<GenerateTasksJob>(j => j.ExecuteAsync(plan.Id, CancellationToken.None));
         }
     }
 }
