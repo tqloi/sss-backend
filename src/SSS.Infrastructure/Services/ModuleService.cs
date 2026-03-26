@@ -52,8 +52,32 @@ namespace SSS.Infrastructure.Services
             if (userId == null || roadmapId == null)
                 throw new InvalidOperationException($"Study plan or roadmap not found for module {moduleId}");
 
-            // Cập nhật trạng thái
+            // Cập nhật trạng thái module và mở khóa module tiếp theo nếu có
             module.Status = ModuleStatus.Completed;
+
+            var modules = await _context.StudyPlanModules
+                .Where(m => m.StudyPlanId == module.StudyPlanId)
+                .OrderBy(m => m.Id) // tạm dùng Id làm thứ tự
+                .ToListAsync(ct);
+
+            var index = modules.FindIndex(m => m.Id == moduleId);
+
+            if (index >= 0 && index < modules.Count - 1)
+            {
+                var nextModule = modules[index + 1];
+
+                if (nextModule.Status == ModuleStatus.Locked)
+                {
+                    nextModule.Status = ModuleStatus.Active;
+                }
+            }
+
+            // 3️⃣ Invalidate cache toàn bộ study plan
+            var cacheKey1 = $"studyplan:roadmap:{userId}:{roadmapId}";
+            var cacheKey2 = $"studyplan:id:{module.StudyPlanId}";
+
+            await _cacheService.RemoveAsync(cacheKey1);
+            await _cacheService.RemoveAsync(cacheKey2);
 
             await _context.SaveChangesAsync(ct);
 
@@ -147,13 +171,6 @@ namespace SSS.Infrastructure.Services
 
             var vectorStudyPlanId = plan?.ToString() ?? module.StudyPlanId.ToString();
             await pipeLine.IngestBehaviorAsync(vectorStudyPlanId, userId, moduleId.ToString(), chunks, ct);
-
-            // 3️⃣ Invalidate cache toàn bộ study plan
-            var cacheKey1 = $"studyplan:roadmap:{userId}:{roadmapId}";
-            var cacheKey2 = $"studyplan:id:{module.StudyPlanId}";
-
-            await _cacheService.RemoveAsync(cacheKey1);
-            await _cacheService.RemoveAsync(cacheKey2);
         }
     }
 }
