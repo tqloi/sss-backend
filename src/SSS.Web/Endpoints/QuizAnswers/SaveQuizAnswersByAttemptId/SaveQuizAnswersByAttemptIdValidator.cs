@@ -21,9 +21,9 @@ namespace SSS.Web.Endpoints.QuizAnswers.SaveQuizAnswersByAttemptId
             RuleForEach(x => x.QuizAnswers)
                 .ChildRules(answer =>
                 {
-                    answer.RuleFor(a => a.Id)
+                    answer.RuleFor(a => a.QuestionId)
                         .GreaterThan(0)
-                        .WithMessage("Quiz answer ID must be a positive integer.");
+                        .WithMessage("Question ID must be a positive integer.");
                 });
         }
     }

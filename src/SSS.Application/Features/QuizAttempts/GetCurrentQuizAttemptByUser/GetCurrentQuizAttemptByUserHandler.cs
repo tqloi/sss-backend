@@ -22,24 +22,28 @@ namespace SSS.Application.Features.QuizAttempts.GetCurrentQuizAttemptByUser
                 throw new KeyNotFoundException($"Study plan module with id {req.ModuleId} not found.");
             }
 
-            var quiz = await db.Quizzes
+            var quizIds = await db.Quizzes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(q => q.RoadmapNodeId == studyPlanModule.RoadmapNodeId, ct);
+                .Where(q => q.RoadmapNodeId == studyPlanModule.RoadmapNodeId)
+                .Select(q => q.Id)
+                .ToListAsync(ct);
 
-            if (quiz is null)
+            if (quizIds.Count == 0)
             {
                 throw new KeyNotFoundException($"Quiz not found for module {req.ModuleId}.");
             }
 
             var quizAttempt = await db.QuizAttempts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(qa =>
-                    qa.QuizId == quiz.Id 
-                    && qa.UserId == req.UserId 
-                    && qa.Status == Domain.Enums.QuizAttemptStatus.InProgress, ct);
+                .Where(qa =>
+                    quizIds.Contains(qa.QuizId)
+                    && qa.UserId == req.UserId
+                    && qa.Status == Domain.Enums.QuizAttemptStatus.InProgress)
+                .OrderByDescending(qa => qa.StartedAt)
+                .FirstOrDefaultAsync(ct);
 
-            var resultDto = quizAttempt is not null 
-                ? mapper.Map<QuizAttemptDto>(quizAttempt) 
+            var resultDto = quizAttempt is not null
+                ? mapper.Map<QuizAttemptDto>(quizAttempt)
                 : null;
 
             return new GetCurrentQuizAttemptByUserResult(resultDto);

@@ -21,7 +21,7 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
             }
 
             var answers = req.QuizAnswers
-                .Where(qa => qa.AttemptId == req.AttemptId)
+                .Where(qa => qa.QuestionId > 0)
                 .ToList();
 
             if (answers.Count == 0)
@@ -29,15 +29,24 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
                 throw new InvalidOperationException("No valid quiz answers to update.");
             }
 
-            var answerIds = answers.Select(a => a.Id).ToList();
+            var questionIds = answers.Select(a => a.QuestionId).Distinct().ToList();
             var existingAnswers = await db.QuizAnswers
-                .Where(qa => answerIds.Contains(qa.Id))
+                .Where(qa => qa.AttemptId == req.AttemptId && questionIds.Contains(qa.QuestionId))
                 .ToListAsync(ct);
+
+            if (existingAnswers.Count == 0)
+            {
+                throw new KeyNotFoundException(
+                    "No quiz answers found for the provided questions in this attempt.");
+            }
+
+            var answerByQuestionId = answers
+                .GroupBy(a => a.QuestionId)
+                .ToDictionary(g => g.Key, g => g.Last());
 
             foreach (var existingAnswer in existingAnswers)
             {
-                var updatedAnswer = answers.FirstOrDefault(a => a.Id == existingAnswer.Id);
-                if (updatedAnswer != null)
+                if (answerByQuestionId.TryGetValue(existingAnswer.QuestionId, out var updatedAnswer))
                 {
                     existingAnswer.OptionId = updatedAnswer.OptionId;
                     existingAnswer.TextValue = updatedAnswer.TextValue;
