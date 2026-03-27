@@ -46,6 +46,9 @@ namespace SSS.Infrastructure.Services
             var plan = await _context.StudyPlans
                 .FirstOrDefaultAsync(p => p.Id == module.StudyPlanId, ct);
 
+            if (plan == null)
+                throw new NotFoundException($"Study plan for module {moduleId}");
+
             // Nếu plan hoặc roadmap không tồn tại, có thể do dữ liệu không nhất quán — tùy chọn: log và return (không throw) để tránh crash toàn bộ, hoặc throw để surface lỗi sớm. Ở đây mình chọn throw để dễ phát hiện và fix lỗi data inconsistency.
             var userId = plan?.UserId;
             var roadmapId = plan?.RoadmapId;
@@ -81,6 +84,7 @@ namespace SSS.Infrastructure.Services
 
             await _context.SaveChangesAsync(ct);
 
+            // Ready data for behavior generation
             var studyEvents = (await _studyEventRepository.GetByUserIdAsync(userId, moduleId.ToString()))
                 .OrderByDescending(e => e.EventTimestamp)
                 .Take(100)
@@ -169,7 +173,7 @@ namespace SSS.Infrastructure.Services
                 (result, "user_behavior")
             };
 
-            var vectorStudyPlanId = plan?.ToString() ?? module.StudyPlanId.ToString();
+            var vectorStudyPlanId = plan?.Id.ToString() ?? module.StudyPlanId.ToString();
             await pipeLine.IngestBehaviorAsync(vectorStudyPlanId, userId, moduleId.ToString(), chunks, ct);
         }
     }
