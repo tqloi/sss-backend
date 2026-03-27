@@ -28,6 +28,7 @@ namespace SSS.Infrastructure.Persistence.Mongo.Documents
         public double? DurationMinutes { get; set; }
         public bool? IsCorrect { get; set; }
         public double? TimeSpentSeconds { get; set; }
+        public double? PlannedDurationSeconds { get; set; }
         public double? CorrectRate { get; set; }
         public string? CurrentUrl { get; set; }
         public string? Browser { get; set; }

@@ -29,7 +29,7 @@ namespace SSS.Application.Features.StudySessions.Common
     public class SessionSummaryResponse
     {
         public string SessionId { get; set; } = null!;
-        public int TotalDurationMinutes { get; set; }
+        public int TotalDurationSeconds { get; set; }
         public int TasksCompleted { get; set; }
         public int TotalTasks { get; set; }
         public int XpEarned { get; set; }
@@ -79,7 +79,7 @@ namespace SSS.Application.Features.StudySessions.Common
         public string Date { get; set; } = null!;
         public string? NodeTitle { get; set; }
         public string? PlanTitle { get; set; }
-        public int DurationMinutes { get; set; }
+        public int DurationSeconds { get; set; }
         public int TasksCompleted { get; set; }
         public int TotalTasks { get; set; }
         public int XpEarned { get; set; }
@@ -91,13 +91,13 @@ namespace SSS.Application.Features.StudySessions.Common
     public class SessionStatisticsDto
     {
         public int TotalSessions { get; set; }
-        public int TotalMinutes { get; set; }
-        public int AverageSessionLength { get; set; }
+        public int TotalSeconds { get; set; }
+        public int AverageSessionLengthSeconds { get; set; }
         public double CompletionRate { get; set; }
         public int CurrentStreak { get; set; }
         public int LongestStreak { get; set; }
         public int SessionsThisWeek { get; set; }
-        public int MinutesThisWeek { get; set; }
+        public int SecondsThisWeek { get; set; }
         public int TotalXpEarned { get; set; }
         public double AverageRating { get; set; }
     }
@@ -106,7 +106,7 @@ namespace SSS.Application.Features.StudySessions.Common
     public class RecentSessionDto
     {
         public string Id { get; set; } = null!;
-        public int DurationMinutes { get; set; }
+        public int DurationSeconds { get; set; }
         public int TasksCompleted { get; set; }
         public int TotalTasks { get; set; }
         public string Date { get; set; } = null!;
