@@ -9,7 +9,7 @@ namespace SSS.Web.Endpoints.AI.CreateAiAddVecDb
     {
         public override void Configure()
         {
-            Post("/ai/add-vec-db");
+            Post("/api/ai/add-vec-db");
 
         }
         public override async Task HandleAsync(CreateAiAddVecDbCommand req, CancellationToken ct)
