@@ -11,7 +11,7 @@ public class Quiz
     public decimal? TotalScore { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public string Level{ get; set; }
+    public string Level { get; set; }
     public decimal PassingScore { get; set; }
 
 

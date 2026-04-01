@@ -7,15 +7,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Features\QuizAttempts\CreateQuizAttempt\**" />
 	  <Compile Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
 	  <Compile Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
 	  <Compile Remove="Features\QuizQuestions\GetAllQuizQuestions\**" />
-	  <EmbeddedResource Remove="Features\QuizAttempts\CreateQuizAttempt\**" />
 	  <EmbeddedResource Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
 	  <EmbeddedResource Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
 	  <EmbeddedResource Remove="Features\QuizQuestions\GetAllQuizQuestions\**" />
-	  <None Remove="Features\QuizAttempts\CreateQuizAttempt\**" />
 	  <None Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
 	  <None Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
 	  <None Remove="Features\QuizQuestions\GetAllQuizQuestions\**" />
@@ -33,7 +30,7 @@
 	<ItemGroup>
 	  <Folder Include="Features\QuizAttempts\CreateQuizAttempt\" />
 	  <Folder Include="Features\QuizAttempts\DeleteQuizAttempt\" />
-	  <Folder Include="Features\QuizAttempts\UpdateQuizAttempt\" />
+	  <Folder Include="Features\QuizAttempts\SubmitQuizAttemp\" />
 	  <Folder Include="Features\QuizQuestions\GetAllQuizQuestions\" />
 	</ItemGroup>
 

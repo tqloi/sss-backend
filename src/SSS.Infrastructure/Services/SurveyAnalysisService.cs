@@ -4,7 +4,6 @@ using SSS.Application.Abstractions.External.AI;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Domain.Constants;
-using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Learning;
 using SSS.Domain.Enums;
 using System.Text.Json;
@@ -341,7 +340,46 @@ Survey Data:
   ""unknown"" → null
 
 [evaluates = ""goal_description""]
-  Free-text answer — use as-is. If empty or null, output null.
+
+    This field represents the user's learning goal in free text.
+
+    Rules:
+    - Use the user's original text ONLY if it expresses a clear and meaningful learning goal.
+    - Trim whitespace.
+
+    You MUST return null if the input is vague, meaningless, or does not indicate a clear goal.
+
+    A goal is NOT meaningful if it contains uncertainty or lack of intent, such as:
+    - ""i don't know"", ""idk"", ""no idea""
+    - ""maybe"", ""not sure""
+    - ""just exploring"", ""trying things""
+    - ""anything"", ""whatever"", ""something""
+
+    Important:
+    - Mentioning topics (backend, AI, frontend) is NOT enough.
+    - The user must clearly commit to a goal.
+
+    Output:
+    - meaningful → keep original text
+    - not meaningful → null
+
+[target_role]
+    Extract a concise role name (e.g., ""Backend Developer"", ""Data Analyst"") ONLY if the user clearly commits to a specific goal.
+
+    If the goal is uncertain or null → target_role MUST be null.
+
+    Do NOT guess.
+    Do NOT infer from weak signals.
+    Be conservative.
+    Be conservative. When uncertain, return null.
+
+    Examples:
+
+    Input: ""i dont know maybe backend""
+    → target_role: null
+
+    Input: ""i want to become a backend developer""
+    → target_role: ""Backend Developer""
 
 === OUTPUT FORMAT ===
 Return ONLY this JSON (no markdown, no commentary):
@@ -349,6 +387,7 @@ Return ONLY this JSON (no markdown, no commentary):
   ""current_level"": ""Beginner"",
   ""deadline_months"": 6,
   ""goal_description"": ""I want to become a backend developer""
+  ""target_role"": ""Backend Developer""
 }}";
 
             return (systemPrompt, userPrompt);
@@ -415,6 +454,26 @@ Return ONLY this JSON (no markdown, no commentary):
             var jsonDoc = JsonDocument.Parse(StripMarkdownCodeBlock(aiResult));
             var root = jsonDoc.RootElement;
 
+            var aiGoal = GetStringProperty(root, "goal_description");
+            var aiRole = GetStringProperty(root, "target_role");
+
+            // target role ưu tiên AI extract
+            string targetRole;
+
+            if (!string.IsNullOrWhiteSpace(aiRole))
+            {
+                targetRole = aiRole.Trim();
+            }
+            else if (!string.IsNullOrWhiteSpace(aiGoal))
+            {
+                // fallback: dùng raw goal
+                targetRole = aiGoal.Trim();
+            }
+            else
+            {
+                targetRole = "Learner";
+            }
+
             return new UserLearningTarget
             {
                 UserId = userId,
@@ -424,12 +483,12 @@ Return ONLY this JSON (no markdown, no commentary):
 
                 // target_role and roadmap_id are not captured by this survey;
                 // the caller must set RoadmapId after receiving the result.
-                TargetRole = "Learner",
+                TargetRole = targetRole,
                 RoadmapId = 0,
 
                 CurrentLevel = GetStringProperty(root, "current_level") ?? "Beginner",
                 TargetDeadlineMonths = GetIntProperty(root, "deadline_months"),
-                GoalDescription = GetStringProperty(root, "goal_description"),
+                GoalDescription = aiGoal,
 
                 Status = TargetStatus.active,
                 CreatedAt = DateTime.UtcNow

@@ -12,7 +12,7 @@ namespace SSS.Web.Endpoints.AI.CreateAiTaskItems
     {
         public override void Configure()
         {
-            Post("/ai/create-task-items");
+            Post("/api/ai/create-task-items");
         }
         public override async Task HandleAsync(CreateAiTaskItemsCommand req, CancellationToken ct)
         {

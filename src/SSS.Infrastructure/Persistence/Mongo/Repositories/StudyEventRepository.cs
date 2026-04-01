@@ -26,5 +26,16 @@ namespace SSS.Infrastructure.Persistence.Mongo.Repositories
 
             return _mapper.Map<IEnumerable<StudyEvent>>(docs);
         }
+
+        public async Task<IEnumerable<StudyEvent>> GetByUserIdAsync(string userId, string moduleId)
+        {
+            var docs = await _collection
+                .Find(x => x.UserId == userId && x.StudyPlanModuleId == moduleId)
+                .SortBy(x => x.EventTimestamp)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<StudyEvent>>(docs);
+
+        }
     }
 }

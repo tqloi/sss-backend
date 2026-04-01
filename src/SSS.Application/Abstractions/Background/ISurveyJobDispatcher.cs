@@ -18,5 +18,12 @@ namespace SSS.Application.Abstractions.Background
         /// and chain a task-generation job for that plan.
         /// </summary>
         void DispatchTargetAnalysis(long responseId, long roadmapId);
+
+        /// <summary>
+        /// Enqueues a job to read the latest user_profile and user_behavior points
+        /// from Qdrant, run AI analysis, and notify the user.
+        /// Triggered after module behavior ingestion.
+        /// </summary>
+        void DispatchModuleBehaviorInsight(long studyPlanId, int moduleId, string userId);
     }
 }

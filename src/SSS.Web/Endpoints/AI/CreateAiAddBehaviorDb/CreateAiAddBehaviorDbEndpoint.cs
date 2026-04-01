@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.AI.CreateAiAddBehaviorDb
     {
         public override void Configure()
         {
-            Post("/ai/add-behavior-db");
+            Post("/api/ai/add-behavior-db");
 
         }
         public override async Task HandleAsync(CreateAiAddBehaviorDbCommand req, CancellationToken ct)

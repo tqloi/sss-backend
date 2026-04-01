@@ -9,14 +9,14 @@ namespace SSS.Web.Endpoints.QuizAttempts.GetQuizAttemptById
     {
         public override void Configure()
         {
-            Get("/api/quiz-attempts/{QuizAttemptId}");
+            Get("/api/quiz-attempts/{Id:long}");
             Summary(s => s.Summary = "Get a quiz attempt by ID");
             Description(d => d.WithTags("QuizAttempts"));
         }
         public override async Task HandleAsync(GetQuizAttemptByIdQuery req, CancellationToken ct)
         {
             var result = await sender.Send(req, ct);
-            await SendAsync(result);
+            await SendAsync(result, cancellation: ct);
         }
     }
 }

@@ -13,6 +13,7 @@ using SSS.Infrastructure.Caching.Redis;
 using SSS.Infrastructure.External.AI.Gemini;
 using SSS.Infrastructure.External.AI.OpenAI;
 using SSS.Infrastructure.External.Communication.Email;
+using SSS.Infrastructure.External.Communication.OneSignal;
 using SSS.Infrastructure.External.Identity.Google;
 using SSS.Infrastructure.External.Storage.Gcs;
 using SSS.Infrastructure.Persistence.Mongo;
@@ -43,6 +44,7 @@ namespace SSS.Infrastructure
             services.AddGemini(config);
             services.AddOpenAI(config);
             services.AddMailService(config);
+            services.AddOneSignal(config);
             services.AddGoogleAuthService(config);
             services.AddMongo(config);
             services.AddRedis(config);
@@ -67,6 +69,7 @@ namespace SSS.Infrastructure
             services.AddScoped<AnalyzeBehaviorJob>();
             services.AddScoped<AnalyzeTargetJob>();
             services.AddScoped<GenerateTasksJob>();
+            services.AddScoped<AnalyzeModuleBehaviorInsightJob>();
             // ─────────────────────────────────────────────────────────────────────
             //services.AddPayOSService(config);
             //// Certificate background workers
@@ -78,6 +81,7 @@ namespace SSS.Infrastructure
 
             // FastEndpoints
             services.AddFastEndpoints();
+            services.AddSignalR();
             services.SwaggerDocument(o =>
             {
                 //o.AutoTagPathSegmentIndex = 2;

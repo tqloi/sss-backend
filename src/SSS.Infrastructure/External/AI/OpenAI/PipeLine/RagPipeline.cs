@@ -30,7 +30,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,"",
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
@@ -38,14 +38,23 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         }
         public async Task IngestBehaviorAsync(string studyplanId, string userId, string studyplanmoduleId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
         {
+            _ = studyplanmoduleId;
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
             var list = new List<VectorPoint>();
             foreach (var (text, source) in chunks)
             {
+                var dataType = source ?? "unknown";
+                var existingPoint = (await _vec.GetLatestUserBehavior(
+                    limit: 1,
+                    userId: userId,
+                    studyplanId: studyplanId,
+                    dataType: dataType,
+                    ct: ct)).FirstOrDefault();
+
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId, studyplanmoduleId,
-            DataType: source ?? "unknown",
+                list.Add(new VectorPoint(existingPoint?.Id ?? Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+            DataType: dataType,
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
@@ -53,12 +62,19 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         public async Task<string> GenerateBehaviorResultAsync(string studyBehaviorContextJson, CancellationToken ct = default)
         {
             var systemPrompt = """
-You are an AI system that analyzes study execution behavior from StudySession, SessionTask, and TaskItem data.
+You are an AI system that analyzes user learning behavior from:
+- Module data
+- StudySession and SessionTask data
+- QuizAttempt data
+- StudyEvents (click/interaction logs with payload and timestamp)
+- StudyEventSummary (aggregated interaction counts)
 
 Your task:
 - Generate ONE concise paragraph in English.
-- Evaluate whether the user tends to complete tasks on time or late.
-- Mention completion consistency, missed/skipped tasks, and schedule discipline.
+- Evaluate completion discipline (on-time vs late tendency) from module/session/task signals.
+- Evaluate assessment behavior from quiz attempts (consistency, completion, potential struggle signals).
+- Evaluate engagement behavior from study events (interaction frequency, category/type patterns, content mode usage).
+- Mention consistency, missed/skipped/incomplete patterns, and overall study discipline.
 - Base conclusions strictly on provided data only.
 
 Important rules:
@@ -67,24 +83,26 @@ Important rules:
 - Output plain natural language text only.
 - Keep tone factual, neutral, embedding-friendly.
 
-On-time interpretation guidance:
+Reasoning guidance:
 - A task is on-time if completion/end time is on or before scheduled date.
-- If only date-level signals are available, make a conservative statement.
-- If data is insufficient, explicitly say evidence is limited.
+- For StudyEvents, infer engagement only from observed frequency, recency, and distribution across event types/categories/content modes.
+- Treat Payload fields (e.g., contentId, contentTitle, contentType, nodeId, studyPlanId) as contextual evidence of learning interaction.
+- If evidence is weak or sparse in any area, explicitly state that evidence is limited.
 
 The output will be stored in Qdrant for later retrieval; keep it compact and semantically rich.
 """;
             var userPromptWithContext = $"""
-Analyze the following study execution dataset and generate one paragraph behavior summary:
+Analyze the following user learning behavior dataset and generate one paragraph behavior summary:
 
 StudyExecutionData:
 {studyBehaviorContextJson}
 
 Focus on:
-- On-time completion trend
-- Late completion tendency
+- Completion discipline (on-time/late)
+- Quiz behavior quality and consistency
+- Learning engagement from StudyEvents and StudyEventSummary
 - Completion vs skip/incomplete balance
-- Overall schedule discipline
+- Overall study discipline
 """;
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
@@ -468,9 +486,16 @@ OUTPUT SCHEMA (STRICT)
 TASK DESIGN RULES
 ======================
 
-- Generate 2–5 tasks ONLY for the given roadmap node
+- Generate 4-6 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
-- estimatedDurationSeconds: 900–7200
+- estimatedDurationSeconds MUST be a NUMBER (integer)
+- Range: More than 900 seconds (15 minutes)
+- Duration MUST be estimated dynamically based on:
+- Complexity of the task
+- Type of task (analysis, coding, testing, etc.)
+- User behavior patterns (e.g., speed, past performance if available)
+- Simpler tasks → shorter duration
+- Complex or implementation-heavy tasks → longer duration
 - scheduledDate must be realistic and progressive
 - Do NOT generate tasks for any other node
 - scheduledDate MUST be based on CURRENT DATETIME above
@@ -482,7 +507,6 @@ BEHAVIOR-ADAPTIVE RULES
 ======================
 
 When behavior context indicates the learner is often late, inconsistent, or skips tasks:
-- Generate 2-3 tasks (not 4-5)
 - Increase estimatedDurationSeconds per task by around 15-30% compared to normal expectation
 - Add more spacing between tasks (prefer gaps of at least 1 day)
 

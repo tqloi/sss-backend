@@ -6,5 +6,6 @@ namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
         : IMongoRepository<StudyEvent>
     {
         Task<IEnumerable<StudyEvent>> GetBySessionIdAsync(string sessionId);
+        Task<IEnumerable<StudyEvent>> GetByUserIdAsync(string userId, string moduleId);
     }
 }
