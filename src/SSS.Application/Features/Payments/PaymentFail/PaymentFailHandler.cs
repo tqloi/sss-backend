@@ -13,7 +13,7 @@ public sealed class PaymentFailHandler(IAppDbContext context)
     public async Task<PaymentFailResult> Handle(PaymentFailCommand req, CancellationToken ct)
     {
         var payment = await context.UserPayments
-            .FirstOrDefaultAsync(p => p.Id == req.PaymentId && p.UserId.Equals(userId), ct)
+            .FirstOrDefaultAsync(p => p.Id == req.PaymentId, ct)
             ?? throw new NotFoundException("Payment not found");
 
         payment.Status = PaymentStatus.Failed;

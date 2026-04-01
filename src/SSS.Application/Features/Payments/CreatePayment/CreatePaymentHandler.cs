@@ -23,12 +23,12 @@ public sealed class CreatePaymentHandler(
             throw new ConflictException("Free subscription does not require payment");
         }
 
-        var amount = ResolveAmount(req.SubscriptionType, req.Amount);
+        //var amount = ResolveAmount(req.SubscriptionType, req.Amount);
         var payment = new UserPayment
         {
             UserId = req.UserId,
             SubscriptionType = req.SubscriptionType,
-            Amount = amount,
+            Amount = req.Amount,
             Currency = "VND",
             Status = PaymentStatus.Pending,
             PaymentDate = DateTime.UtcNow,
@@ -51,7 +51,7 @@ public sealed class CreatePaymentHandler(
             new PayOsCreatePaymentRequest
             {
                 OrderCode = payment.Id,
-                Amount = (int)decimal.Round(amount, MidpointRounding.AwayFromZero),
+                Amount = (int)payment.Amount,
                 Description = description,
                 ReturnUrl = returnUrl,
                 CancelUrl = cancelUrl,
@@ -67,7 +67,7 @@ public sealed class CreatePaymentHandler(
             {
                 PaymentId = payment.Id,
                 OrderCode = payment.Id,
-                Amount = (int)decimal.Round(amount, MidpointRounding.AwayFromZero),
+                Amount = (int) payment.Amount,
                 SubscriptionType = req.SubscriptionType,
                 CheckoutUrl = paymentLink.CheckoutUrl,
                 PaymentLinkId = paymentLink.PaymentLinkId,

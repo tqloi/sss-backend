@@ -12,7 +12,7 @@ public sealed class CreatePaymentRequest
 {
     [JsonIgnore]
     public SubscriptionType SubscriptionType { get; set; } = SubscriptionType.Premium;
-    public decimal? Amount { get; set; } = MembershipConstants.PreMiumPlan;
+    public decimal Amount { get; set; } = MembershipConstants.PreMiumPlan;
     public string? Description { get; set; }
     public string? ReturnUrl { get; set; } 
     public string? CancelUrl { get; set; }
