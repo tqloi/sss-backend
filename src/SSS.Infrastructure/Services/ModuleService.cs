@@ -2,6 +2,7 @@
 using iText.Commons.Bouncycastle.Cert.Ocsp;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Ocsp;
+using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
@@ -23,14 +24,16 @@ namespace SSS.Infrastructure.Services
         private readonly IStudyEventRepository _studyEventRepository;
         private readonly IMapper mapper;
         private readonly IPipeLine pipeLine;
+        private readonly ISurveyJobDispatcher _jobDispatcher;
 
-        public ModuleService(AppDbContext context, ICacheService cacheService, IStudyEventRepository studyEvent, IMapper mapper, IPipeLine pipeLine)
+        public ModuleService(AppDbContext context, ICacheService cacheService, IStudyEventRepository studyEvent, IMapper mapper, IPipeLine pipeLine, ISurveyJobDispatcher jobDispatcher)
         {
             _context = context;
             _cacheService = cacheService;
             _studyEventRepository = studyEvent;
             this.mapper = mapper;
             this.pipeLine = pipeLine;
+            _jobDispatcher = jobDispatcher;
         }
 
         public async Task CompleteModuleAsync(int moduleId, CancellationToken ct)
@@ -175,6 +178,8 @@ namespace SSS.Infrastructure.Services
 
             var vectorStudyPlanId = plan?.Id.ToString() ?? module.StudyPlanId.ToString();
             await pipeLine.IngestBehaviorAsync(vectorStudyPlanId, userId, moduleId.ToString(), chunks, ct);
+
+            _jobDispatcher.DispatchModuleBehaviorInsight(plan.Id, moduleId, userId);
         }
     }
 }
