@@ -26,6 +26,7 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.CreateTask
             {
                 StudyPlanModuleId = req.StudyPlanModuleId,
                 Title = req.Title,
+                Description = req.Description,
                 Status = req.Status,
                 EstimatedDurationSeconds = req.EstimatedDurationSeconds,
                 ScheduledDate = req.ScheduledDate

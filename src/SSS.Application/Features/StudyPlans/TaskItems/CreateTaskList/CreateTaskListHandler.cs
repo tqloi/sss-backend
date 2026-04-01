@@ -33,6 +33,7 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.CreateTaskList
             {
                 StudyPlanModuleId = t.StudyPlanModuleId,
                 Title = t.Title,
+                Description = t.Description,
                 Status = t.Status,
                 EstimatedDurationSeconds = t.EstimatedDurationSeconds,
                 ScheduledDate = t.ScheduledDate

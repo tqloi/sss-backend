@@ -10,6 +10,7 @@ namespace SSS.WebApi.Endpoints.Storage.GetSignedReadUrl
         {
             Get("/api/storage/signed-read");
             // AllowAnonymous(); // hoặc Authorize();
+            Description(d => d.WithTags("Storage"));
             Summary(s =>
             {
                 s.Summary = "Lấy URL đọc có chữ ký (GET)";
