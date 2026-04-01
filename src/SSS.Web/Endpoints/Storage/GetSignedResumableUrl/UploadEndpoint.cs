@@ -10,6 +10,7 @@ namespace SSS.WebApi.Endpoints.Storage.GetSignedResumableUrl
         {
             Get("/api/storage/signed-resumable");
             // Authorize();
+            Description(d => d.WithTags("Storage"));
             Summary(s =>
             {
                 s.Summary = "Lấy URL khởi tạo Resumable Upload (POST)";

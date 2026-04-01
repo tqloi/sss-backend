@@ -10,6 +10,7 @@ namespace SSS.WebApi.Endpoints.Storage.GetSignedWriteUrl
         {
             Get("/api/storage/signed-write");
             // Authorize();
+            Description(d => d.WithTags("Storage"));
             Summary(s =>
             {
                 s.Summary = "Lấy URL ghi có chữ ký (PUT)";
