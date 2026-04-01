@@ -69,6 +69,7 @@ namespace SSS.Infrastructure
             services.AddScoped<AnalyzeBehaviorJob>();
             services.AddScoped<AnalyzeTargetJob>();
             services.AddScoped<GenerateTasksJob>();
+            services.AddScoped<AnalyzeModuleBehaviorInsightJob>();
             // ─────────────────────────────────────────────────────────────────────
             //services.AddPayOSService(config);
             //// Certificate background workers

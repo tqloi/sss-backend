@@ -21,5 +21,11 @@ namespace SSS.Infrastructure.Background
             BackgroundJob.Enqueue<AnalyzeTargetJob>(
                 j => j.ExecuteAsync(responseId, roadmapId, CancellationToken.None));
         }
+
+        public void DispatchModuleBehaviorInsight(long studyPlanId, int moduleId, string userId)
+        {
+            BackgroundJob.Enqueue<AnalyzeModuleBehaviorInsightJob>(
+                j => j.ExecuteAsync(studyPlanId, moduleId, userId, CancellationToken.None));
+        }
     }
 }
