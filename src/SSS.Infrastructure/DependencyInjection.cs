@@ -15,6 +15,7 @@ using SSS.Infrastructure.External.AI.OpenAI;
 using SSS.Infrastructure.External.Communication.Email;
 using SSS.Infrastructure.External.Communication.OneSignal;
 using SSS.Infrastructure.External.Identity.Google;
+using SSS.Infrastructure.External.Payment.PayOS;
 using SSS.Infrastructure.External.Storage.Gcs;
 using SSS.Infrastructure.Persistence.Mongo;
 using SSS.Infrastructure.Persistence.Sql;
@@ -46,6 +47,7 @@ namespace SSS.Infrastructure
             services.AddMailService(config);
             services.AddOneSignal(config);
             services.AddGoogleAuthService(config);
+            services.AddPayOSService(config);
             services.AddMongo(config);
             services.AddRedis(config);
             services.AddGcsStorage(config);

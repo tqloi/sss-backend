@@ -7,6 +7,7 @@ using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Identity;
 using SSS.Domain.Entities.Learning;
 using SSS.Domain.Entities.Notification;
+using SSS.Domain.Entities.Payment;
 using SSS.Domain.Entities.Planning;
 using SSS.Domain.Entities.Tracking;
 
@@ -58,6 +59,9 @@ namespace SSS.Infrastructure.Persistence.Sql
         // Notification
         public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
         public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
+
+        // Payment
+        public DbSet<UserPayment> UserPayments => Set<UserPayment>();
 
         // Security (non-default identity table)
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
