@@ -19,6 +19,7 @@
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? AvatarUrl { get; set; }
+        public string? SubscriptionType { get; set; }
         public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
     }
 }

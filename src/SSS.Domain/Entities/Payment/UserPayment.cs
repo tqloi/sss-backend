@@ -6,7 +6,7 @@ namespace SSS.Domain.Entities.Payment
     {
         public long Id { get; set; }
 
-        public string UserId { get; set; } = string.Empty;
+        public string UserId { get; set; } = null!;
 
         public SubscriptionType SubscriptionType { get; set; } = SubscriptionType.Premium;
 
@@ -15,6 +15,8 @@ namespace SSS.Domain.Entities.Payment
         public string Currency { get; set; } = "VND";
 
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
+
+        public int SubscriptionDuration { get; set; } = 1; // Duration in months (1, 6, 12)
 
         public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
     }

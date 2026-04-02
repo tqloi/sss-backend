@@ -63,6 +63,8 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
         public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
 
+       
+
         // Security (non-default identity table)
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 

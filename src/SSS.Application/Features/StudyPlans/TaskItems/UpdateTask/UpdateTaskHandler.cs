@@ -26,7 +26,7 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.UpdateTask
             if (req.Title != null)
                 taskItem.Title = req.Title;
 
-            if (req.Title != null)
+            if (req.Description != null)
                 taskItem.Description = req.Description;
 
             if (req.Status.HasValue)

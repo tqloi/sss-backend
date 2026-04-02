@@ -14,7 +14,7 @@ namespace SSS.Infrastructure.Persistence.Sql.Configurations.Payment
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.UserId)
-                .HasMaxLength(255)
+                 .HasColumnType("varchar(255)")
                 .IsRequired();
 
             builder.Property(x => x.Amount)

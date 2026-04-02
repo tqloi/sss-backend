@@ -10,6 +10,7 @@ namespace SSS.WebApi.Endpoints.Storage.DeleteObject
         {
             Delete("/api/storage/delete-object");
             //Roles("Admin");
+            Description(d => d.WithTags("Storage"));
             Summary(s =>
             {
                 s.Summary = "Xoá object khỏi GCS";

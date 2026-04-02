@@ -64,6 +64,8 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserNotification> UserNotifications { get; }
         DbSet<UserPushToken> UserPushTokens { get; }
 
+        
+
         // Security
         DbSet<RefreshToken> RefreshTokens { get; }
         DbSet<User> Users { get; }

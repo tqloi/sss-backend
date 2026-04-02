@@ -11,6 +11,7 @@ namespace SSS.WebApi.Endpoints.Storage.Upload
         {
             Post("/api/storage/upload");
             // Authorize(); // bật nếu cần
+            Description(d => d.WithTags("Storage"));
             AllowFileUploads();
             Summary(s =>
             {

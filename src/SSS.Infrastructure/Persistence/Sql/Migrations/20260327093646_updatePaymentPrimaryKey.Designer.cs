@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SSS.Infrastructure.Persistence.Sql;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Migrations
+namespace SSS.Infrastructure.Persistence.Sql.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327093646_updatePaymentPrimaryKey")]
+    partial class updatePaymentPrimaryKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1252,9 +1255,6 @@ namespace SSS.Infrastructure.Migrations
                         .HasColumnType("varchar(20)")
                         .HasDefaultValue("Pending");
 
-                    b.Property<int>("SubscriptionDuration")
-                        .HasColumnType("int");
-
                     b.Property<string>("SubscriptionType")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -1314,9 +1314,6 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<long>("RoadmapNodeId")
                         .HasColumnType("bigint");

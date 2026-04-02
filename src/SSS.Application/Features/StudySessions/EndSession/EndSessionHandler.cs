@@ -61,6 +61,11 @@ namespace SSS.Application.Features.StudySessions.EndSession
                     {
                         sessionTask.EndTimeUtc = taskInfo.EndTime;
                         
+                        if (taskInfo.StartTime.HasValue)
+                        {
+                            sessionTask.StartTimeUtc = taskInfo.StartTime;
+                        }
+                        
                         // Nếu EndTime khác null -> Completed
                         if (taskInfo.EndTime.HasValue)
                         {

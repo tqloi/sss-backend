@@ -141,6 +141,7 @@ namespace SSS.Application.Features.StudySessions.Common
     public class EndSessionTaskDto
     {
         public long TaskId { get; set; }
+        public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
     }
 
