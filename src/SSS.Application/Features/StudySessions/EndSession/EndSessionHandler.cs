@@ -89,6 +89,28 @@ namespace SSS.Application.Features.StudySessions.EndSession
             var activeMinutes = (session.ActualDurationSeconds ?? 0) / 60;
             var xpEarned = activeMinutes * 10 + tasksCompletedCount * 25;
 
+            // Update User Gamification
+            var gamification = await context.UserGamifications
+                .FirstOrDefaultAsync(g => g.UserId == req.UserId, ct);
+
+            var today = DateTime.UtcNow.Date;
+
+            if (gamification == null)
+            {
+                gamification = new Domain.Entities.Tracking.UserGamification
+                {
+                    UserId = req.UserId,
+                    TotalExp = xpEarned,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                context.UserGamifications.Add(gamification);
+            }
+            else
+            {
+                gamification.TotalExp = (gamification.TotalExp ?? 0) + xpEarned;
+                gamification.UpdatedAt = DateTime.UtcNow;
+            }
+
             await context.SaveChangesAsync(ct);
 
             return new EndSessionResult
