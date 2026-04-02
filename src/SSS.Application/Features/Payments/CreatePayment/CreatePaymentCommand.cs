@@ -10,8 +10,8 @@ public sealed class CreatePaymentCommand : IRequest<CreatePaymentResult>
     public string UserId { get; set; } = null!;
 
     public SubscriptionType SubscriptionType { get; set; }
-    public decimal Amount { get; set; }
-    public string? Description { get; set; }
+    public int SubscriptionDuration { get; set; } = 1; // 1, 6, or 12 months
+    //public string? Description { get; set; }
     public string? ReturnUrl { get; set; }
     public string? CancelUrl { get; set; }
 }

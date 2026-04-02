@@ -1,3 +1,4 @@
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
@@ -7,7 +8,7 @@ using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Payments.PaymentSuccess;
 
-public sealed class PaymentSuccessHandler(IAppDbContext context)
+public sealed class PaymentSuccessHandler(IAppDbContext context, IMapper mapper)
     : IRequestHandler<PaymentSuccessCommand, PaymentSuccessResult>
 {
     public async Task<PaymentSuccessResult> Handle(PaymentSuccessCommand req, CancellationToken ct)
@@ -15,6 +16,16 @@ public sealed class PaymentSuccessHandler(IAppDbContext context)
         var payment = await context.UserPayments
             .FirstOrDefaultAsync(p => p.Id == req.PaymentId && p.UserId.Equals(req.UserId), ct)
             ?? throw new NotFoundException("Payment not found");
+
+        if (payment.Status == PaymentStatus.Success)
+        {
+            return new PaymentSuccessResult
+            {
+                Success = true,
+                Message = "Payment already processed",
+                Data = mapper.Map<PaymentStatusDto>(payment),
+            };
+        }
 
         payment.Status = PaymentStatus.Success;
         payment.PaymentDate = DateTime.UtcNow;
@@ -29,7 +40,8 @@ public sealed class PaymentSuccessHandler(IAppDbContext context)
 
         user.SubscriptionType = payment.SubscriptionType;
         user.SubscriptionStartDate ??= now;
-        user.SubscriptionEndDate = baseDate.AddDays(GetSubscriptionDays(payment.SubscriptionType));
+        
+        user.SubscriptionEndDate = baseDate.AddMonths(payment.SubscriptionDuration);
 
         await context.SaveChangesAsync(ct);
 
@@ -37,21 +49,8 @@ public sealed class PaymentSuccessHandler(IAppDbContext context)
         {
             Success = true,
             Message = "Payment marked as successful",
-            Data = new PaymentStatusDto
-            {
-                PaymentId = payment.Id,
-                Status = payment.Status,
-            },
-        };
-    }
-
-    private static int GetSubscriptionDays(SubscriptionType type)
-    {
-        return type switch
-        {
-            SubscriptionType.Premium => 30,
-            SubscriptionType.Pro => 365,
-            _ => 0,
+            Data = mapper.Map<PaymentStatusDto>(payment),
         };
     }
 }
+
