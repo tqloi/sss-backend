@@ -1,10 +1,10 @@
 using MediatR;
-using MongoDB.Bson;
+using System.Text.Json;
 
 namespace SSS.Application.Features.PostHog.ReceiveWebhook
 {
     public class ReceivePostHogWebhookCommand : IRequest
     {
-        public BsonDocument RawPayload { get; set; } = new();
+        public JsonElement RawPayload { get; set; }
     }
 }

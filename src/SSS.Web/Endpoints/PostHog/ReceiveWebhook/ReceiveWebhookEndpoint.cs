@@ -5,7 +5,6 @@ using FastEndpoints;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using SSS.Application.Features.PostHog.ReceiveWebhook;
 
 namespace SSS.Web.Endpoints.PostHog.ReceiveWebhook
@@ -56,12 +55,13 @@ namespace SSS.Web.Endpoints.PostHog.ReceiveWebhook
 
             try
             {
-                //  Parse toàn bộ raw JSON thành BsonDocument — không bị lỗi với nested object
-                var bsonDoc = BsonDocument.Parse(rawBody);
+                // Parse raw JSON to JsonElement to pass to Application layer
+                using var jsonDoc = JsonDocument.Parse(rawBody);
+                var payload = jsonDoc.RootElement.Clone();
 
                 var command = new ReceivePostHogWebhookCommand
                 {
-                    RawPayload = bsonDoc
+                    RawPayload = payload
                 };
 
                 await _sender.Send(command, ct);

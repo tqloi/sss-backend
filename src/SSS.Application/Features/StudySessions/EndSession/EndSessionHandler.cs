@@ -93,7 +93,7 @@ namespace SSS.Application.Features.StudySessions.EndSession
                 Data = new SessionSummaryResponse
                 {
                     SessionId = session.Id,
-                    TotalDurationMinutes = (session.ActualDurationSeconds ?? 0) / 60,
+                    TotalDurationSeconds = session.ActualDurationSeconds ?? 0,
                     TasksCompleted = tasksCompletedCount,
                     TotalTasks = totalTasks,
                     XpEarned = xpEarned
