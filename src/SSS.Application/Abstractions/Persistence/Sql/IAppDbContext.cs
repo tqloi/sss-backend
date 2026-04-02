@@ -50,6 +50,9 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserGamification> UserGamifications { get; }
         DbSet<UserBehaviorWindow> UserBehaviorWindows { get; }
 
+        // Payment
+        DbSet<UserPayment> UserPayments { get; }
+
         // Quiz
         DbSet<Quiz> Quizzes { get; }
         DbSet<QuizQuestion> QuizQuestions { get; }
@@ -61,8 +64,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserNotification> UserNotifications { get; }
         DbSet<UserPushToken> UserPushTokens { get; }
 
-        // Payment
-        DbSet<UserPayment> UserPayments { get; }
+        
 
         // Security
         DbSet<RefreshToken> RefreshTokens { get; }

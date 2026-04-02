@@ -49,6 +49,9 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<UserGamification> UserGamifications => Set<UserGamification>();
         public DbSet<UserBehaviorWindow> UserBehaviorWindows => Set<UserBehaviorWindow>();
 
+        // Payment
+        public DbSet<UserPayment> UserPayments => Set<UserPayment>();
+
         // Quiz
         public DbSet<Quiz> Quizzes => Set<Quiz>();
         public DbSet<QuizQuestion> QuizQuestions => Set<QuizQuestion>();
@@ -60,8 +63,7 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
         public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
 
-        // Payment
-        public DbSet<UserPayment> UserPayments => Set<UserPayment>();
+       
 
         // Security (non-default identity table)
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
