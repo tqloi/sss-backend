@@ -1,4 +1,4 @@
-namespace SSS.WebApi.Endpoints.Users.GetUserMembership;
+namespace SSS.Web.Endpoints.Subscriptions.GetUserMembership;
 
 public sealed class GetUserMembershipResponse
 {

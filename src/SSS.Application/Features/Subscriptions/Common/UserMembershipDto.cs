@@ -1,4 +1,4 @@
-namespace SSS.Application.Features.UserProfile.Common;
+namespace SSS.Application.Features.Subscriptions.Common;
 
 public sealed class UserMembershipDto
 {

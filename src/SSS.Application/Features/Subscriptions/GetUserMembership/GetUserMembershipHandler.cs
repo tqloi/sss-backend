@@ -1,10 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using SSS.Application.Features.UserProfile.Common;
+using SSS.Application.Features.Subscriptions.Common;
 using SSS.Domain.Entities.Identity;
 using SSS.Domain.Enums;
 
-namespace SSS.Application.Features.UserProfile.GetUserMembership;
+namespace SSS.Application.Features.Subscriptions.GetUserMembership;
 
 public sealed class GetUserMembershipHandler(
     UserManager<User> userManager

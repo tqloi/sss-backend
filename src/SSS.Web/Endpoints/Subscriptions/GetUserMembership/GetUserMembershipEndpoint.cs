@@ -1,9 +1,9 @@
 using FastEndpoints;
 using MediatR;
-using SSS.Application.Features.UserProfile.GetUserMembership;
+using SSS.Application.Features.Subscriptions.GetUserMembership;
 using System.Security.Claims;
 
-namespace SSS.WebApi.Endpoints.Users.GetUserMembership;
+namespace SSS.Web.Endpoints.Subscriptions.GetUserMembership;
 
 public sealed class GetUserMembershipEndpoint(
     ISender sender,

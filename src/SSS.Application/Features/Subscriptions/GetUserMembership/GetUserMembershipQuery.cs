@@ -1,7 +1,7 @@
 using MediatR;
-using SSS.Application.Features.UserProfile.Common;
+using SSS.Application.Features.Subscriptions.Common;
 
-namespace SSS.Application.Features.UserProfile.GetUserMembership;
+namespace SSS.Application.Features.Subscriptions.GetUserMembership;
 
 public sealed class GetUserMembershipQuery : IRequest<UserMembershipDto>
 {

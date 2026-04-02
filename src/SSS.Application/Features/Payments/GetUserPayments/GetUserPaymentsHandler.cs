@@ -13,18 +13,31 @@ public sealed class GetUserPaymentsHandler(
 {
     public async Task<GetUserPaymentsResult> Handle(GetUserPaymentsQuery request, CancellationToken ct)
     {
-        var payments = await dbContext.UserPayments
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
+
+        var baseQuery = dbContext.UserPayments
             .AsNoTracking()
-            .Where(p => p.UserId == request.UserId && p.Status != Domain.Enums.PaymentStatus.Pending)
+            .Where(p => p.UserId == request.UserId && p.Status != Domain.Enums.PaymentStatus.Pending);
+
+        var totalCount = await baseQuery.CountAsync(ct);
+
+        var payments = await baseQuery
             .OrderByDescending(p => p.PaymentDate)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(ct);
 
         var paymentDtos = mapper.Map<List<UserPaymentDto>>(payments);
+        var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
 
         return new GetUserPaymentsResult
         {
             Payments = paymentDtos,
-            TotalCount = paymentDtos.Count,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalPages = totalPages,
         };
     }
 }
