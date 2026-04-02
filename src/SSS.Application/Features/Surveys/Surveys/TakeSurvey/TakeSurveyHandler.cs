@@ -226,8 +226,8 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                         {
                             await notificationService.CreateAndDispatchAsync(
                                 request.UserId,
-                                "Ban da hoan thanh khao sat dau tien",
-                                "Cam on ban da hoan thanh khao sat ON_REGISTER. Ho so hoc tap se duoc toi uu tot hon.",
+                                "Thank you for completing the first survey.",
+                                "Your academic record will be better optimized.",
                                 NotificationType.Achievement,
                                 ct: cancellationToken);
                         }
