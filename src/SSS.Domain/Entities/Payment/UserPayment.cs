@@ -16,6 +16,8 @@ namespace SSS.Domain.Entities.Payment
 
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
+        public int SubscriptionDuration { get; set; } = 1; // Duration in months (1, 6, 12)
+
         public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
     }
 }

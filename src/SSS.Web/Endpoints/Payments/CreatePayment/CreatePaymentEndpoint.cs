@@ -1,22 +1,9 @@
 using FastEndpoints;
 using MediatR;
 using SSS.Application.Features.Payments.CreatePayment;
-using SSS.Domain.Constants;
-using SSS.Domain.Enums;
 using System.Security.Claims;
-using System.Text.Json.Serialization;
 
 namespace SSS.Web.Endpoints.Payments.CreatePayment;
-
-public sealed class CreatePaymentRequest
-{
-    [JsonIgnore]
-    public SubscriptionType SubscriptionType { get; set; } = SubscriptionType.Premium;
-    public decimal Amount { get; set; } = MembershipConstants.PreMiumPlan;
-    public string? Description { get; set; }
-    public string? ReturnUrl { get; set; } 
-    public string? CancelUrl { get; set; }
-}
 
 public sealed class CreatePaymentEndpoint(ISender sender, IHttpContextAccessor httpContext)
     : Endpoint<CreatePaymentRequest, CreatePaymentResult>
@@ -37,8 +24,8 @@ public sealed class CreatePaymentEndpoint(ISender sender, IHttpContextAccessor h
         {
             UserId = userId,
             SubscriptionType = req.SubscriptionType,
-            Amount = req.Amount,
-            Description = req.Description,
+            SubscriptionDuration = req.SubscriptionDuration,
+            //Description = req.Description,
             ReturnUrl = req.ReturnUrl,
             CancelUrl = req.CancelUrl,
         }, ct);

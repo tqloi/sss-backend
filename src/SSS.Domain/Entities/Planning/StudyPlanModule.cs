@@ -11,6 +11,7 @@ public class StudyPlanModule
     public long RoadmapNodeId { get; set; }
     public ModuleStatus? Status { get; set; }
     public bool isTaskGenerated { get; set; } = false;
+    public DateTime? CompletedAt { get; set; }
 
     // Navigation
     public virtual StudyPlan StudyPlan { get; set; } = null!;
