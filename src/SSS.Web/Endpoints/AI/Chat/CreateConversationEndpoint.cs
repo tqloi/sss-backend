@@ -16,7 +16,7 @@ namespace SSS.Web.Endpoints.AI.Chat
 
         public override void Configure()
         {
-            Post("ai/chat/conversations");
+            Post("/api/ai/chat/conversations");
             Summary(s =>
             {
                 s.Summary = "Create a new conversation for a roadmap";

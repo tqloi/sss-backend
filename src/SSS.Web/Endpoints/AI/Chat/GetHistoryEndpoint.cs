@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.AI.Chat
     {
         public override void Configure()
         {
-            Get("ai/chat/{ConversationId}/history");
+            Get("/api/ai/chat/{ConversationId}/history");
             
         }
 

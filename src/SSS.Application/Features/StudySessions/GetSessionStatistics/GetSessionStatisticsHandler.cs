@@ -40,16 +40,16 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                 .ToListAsync(ct);
 
             var completedSessions = sessions.Where(s => s.Status == SessionStatus.Completed).ToList();
-            var totalMinutes = completedSessions.Sum(s => (s.ActualDurationSeconds ?? 0)) / 60;
-            var avgLength = completedSessions.Count > 0 ? totalMinutes / completedSessions.Count : 0;
+            var totalSeconds = completedSessions.Sum(s => (s.ActualDurationSeconds ?? 0));
+            var avgLengthSeconds = completedSessions.Count > 0 ? (int)totalSeconds / completedSessions.Count : 0;
             var completionRate = sessions.Count > 0 ? (double)completedSessions.Count / sessions.Count : 0;
 
             // This week stats
             var weekStart = now.AddDays(-7);
             var thisWeekSessions = sessions.Where(s => s.StartAt >= weekStart).ToList();
-            var minutesThisWeek = thisWeekSessions
+            var secondsThisWeek = thisWeekSessions
                 .Where(s => s.Status == SessionStatus.Completed)
-                .Sum(s => (s.ActualDurationSeconds ?? 0)) / 60;
+                .Sum(s => (s.ActualDurationSeconds ?? 0));
 
             // Streak calculations
             var completedDates = completedSessions
@@ -76,13 +76,13 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                 Data = new SessionStatisticsDto
                 {
                     TotalSessions = sessions.Count,
-                    TotalMinutes = totalMinutes,
-                    AverageSessionLength = avgLength,
+                    TotalSeconds = (int)totalSeconds,
+                    AverageSessionLengthSeconds = avgLengthSeconds,
                     CompletionRate = Math.Round(completionRate, 2),
                     CurrentStreak = currentStreak,
                     LongestStreak = longestStreak,
                     SessionsThisWeek = thisWeekSessions.Count,
-                    MinutesThisWeek = minutesThisWeek,
+                    SecondsThisWeek = (int)secondsThisWeek,
                     TotalXpEarned = totalXp,
                     AverageRating = Math.Round(avgRating, 1)
                 }

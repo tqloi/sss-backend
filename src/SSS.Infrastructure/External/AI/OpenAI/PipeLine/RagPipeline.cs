@@ -30,7 +30,7 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
             foreach (var (text, source) in chunks)
             {
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,"",
+                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
             DataType: source ?? "unknown",
             CreatedAt: DateTime.UtcNow));
             }
@@ -38,14 +38,23 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         }
         public async Task IngestBehaviorAsync(string studyplanId, string userId, string studyplanmoduleId, IEnumerable<(string Text, string? Source)> chunks, CancellationToken ct = default)
         {
+            _ = studyplanmoduleId;
             int dim = await _emp.GetDimAsync(ct);
             await _vec.EnsureCollectionAsync(dim, ct);
             var list = new List<VectorPoint>();
             foreach (var (text, source) in chunks)
             {
+                var dataType = source ?? "unknown";
+                var existingPoint = (await _vec.GetLatestUserBehavior(
+                    limit: 1,
+                    userId: userId,
+                    studyplanId: studyplanId,
+                    dataType: dataType,
+                    ct: ct)).FirstOrDefault();
+
                 var vec = await _emp.EmbeddingAsync(text, ct);
-                list.Add(new VectorPoint(Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId, studyplanmoduleId,
-            DataType: source ?? "unknown",
+                list.Add(new VectorPoint(existingPoint?.Id ?? Guid.NewGuid().ToString("N"), vec, text, source, userId, studyplanId,
+            DataType: dataType,
             CreatedAt: DateTime.UtcNow));
             }
             await _vec.UpsertAsync(list, ct);
@@ -477,7 +486,7 @@ OUTPUT SCHEMA (STRICT)
 TASK DESIGN RULES
 ======================
 
-- Generate 2–5 tasks ONLY for the given roadmap node
+- Generate 4-6 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
 - estimatedDurationSeconds MUST be a NUMBER (integer)
 - Range: More than 900 seconds (15 minutes)
@@ -498,7 +507,6 @@ BEHAVIOR-ADAPTIVE RULES
 ======================
 
 When behavior context indicates the learner is often late, inconsistent, or skips tasks:
-- Generate 2-3 tasks (not 4-5)
 - Increase estimatedDurationSeconds per task by around 15-30% compared to normal expectation
 - Add more spacing between tasks (prefer gaps of at least 1 day)
 

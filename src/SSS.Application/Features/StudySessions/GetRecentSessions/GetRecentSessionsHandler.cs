@@ -20,7 +20,7 @@ namespace SSS.Application.Features.StudySessions.GetRecentSessions
                 .Select(s => new RecentSessionDto
                 {
                     Id = s.Id,
-                    DurationMinutes = (s.ActualDurationSeconds ?? 0) / 60,
+                    DurationSeconds = s.ActualDurationSeconds ?? 0,
                     TasksCompleted = s.TasksCompletedCount ?? 0,
                     TotalTasks = s.TotalTasks ?? 0,
                     Date = s.StartAt.ToString("yyyy-MM-dd"),

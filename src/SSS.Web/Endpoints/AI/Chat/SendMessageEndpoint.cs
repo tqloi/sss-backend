@@ -10,7 +10,7 @@ namespace SSS.Web.Endpoints.AI.Chat
     {
         public override void Configure()
         {
-            Post("ai/chat/send");
+            Post("/api/ai/chat/send");
             
         }
 
