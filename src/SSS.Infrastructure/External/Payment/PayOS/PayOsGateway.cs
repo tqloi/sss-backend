@@ -39,4 +39,14 @@ public sealed class PayOsGateway(Net.payOS.PayOS payOs) : IPayOsGateway
         // Net.payOS sdk library provides dynamic signature verification 
         return payOs.verifyPaymentWebhookData(webhookBody);
     }
+
+    public async Task<Net.payOS.Types.PaymentLinkInformation> CancelPaymentLinkAsync(long orderCode, string? cancellationReason, CancellationToken ct = default)
+    {
+        return await payOs.cancelPaymentLink((int)orderCode, cancellationReason);
+    }
+
+    public async Task<Net.payOS.Types.PaymentLinkInformation> GetPaymentLinkInformationAsync(long orderCode, CancellationToken ct = default)
+    {
+        return await payOs.getPaymentLinkInformation((int)orderCode);
+    }
 }

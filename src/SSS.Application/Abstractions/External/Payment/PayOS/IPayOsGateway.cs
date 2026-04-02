@@ -24,4 +24,7 @@ public interface IPayOsGateway
     );
 
     Net.payOS.Types.WebhookData VerifyWebhookData(Net.payOS.Types.WebhookType webhookBody);
+    Task<Net.payOS.Types.PaymentLinkInformation> CancelPaymentLinkAsync(long orderCode, string? cancellationReason, CancellationToken ct = default);
+
+    Task<Net.payOS.Types.PaymentLinkInformation> GetPaymentLinkInformationAsync(long orderCode, CancellationToken ct = default);
 }
