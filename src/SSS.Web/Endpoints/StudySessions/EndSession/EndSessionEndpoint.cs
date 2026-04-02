@@ -19,6 +19,7 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
     public class EndSessionTaskRequest
     {
         public long TaskId { get; set; }
+        public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
     }
 
@@ -47,6 +48,7 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
                 Tasks = req.Tasks?.Select(t => new EndSessionTaskDto
                 {
                     TaskId = t.TaskId,
+                    StartTime = t.StartTime,
                     EndTime = t.EndTime
                 }).ToList()
             };
