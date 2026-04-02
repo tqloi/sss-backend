@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using SSS.Application.Abstractions.Caching;
 using StackExchange.Redis;
 
 namespace SSS.Infrastructure.Caching.Redis
@@ -29,7 +30,7 @@ namespace SSS.Infrastructure.Caching.Redis
                 return ConnectionMultiplexer.Connect(config);
             });
 
-            //services.AddScoped<ICacheService, RedisCacheService>();
+            services.AddScoped<ICacheService, RedisCacheService>();
             return services;
         }
     }

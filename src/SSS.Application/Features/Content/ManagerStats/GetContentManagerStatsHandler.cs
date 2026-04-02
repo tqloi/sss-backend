@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Domain.Constants;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Content.ManagerStats
 {
-    public sealed class GetContentManagerStatsHandler(IAppDbContext dbContext)
+    public sealed class GetContentManagerStatsHandler(IAppDbContext dbContext, ICacheService cacheService)
         : IRequestHandler<GetContentManagerStatsQuery, GetContentManagerStatsResult>
     {
         public async Task<GetContentManagerStatsResult> Handle(GetContentManagerStatsQuery request, CancellationToken cancellationToken)
@@ -13,6 +15,16 @@ namespace SSS.Application.Features.Content.ManagerStats
             if (string.IsNullOrWhiteSpace(request.ManagerId))
             {
                 throw new UnauthorizedAccessException("Manager id is required.");
+            }
+
+            var cacheKey = request.SubjectId.HasValue
+                ? $"content-manager:stats:{request.ManagerId}:subject:{request.SubjectId.Value}"
+                : $"content-manager:stats:{request.ManagerId}:all";
+
+            var cachedStats = await cacheService.GetAsync<ContentManagerStatsDto>(cacheKey);
+            if (cachedStats is not null)
+            {
+                return new GetContentManagerStatsResult(cachedStats);
             }
 
             var managedSubjectIds = await dbContext.ContentManagerSubjects
@@ -24,12 +36,16 @@ namespace SSS.Application.Features.Content.ManagerStats
 
             if (managedSubjectIds.Count == 0)
             {
-                return new GetContentManagerStatsResult(new ContentManagerStatsDto());
+                var emptyStats = new ContentManagerStatsDto();
+                await cacheService.SetAsync(cacheKey, emptyStats, CacheConstants.DefaultExpiration);
+                return new GetContentManagerStatsResult(emptyStats);
             }
 
             if (request.SubjectId.HasValue && !managedSubjectIds.Contains(request.SubjectId.Value))
             {
-                return new GetContentManagerStatsResult(new ContentManagerStatsDto());
+                var emptyStats = new ContentManagerStatsDto();
+                await cacheService.SetAsync(cacheKey, emptyStats, CacheConstants.DefaultExpiration);
+                return new GetContentManagerStatsResult(emptyStats);
             }
 
             var roadmapBaseQuery = dbContext.Roadmaps
@@ -49,7 +65,9 @@ namespace SSS.Application.Features.Content.ManagerStats
 
             if (roadmaps.Count == 0)
             {
-                return new GetContentManagerStatsResult(new ContentManagerStatsDto());
+                var emptyStats = new ContentManagerStatsDto();
+                await cacheService.SetAsync(cacheKey, emptyStats, CacheConstants.DefaultExpiration);
+                return new GetContentManagerStatsResult(emptyStats);
             }
 
             var roadmapIds = roadmaps.Select(r => r.Id).ToList();
@@ -302,6 +320,7 @@ namespace SSS.Application.Features.Content.ManagerStats
                 MostFailedQuiz = mostFailedQuiz
             };
 
+            await cacheService.SetAsync(cacheKey, stats, CacheConstants.DefaultExpiration);
             return new GetContentManagerStatsResult(stats);
         }
 
