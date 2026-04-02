@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using SSS.Application.Abstractions.External.Payment.PayOS;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Exceptions;
-using SSS.Application.Features.Payments.PaymentSuccess;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Payments.GetPaymentStatus;
