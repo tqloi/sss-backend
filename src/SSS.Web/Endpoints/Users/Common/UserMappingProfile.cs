@@ -1,10 +1,12 @@
 using AutoMapper;
 using SSS.Application.Features.UserProfile.ChangePassword;
 using SSS.Application.Features.UserProfile.Common;
+using SSS.Application.Features.UserProfile.GetUserMembership;
 using SSS.Application.Features.UserProfile.UpdateProfile;
 using SSS.Domain.Enums;
 using SSS.WebApi.Endpoints.Users.ChangePassword;
 using SSS.WebApi.Endpoints.Users.GetProfile;
+using SSS.WebApi.Endpoints.Users.GetUserMembership;
 using SSS.WebApi.Endpoints.Users.UpdateProfile;
 
 namespace SSS.WebApi.Endpoints.Users.Common;
@@ -15,6 +17,7 @@ public class UserMappingProfile : Profile
     {
         // GetProfile
         CreateMap<UserProfileDto, GetProfileResponse>();
+        CreateMap<UserMembershipDto, GetUserMembershipResponse>();
 
         // UpdateProfile
         CreateMap<UpdateProfileRequest, UpdateProfileCommand>()

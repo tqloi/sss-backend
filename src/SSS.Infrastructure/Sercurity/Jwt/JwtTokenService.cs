@@ -119,6 +119,7 @@ namespace SSS.Infrastructure.Sercurity.Jwt
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     AvatarUrl = user.AvatarUrl,
+                    SubscriptionType = user.SubscriptionType?.ToString(),
                     Roles = roles.ToList()
                 }
             };

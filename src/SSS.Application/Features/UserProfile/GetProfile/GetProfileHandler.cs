@@ -25,7 +25,7 @@ public sealed class GetProfileHandler(
             Address = user.Address,
             Dob = user.Dob,
             Gender = user.Gender?.ToString(),
-            PhoneNumber = user.PhoneNumber
+            PhoneNumber = user.PhoneNumber,
         };
     }
 }
