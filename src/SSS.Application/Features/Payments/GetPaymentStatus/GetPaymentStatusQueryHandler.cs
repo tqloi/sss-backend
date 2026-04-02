@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SSS.Application.Abstractions.External.Payment.PayOS;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Exceptions;
+using SSS.Application.Features.Payments.PaymentSuccess;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Payments.GetPaymentStatus;
@@ -31,22 +32,51 @@ public sealed class GetPaymentStatusQueryHandler(
         try
         {
             var payOsData = await payOsGateway.GetPaymentLinkInformationAsync(payment.Id, ct);
-            
+
             bool statusChanged = false;
 
             if (payOsData.status == "PAID")
             {
-                payment.Status = PaymentStatus.Success;
-                statusChanged = true;
-                logger.LogInformation("Payment {Id} explicitly synced as Success via PayOS status check", payment.Id);
+                if (payment.Status != PaymentStatus.Success)
+                {
+                    payment.Status = PaymentStatus.Success;
+                    payment.PaymentDate = DateTime.UtcNow;
+
+                    var user = await context.Users.FirstOrDefaultAsync(u => u.Id == payment.UserId, ct);
+                    if (user != null)
+                    {
+                        var now = DateTime.UtcNow;
+                        var baseDate = user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate > now
+                            ? user.SubscriptionEndDate.Value
+                            : now;
+
+                        user.SubscriptionType = payment.SubscriptionType;
+                        user.SubscriptionStartDate ??= now;
+                        user.SubscriptionEndDate = baseDate.AddMonths(payment.SubscriptionDuration);
+                    }
+
+                    statusChanged = true;
+                    logger.LogInformation("Payment {Id} explicitly synced as Success via PayOS status check", payment.Id);
+                }
             }
             else if (payOsData.status == "CANCELLED")
             {
                 payment.Status = PaymentStatus.Canceled;
+
                 statusChanged = true;
                 logger.LogInformation("Payment {Id} explicitly synced as Canceled via PayOS status check", payment.Id);
             }
-            
+            else
+            {
+                payment.Status = PaymentStatus.Failed;
+
+                statusChanged = true;
+                logger.LogInformation(
+                    "Payment {Id} explicitly synced as Failed via PayOS status check",
+                    payment.Id
+                );
+            }
+
             if (statusChanged)
             {
                 await context.SaveChangesAsync(ct);
