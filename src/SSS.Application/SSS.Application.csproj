@@ -7,18 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
-	  <Compile Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
-	  <Compile Remove="Features\QuizQuestions\GetAllQuizQuestions\**" />
-	  <EmbeddedResource Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
-	  <EmbeddedResource Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
-	  <EmbeddedResource Remove="Features\QuizQuestions\GetAllQuizQuestions\**" />
-	  <None Remove="Features\QuizAttempts\DeleteQuizAttempt\**" />
-	  <None Remove="Features\QuizAttempts\UpdateQuizAttempt\**" />
-	  <None Remove="Features\QuizQuestions\GetAllQuizQuestions\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\SSS.Domain\SSS.Domain.csproj" />
 	</ItemGroup>
 
@@ -26,13 +14,7 @@
 		<PackageReference Include="MediatR" Version="13.0.0" />
 		<PackageReference Include="AutoMapper" Version="15.0.1" />
 		<PackageReference Include="MongoDB.Bson" Version="3.7.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Features\QuizAttempts\CreateQuizAttempt\" />
-	  <Folder Include="Features\QuizAttempts\DeleteQuizAttempt\" />
-	  <Folder Include="Features\QuizAttempts\SubmitQuizAttemp\" />
-	  <Folder Include="Features\QuizQuestions\GetAllQuizQuestions\" />
+		<PackageReference Include="payOS" Version="1.0.9" />
 	</ItemGroup>
 
 </Project>

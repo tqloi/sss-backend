@@ -1,4 +1,4 @@
-﻿using Net.payOS.Types;
+using Net.payOS.Types;
 using SSS.Application.Abstractions.External.Payment.PayOS;
 
 namespace SSS.Infrastructure.External.Payment.PayOS;
@@ -32,5 +32,11 @@ public sealed class PayOsGateway(Net.payOS.PayOS payOs) : IPayOsGateway
             QrCode = result.qrCode,
             PaymentLinkId = result.paymentLinkId,
         };
+    }
+
+    public Net.payOS.Types.WebhookData VerifyWebhookData(Net.payOS.Types.WebhookType webhookBody)
+    {
+        // Net.payOS sdk library provides dynamic signature verification 
+        return payOs.verifyPaymentWebhookData(webhookBody);
     }
 }

@@ -15,7 +15,7 @@ public sealed class GetUserPaymentsHandler(
     {
         var payments = await dbContext.UserPayments
             .AsNoTracking()
-            .Where(p => p.UserId == request.UserId)
+            .Where(p => p.UserId == request.UserId && p.Status != Domain.Enums.PaymentStatus.Pending)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync(ct);
 

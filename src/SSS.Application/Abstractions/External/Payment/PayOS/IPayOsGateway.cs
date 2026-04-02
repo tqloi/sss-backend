@@ -1,4 +1,4 @@
-﻿namespace SSS.Application.Abstractions.External.Payment.PayOS;
+namespace SSS.Application.Abstractions.External.Payment.PayOS;
 
 public sealed class PayOsCreatePaymentRequest
 {
@@ -22,4 +22,6 @@ public interface IPayOsGateway
         PayOsCreatePaymentRequest request,
         CancellationToken ct = default
     );
+
+    Net.payOS.Types.WebhookData VerifyWebhookData(Net.payOS.Types.WebhookType webhookBody);
 }
