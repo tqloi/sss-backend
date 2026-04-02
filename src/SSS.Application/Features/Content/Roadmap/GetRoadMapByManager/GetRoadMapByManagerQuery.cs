@@ -1,10 +1,11 @@
 using MediatR;
 using SSS.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
 {
     public sealed record GetRoadMapByManagerQuery(
-        string ManagerId,
+        [property: JsonIgnore] string ManagerId,
         int PageIndex,
         int PageSize,
         long? SubjectId = null,
