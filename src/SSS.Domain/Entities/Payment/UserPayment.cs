@@ -6,7 +6,7 @@ namespace SSS.Domain.Entities.Payment
     {
         public long Id { get; set; }
 
-        public long UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         public SubscriptionType SubscriptionType { get; set; } = SubscriptionType.Premium;
 

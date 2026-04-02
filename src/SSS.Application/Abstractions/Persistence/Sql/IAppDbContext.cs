@@ -6,6 +6,7 @@ using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Identity;
 using SSS.Domain.Entities.Learning;
 using SSS.Domain.Entities.Notification;
+using SSS.Domain.Entities.Payment;
 using SSS.Domain.Entities.Planning;
 using SSS.Domain.Entities.Tracking;
 
@@ -48,6 +49,9 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserSubjectStat> UserSubjectStats { get; }
         DbSet<UserGamification> UserGamifications { get; }
         DbSet<UserBehaviorWindow> UserBehaviorWindows { get; }
+
+        // Payment
+        DbSet<UserPayment> UserPayments { get; }
 
         // Quiz
         DbSet<Quiz> Quizzes { get; }
