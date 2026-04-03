@@ -26,6 +26,10 @@ public class NotificationService(
         NotificationRelatedType? relatedType = null,
         long? relatedId = null,
         string? relatedSessionId = null,
+        string? status = null,
+        string? actionUrl = null,
+        string? dedupeKey = null,
+        bool isPush = true,
         CancellationToken ct = default)
     {
         var entity = new UserNotification
@@ -37,6 +41,9 @@ public class NotificationService(
             RelatedType = relatedType,
             RelatedId = relatedId,
             RelatedSessionId = string.IsNullOrWhiteSpace(relatedSessionId) ? null : relatedSessionId.Trim(),
+            Status = status?.Trim(),
+            ActionUrl = actionUrl?.Trim(),
+            DedupeKey = dedupeKey?.Trim(),
             IsRead = false,
             CreatedAt = DateTime.UtcNow
         };
@@ -54,12 +61,21 @@ public class NotificationService(
             RelatedType = entity.RelatedType,
             RelatedId = entity.RelatedId,
             RelatedSessionId = entity.RelatedSessionId,
+            Status = entity.Status,
+            ActionUrl = entity.ActionUrl,
+            DedupeKey = entity.DedupeKey,
             IsRead = entity.IsRead,
             CreatedAt = entity.CreatedAt
         };
 
         await hubContext.Clients.User(userId)
             .SendAsync("notification.received", payload, ct);
+
+        // Handle Push Notification (Skip if isPush is false)
+        if (!isPush)
+        {
+            return entity.Id;
+        }
 
         var activeSubscriptionIds = await dbContext.UserPushTokens
             .Where(x => x.UserId == userId && x.IsActive)

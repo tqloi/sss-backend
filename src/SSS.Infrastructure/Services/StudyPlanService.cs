@@ -9,6 +9,7 @@ namespace SSS.Infrastructure.Services
 {
     public class StudyPlanService(
         IAppDbContext db,
+        INotificationService notificationService,
         ILogger<StudyPlanService> logger) : IStudyPlanService
     {
         public async Task<StudyPlan> CreatePlanWithModulesAsync(
@@ -23,37 +24,56 @@ namespace SSS.Infrastructure.Services
             if (nodes.Count == 0)
                 logger.LogWarning("[StudyPlanService] Roadmap {RoadmapId} has no nodes. Creating plan without modules.", roadmapId);
 
-            // Create the plan — starts in GeneratingTasks so the frontend can show a loading state
             var plan = new StudyPlan
             {
                 UserId = userId,
                 RoadmapId = roadmapId,
                 ProfileVersion = 1,
                 Strategy = StudyPlanStrategy.Balanced,
-                Status = StudyPlanStatus.Ready,
+                Status = StudyPlanStatus.Ready, // Set to Ready so redirection can happen
                 CreatedAt = DateTime.UtcNow
             };
 
-            db.StudyPlans.Add(plan);
-            await db.SaveChangesAsync(ct);
+            using var transaction = await db.BeginTransactionAsync(ct);
 
-            // One module per roadmap node — all locked until tasks are generated
-            if (nodes.Count > 0)
+            try
             {
-                var modules = nodes.Select((node, index) => new StudyPlanModule
-                {
-                    StudyPlanId = plan.Id,
-                    RoadmapNodeId = node.Id,
-                    Status = index == 0 ? ModuleStatus.Active : ModuleStatus.Locked,
-                    isTaskGenerated = false
-                }).ToList();
-
-                db.StudyPlanModules.AddRange(modules);
+                // Create the plan
+                db.StudyPlans.Add(plan);
                 await db.SaveChangesAsync(ct);
-            }
 
-            logger.LogInformation("[StudyPlanService] StudyPlan {PlanId} created for user {UserId} with {ModuleCount} modules.",
-                plan.Id, userId, nodes.Count);
+                // One module per roadmap node
+                if (nodes.Count > 0)
+                {
+                    var modules = nodes.Select((node, index) => new StudyPlanModule
+                    {
+                        StudyPlanId = plan.Id,
+                        RoadmapNodeId = node.Id,
+                        Status = index == 0 ? ModuleStatus.Active : ModuleStatus.Locked,
+                        isTaskGenerated = false
+                    }).ToList();
+
+                    db.StudyPlanModules.AddRange(modules);
+                    await db.SaveChangesAsync(ct);
+                }
+
+                logger.LogInformation("[StudyPlanService] StudyPlan {PlanId} created for user {UserId} with {ModuleCount} modules.",
+                    plan.Id, userId, nodes.Count);
+
+                await transaction.CommitAsync(ct);
+                
+                // Trigger SignalR notification after DB is committed
+                if (plan.Status.HasValue)
+                {
+                    await NotifyStatusUpdatedAsync(plan, plan.Status.Value, ct);
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(ct);
+                logger.LogError(ex, "[StudyPlanService] Error creating plan for user {UserId}", userId);
+                throw;
+            }
 
             return plan;
         }
@@ -71,6 +91,52 @@ namespace SSS.Infrastructure.Services
             await db.SaveChangesAsync(ct);
 
             logger.LogInformation("[StudyPlanService] StudyPlan {PlanId} status → {Status}.", studyPlanId, status);
+
+            // Handle Realtime Notification for terminal statuses
+            await NotifyStatusUpdatedAsync(plan, status, ct);
+        }
+
+        private async Task NotifyStatusUpdatedAsync(StudyPlan plan, StudyPlanStatus status, CancellationToken ct)
+        {
+            try
+            {
+                if (status != StudyPlanStatus.Ready && status != StudyPlanStatus.Failed)
+                    return;
+
+                string dedupeKey = $"studyPlan:{plan.Id}:{status.ToString().ToLower()}";
+
+                // Idempotency check: don't send if already sent
+                var alreadyExists = await db.UserNotifications
+                    .AnyAsync(n => n.DedupeKey == dedupeKey, ct);
+
+                if (alreadyExists) return;
+
+                string title = status == StudyPlanStatus.Ready
+                    ? "Your study plan is ready!"
+                    : "Study plan generation failed";
+
+                string message = status == StudyPlanStatus.Ready
+                    ? "We have finished generating your personalized study plan. You can start learning now."
+                    : "We encountered an error while building your study plan. Please try again later.";
+
+                await notificationService.CreateAndDispatchAsync(
+                    userId: plan.UserId,
+                    title: title,
+                    content: message,
+                    type: NotificationType.System,
+                    relatedType: NotificationRelatedType.Plan,
+                    relatedId: plan.Id,
+                    status: status.ToString(),
+                    actionUrl: $"/dashboard/{plan.Id}",
+                    dedupeKey: dedupeKey,
+                    isPush: false,
+                    ct: ct
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[StudyPlanService] Failed to dispatch notification for plan {PlanId}", plan.Id);
+            }
         }
     }
 }

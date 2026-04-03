@@ -70,7 +70,6 @@ namespace SSS.Infrastructure
             // Jobs must be resolvable by Hangfire's DI activator
             services.AddScoped<AnalyzeBehaviorJob>();
             services.AddScoped<AnalyzeTargetJob>();
-            services.AddScoped<GenerateTasksJob>();
             services.AddScoped<AnalyzeModuleBehaviorInsightJob>();
             // ─────────────────────────────────────────────────────────────────────
             //services.AddPayOSService(config);
