@@ -5,13 +5,8 @@ using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.StudySessions.PauseSession
 {
-    public class PauseSessionRequest
-    {
-        public string Id { get; set; } = null!;
-    }
-
     public class PauseSessionEndpoint(ISender sender, IHttpContextAccessor httpContext)
-        : Endpoint<PauseSessionRequest, PauseSessionResult>
+        : EndpointWithoutRequest<PauseSessionResult>
     {
         public override void Configure()
         {
@@ -20,14 +15,22 @@ namespace SSS.Web.Endpoints.StudySessions.PauseSession
             Summary(s => s.Summary = "Pause a study session");
         }
 
-        public override async Task HandleAsync(PauseSessionRequest req, CancellationToken ct)
+        public override async Task HandleAsync(CancellationToken ct)
         {
+            var sessionId = Route<string>("Id");
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                AddError(r => r, "Id is required.");
+                await SendErrorsAsync(cancellation: ct);
+                return;
+            }
+
             var userId = httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var command = new PauseSessionCommand
             {
                 UserId = userId!,
-                SessionId = req.Id
+                SessionId = sessionId
             };
 
             var result = await sender.Send(command, ct);

@@ -12,5 +12,9 @@ public interface INotificationService
         NotificationRelatedType? relatedType = null,
         long? relatedId = null,
         string? relatedSessionId = null,
+        string? status = null,
+        string? actionUrl = null,
+        string? dedupeKey = null,
+        bool isPush = true,
         CancellationToken ct = default);
 }

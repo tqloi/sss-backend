@@ -55,6 +55,18 @@ public class UserNotificationConfiguration : IEntityTypeConfiguration<UserNotifi
             .HasColumnType("datetime(6)")
             .IsRequired();
 
+        builder.Property(e => e.Status)
+            .HasMaxLength(50);
+
+        builder.Property(e => e.DedupeKey)
+            .HasMaxLength(255);
+
+        builder.Property(e => e.ActionUrl)
+            .HasMaxLength(1000);
+
+        builder.HasIndex(e => e.DedupeKey)
+            .IsUnique();
+
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)

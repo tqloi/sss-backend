@@ -12,6 +12,9 @@ public sealed class RealtimeNotificationDto
     public NotificationRelatedType? RelatedType { get; set; }
     public long? RelatedId { get; set; }
     public string? RelatedSessionId { get; set; }
+    public string? Status { get; set; }
+    public string? ActionUrl { get; set; }
+    public string? DedupeKey { get; set; }
     public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }
 }
