@@ -10,7 +10,7 @@ public class SyncRoadmapGraphEndpoint(ISender sender)
     public override void Configure()
     {
         Put("/api/roadmaps/{roadmapId}/graph");
-        Summary(s => s.Summary = "Sync/update full roadmap graph (add/update/delete to match payload)");
+        Summary(s => s.Summary = "Sync/update roadmap graph (content delete requires deleteContents list)");
         Description(d => d.WithTags("Roadmaps"));
         Roles("ContentManager");
     }
@@ -23,6 +23,7 @@ public class SyncRoadmapGraphEndpoint(ISender sender)
             Roadmap = req.Roadmap,
             Nodes = req.Nodes,
             Contents = req.Contents,
+            DeleteContents = req.DeleteContents,
             Edges = req.Edges
         };
 
@@ -44,5 +45,6 @@ public class SyncRoadmapGraphRequest
     public Application.Features.Content.Roadmaps.Common.RoadmapGraphUpdateMetadata? Roadmap { get; set; }
     public List<Application.Features.Content.Roadmaps.Common.RoadmapNodeGraphItem> Nodes { get; set; } = new();
     public List<Application.Features.Content.Roadmaps.Common.NodeContentGraphItem> Contents { get; set; } = new();
+    public List<long> DeleteContents { get; set; } = new();
     public List<Application.Features.Content.Roadmaps.Common.RoadmapEdgeGraphItem> Edges { get; set; } = new();
 }

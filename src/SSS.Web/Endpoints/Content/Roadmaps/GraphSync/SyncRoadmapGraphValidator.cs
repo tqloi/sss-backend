@@ -45,6 +45,13 @@ public class SyncRoadmapGraphValidator : Validator<SyncRoadmapGraphCommand>
                 .WithMessage("Content must reference a node via NodeId or NodeClientId.");
         });
 
+        RuleForEach(x => x.DeleteContents)
+            .GreaterThan(0).WithMessage("Delete content IDs must be greater than 0.");
+
+        RuleFor(x => x.DeleteContents)
+            .Must(ids => ids.Distinct().Count() == ids.Count)
+            .WithMessage("DeleteContents contains duplicate content IDs.");
+
         RuleForEach(x => x.Edges).ChildRules(edge =>
         {
             edge.RuleFor(e => e)

@@ -48,6 +48,8 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
                 .Select(c => new { c.Id, c.NodeId, c.ContentType, c.Title, c.Url, c.Description, c.EstimatedMinutes, c.Difficulty, c.OrderNo, c.IsRequired })
                 .ToListAsync(cancellationToken);
 
+            var existingContentIds = existingContents.Select(c => c.Id).ToHashSet();
+
             var existingEdges = await dbContext.RoadmapEdges
                 .AsNoTracking()
                 .Where(e => e.RoadmapId == roadmapId)
@@ -55,7 +57,7 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
                 .ToListAsync(cancellationToken);
 
             // 3. Validate payload
-            var validationResult = ValidatePayload(request, roadmapId, existingNodeIds);
+            var validationResult = ValidatePayload(request, roadmapId, existingNodeIds, existingContentIds);
             if (!validationResult.isValid)
             {
                 await transaction.RollbackAsync(cancellationToken);
@@ -163,7 +165,6 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
             }
 
             // 6. Upsert contents
-            var payloadContentIds = new HashSet<long>();
             foreach (var contentItem in request.Contents)
             {
                 var resolvedNodeId = ResolveNodeId(contentItem.NodeId, contentItem.NodeClientId, fullNodeIdMap);
@@ -227,8 +228,6 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
                     content.OrderNo = contentItem.OrderNo;
                     content.IsRequired = contentItem.IsRequired;
                     dbContext.NodeContents.Update(content);
-
-                    payloadContentIds.Add(contentId);
                 }
                 else
                 {
@@ -260,7 +259,6 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
                     await dbContext.SaveChangesAsync(cancellationToken);
 
                     contentIdMap[contentItem.ClientId] = newContent.Id;
-                    payloadContentIds.Add(newContent.Id);
                 }
             }
 
@@ -364,10 +362,9 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
                     .ExecuteDeleteAsync(cancellationToken);
             }
 
-            // 9. Delete orphaned contents
-            var contentsToDelete = existingContents
-                .Where(c => !payloadContentIds.Contains(c.Id))
-                .Select(c => c.Id)
+            // 9. Delete only requested contents
+            var contentsToDelete = request.DeleteContents
+                .Distinct()
                 .ToList();
 
             if (contentsToDelete.Any())
@@ -435,7 +432,11 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
         }
     }
 
-    private (bool isValid, string? errorMessage) ValidatePayload(SyncRoadmapGraphCommand request, long roadmapId, HashSet<long> existingNodeIds)
+    private (bool isValid, string? errorMessage) ValidatePayload(
+        SyncRoadmapGraphCommand request,
+        long roadmapId,
+        HashSet<long> existingNodeIds,
+        HashSet<long> existingContentIds)
     {
         // Validate node clientIds are unique
         var nodeClientIds = request.Nodes.Where(n => !string.IsNullOrEmpty(n.ClientId)).Select(n => n.ClientId!).ToList();
@@ -457,6 +458,17 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
         if (invalidNodeIds.Any())
         {
             return (false, $"Nodes with IDs {string.Join(", ", invalidNodeIds)} do not belong to roadmap {roadmapId}.");
+        }
+
+        // Validate all delete content IDs belong to this roadmap
+        var invalidDeleteContentIds = request.DeleteContents
+            .Where(id => id <= 0 || !existingContentIds.Contains(id))
+            .Distinct()
+            .ToList();
+
+        if (invalidDeleteContentIds.Any())
+        {
+            return (false, $"Contents with IDs {string.Join(", ", invalidDeleteContentIds)} cannot be deleted because they do not belong to roadmap {roadmapId}.");
         }
 
         return (true, null);
