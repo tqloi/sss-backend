@@ -14,6 +14,7 @@ namespace SSS.Web.Endpoints.UserGamifications.RecordDailyLogin
                 s.Summary = "Record Daily Login for Streak Tracking";
                 s.Description = "Evaluates the user's login date, increments the daily streak, and returns the updated gamification stats.";
             });
+            Roles("User");
         }
 
         public override async Task HandleAsync(CancellationToken ct)
