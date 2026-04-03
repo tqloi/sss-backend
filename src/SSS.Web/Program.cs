@@ -1,4 +1,4 @@
-﻿using FastEndpoints;
+using FastEndpoints;
 using FastEndpoints.Swagger;
 using Hangfire;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -83,6 +83,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<UserGamificationHub>("/hubs/user-gamification");
 app.UseFastEndpoints(c =>
 {
     c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());

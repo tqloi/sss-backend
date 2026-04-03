@@ -1,13 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
 using SSS.Application.Features.StudySessions.Common;
+using SSS.Application.Features.UserGamifications.Common;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.StudySessions.EndSession
 {
-    public class EndSessionHandler(IAppDbContext context)
+    public class EndSessionHandler(IAppDbContext context, IUserGamificationRealtimeService realtimeService)
         : IRequestHandler<EndSessionCommand, EndSessionResult>
     {
         public async Task<EndSessionResult> Handle(EndSessionCommand req, CancellationToken ct)
@@ -112,6 +114,19 @@ namespace SSS.Application.Features.StudySessions.EndSession
             }
 
             await context.SaveChangesAsync(ct);
+
+            var commonDto = new UserGamificationDto
+            {
+                Id = gamification.Id,
+                UserId = gamification.UserId,
+                CurrentStreak = gamification.CurrentStreak,
+                LongestStreak = gamification.LongestStreak,
+                LastActiveDate = gamification.LastActiveDate,
+                TotalExp = gamification.TotalExp,
+                UpdatedAt = gamification.UpdatedAt
+            };
+
+            await realtimeService.NotifyGamificationUpdatedAsync(req.UserId, commonDto, ct);
 
             return new EndSessionResult
             {

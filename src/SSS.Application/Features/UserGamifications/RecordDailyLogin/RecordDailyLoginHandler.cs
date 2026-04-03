@@ -1,11 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
 using SSS.Domain.Entities.Tracking;
 
 namespace SSS.Application.Features.UserGamifications.RecordDailyLogin
 {
-    public class RecordDailyLoginHandler(IAppDbContext context)
+    public class RecordDailyLoginHandler(IAppDbContext context, IUserGamificationRealtimeService realtimeService)
         : IRequestHandler<RecordDailyLoginCommand, RecordDailyLoginResult>
     {
         public async Task<RecordDailyLoginResult> Handle(RecordDailyLoginCommand req, CancellationToken ct)
@@ -61,6 +62,19 @@ namespace SSS.Application.Features.UserGamifications.RecordDailyLogin
             }
 
             await context.SaveChangesAsync(ct);
+
+            var commonDto = new Common.UserGamificationDto
+            {
+                Id = gamification.Id,
+                UserId = gamification.UserId,
+                CurrentStreak = gamification.CurrentStreak,
+                LongestStreak = gamification.LongestStreak,
+                LastActiveDate = gamification.LastActiveDate,
+                TotalExp = gamification.TotalExp,
+                UpdatedAt = gamification.UpdatedAt
+            };
+
+            await realtimeService.NotifyGamificationUpdatedAsync(req.UserId, commonDto, ct);
 
             return new RecordDailyLoginResult
             {

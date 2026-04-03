@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -54,7 +54,7 @@ namespace SSS.Infrastructure.Sercurity.Jwt
                             var path = context.HttpContext.Request.Path;
 
                             if (!string.IsNullOrWhiteSpace(accessToken)
-                                && path.StartsWithSegments("/hubs/notifications"))
+                                && (path.StartsWithSegments("/hubs/notifications") || path.StartsWithSegments("/hubs/user-gamification")))
                             {
                                 context.Token = accessToken;
                             }
