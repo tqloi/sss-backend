@@ -5,13 +5,8 @@ using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.StudySessions.GetSessionById
 {
-    public class GetSessionByIdRequest
-    {
-        public string Id { get; set; } = null!;
-    }
-
     public class GetSessionByIdEndpoint(ISender sender, IHttpContextAccessor httpContext)
-        : Endpoint<GetSessionByIdRequest, GetSessionByIdResult>
+        : EndpointWithoutRequest<GetSessionByIdResult>
     {
         public override void Configure()
         {
@@ -20,14 +15,22 @@ namespace SSS.Web.Endpoints.StudySessions.GetSessionById
             Summary(s => s.Summary = "Get session detail by ID");
         }
 
-        public override async Task HandleAsync(GetSessionByIdRequest req, CancellationToken ct)
+        public override async Task HandleAsync(CancellationToken ct)
         {
+            var sessionId = Route<string>("Id");
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                AddError(r => r, "Id is required.");
+                await SendErrorsAsync(cancellation: ct);
+                return;
+            }
+
             var userId = httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var query = new GetSessionByIdQuery
             {
                 UserId = userId!,
-                SessionId = req.Id
+                SessionId = sessionId
             };
 
             var result = await sender.Send(query, ct);

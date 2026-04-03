@@ -4,7 +4,7 @@ using SSS.Application.Abstractions.External.Storage.Gcs;
 namespace SSS.WebApi.Endpoints.Storage.GetSignedWriteUrl
 {
     public sealed class GetSignedWriteUrlEndpoint(IGcsStorageService storage)
-       : Endpoint<GetSignedWriteUrlRequest, GetSignedWriteUrlResponse>
+       : EndpointWithoutRequest<GetSignedWriteUrlResponse>
     {
         public override void Configure()
         {
@@ -18,12 +18,22 @@ namespace SSS.WebApi.Endpoints.Storage.GetSignedWriteUrl
             });
         }
 
-        public override Task HandleAsync(GetSignedWriteUrlRequest req, CancellationToken ct)
+        public override Task HandleAsync(CancellationToken ct)
         {
+            var objectName = Query<string>("objectName");
+            var contentType = Query<string>("contentType") ?? "application/octet-stream";
+            var ttlSeconds = Query<int?>("ttlSeconds") ?? 300;
+
+            if (string.IsNullOrWhiteSpace(objectName) || string.IsNullOrWhiteSpace(contentType) || ttlSeconds <= 0 || ttlSeconds > 3600)
+            {
+                AddError(r => r, "objectName and contentType are required; ttlSeconds must be between 1 and 3600.");
+                return SendErrorsAsync(cancellation: ct);
+            }
+
             var url = storage.GetSignedWriteUrl(
-                req.ObjectName,
-                req.ContentType,
-                TimeSpan.FromSeconds(req.TtlSeconds));
+                objectName,
+                contentType,
+                TimeSpan.FromSeconds(ttlSeconds));
 
             return SendOkAsync(new GetSignedWriteUrlResponse { Success = true, Url = url }, ct);
         }

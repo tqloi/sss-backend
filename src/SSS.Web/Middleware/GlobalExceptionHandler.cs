@@ -33,7 +33,7 @@ namespace SSS.Middleware
                     (409, "app/conflict", "Conflict", ex.Message),
 
                 // mặc định
-                //_ => (500, "server/unexpected", "Internal Server Error", "An unexpected error occurred.")
+                _ => (500, "server/unexpected", "Internal Server Error", "An unexpected error occurred.")
             };
 
             logger.LogError(ex, "Error at {Path} → {Status}", ctx.Request.Path, status);

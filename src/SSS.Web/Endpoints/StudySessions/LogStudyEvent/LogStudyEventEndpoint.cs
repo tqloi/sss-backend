@@ -7,7 +7,6 @@ namespace SSS.Web.Endpoints.StudySessions.LogStudyEvent
 {
     public class LogStudyEventRequest
     {
-        public string Id { get; set; } = null!;
         public string EventType { get; set; } = null!;
         public long? TaskId { get; set; }
         public string? UserId { get; set; }
@@ -27,12 +26,20 @@ namespace SSS.Web.Endpoints.StudySessions.LogStudyEvent
 
         public override async Task HandleAsync(LogStudyEventRequest req, CancellationToken ct)
         {
+            var sessionId = Route<string>("Id");
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                AddError(r => r, "Id is required.");
+                await SendErrorsAsync(cancellation: ct);
+                return;
+            }
+
             var userId = req.UserId ?? httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var command = new LogStudyEventCommand
             {
                 UserId = userId!,
-                SessionId = req.Id,
+                SessionId = sessionId,
                 EventType = req.EventType,
                 TaskId = req.TaskId,
                 StudyPlanModuleId = req.StudyPlanModuleId,

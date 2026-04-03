@@ -8,7 +8,6 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
 {
     public class EndSessionRequest
     {
-        public string Id { get; set; } = null!;
         public string? EndedReason { get; set; }
         public int? SelfRating { get; set; }
         public string? Notes { get; set; }
@@ -34,12 +33,20 @@ namespace SSS.Web.Endpoints.StudySessions.EndSession
 
         public override async Task HandleAsync(EndSessionRequest req, CancellationToken ct)
         {
+            var sessionId = Route<string>("Id");
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                AddError(r => r, "Id is required.");
+                await SendErrorsAsync(cancellation: ct);
+                return;
+            }
+
             var userId = httpContext.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var command = new EndSessionCommand
             {
                 UserId = userId!,
-                SessionId = req.Id,
+                SessionId = sessionId,
                 EndedReason = req.EndedReason,
                 SelfRating = req.SelfRating,
                 Notes = req.Notes,
