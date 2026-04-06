@@ -88,7 +88,21 @@ namespace SSS.Application.Features.Content.RoadmapNodes.GetPreviousNodeContents
                 {
                     Success = true,
                     Message = "No previous node found.",
-                    Data = new List<NodeContentDTO>()
+                    Data = null
+                };
+            }
+
+            var previousNode = await dbContext.RoadmapNodes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(n => n.Id == previousNodeId.Value, cancellationToken);
+
+            if (previousNode is null)
+            {
+                return new GetPreviousNodeContentsResult
+                {
+                    Success = true,
+                    Message = "No previous node found.",
+                    Data = null
                 };
             }
 
@@ -98,7 +112,7 @@ namespace SSS.Application.Features.Content.RoadmapNodes.GetPreviousNodeContents
                 .OrderBy(c => c.OrderNo)
                 .ToListAsync(cancellationToken);
 
-            var result = contents.Select(c => new NodeContentDTO
+            var contentDtos = contents.Select(c => new NodeContentDTO
             {
                 Id = c.Id,
                 NodeId = c.NodeId,
@@ -111,6 +125,17 @@ namespace SSS.Application.Features.Content.RoadmapNodes.GetPreviousNodeContents
                 OrderNo = c.OrderNo,
                 IsRequired = c.IsRequired
             }).ToList();
+
+            var result = new PreviousRoadmapNodeContentsDto
+            {
+                Id = previousNode.Id,
+                RoadmapId = previousNode.RoadmapId,
+                Title = previousNode.Title,
+                Description = previousNode.Description,
+                Difficulty = previousNode.Difficulty,
+                OrderNo = previousNode.OrderNo,
+                Contents = contentDtos
+            };
 
             return new GetPreviousNodeContentsResult
             {
