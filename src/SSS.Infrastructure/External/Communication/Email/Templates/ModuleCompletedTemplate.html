@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudySense - Module Completed</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f8f9fb;
+        color: #222;
+        line-height: 1.6;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #cfd8e0;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(26, 84, 144, 0.15);
+      }
+
+      .header {
+        background: #1a5490;
+        text-align: center;
+        padding: 24px 16px;
+        font-size: 26px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .content {
+        padding: 32px 24px;
+        text-align: center;
+      }
+
+      .sub {
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        color: #666;
+        margin-bottom: 6px;
+      }
+
+      .title {
+        font-size: 22px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        color: #1a5490;
+      }
+
+      .description {
+        font-size: 15px;
+        color: #444;
+        margin-bottom: 24px;
+      }
+
+      .highlight {
+        background: #f3f6fb;
+        border: 1px solid #d6e1ee;
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 14px;
+        color: #34495e;
+        margin-bottom: 24px;
+      }
+
+      .action-button {
+        display: inline-block;
+        background: #1a5490 !important;
+        color: #fff !important;
+        text-decoration: none !important;
+        padding: 14px 30px;
+        border-radius: 30px;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .footer {
+        background: #f3f5f8;
+        text-align: center;
+        padding: 20px;
+        font-size: 13px;
+        color: #555;
+        border-top: 1px solid #d6dce2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">StudySense</div>
+
+      <div class="content">
+        <div class="sub">Progress Update</div>
+        <h1 class="title">Module Completed</h1>
+        <p class="description">
+          Great job <strong>{{ .StudentName }}</strong>! You have completed module
+          <strong>{{ .ModuleName }}</strong> in roadmap
+          <strong>{{ .RoadmapName }}</strong>.
+        </p>
+
+        <div class="highlight">
+          Keep this momentum and continue to the next module.
+        </div>
+
+        <a href="{{ .RoadmapUrl }}" class="action-button">Continue Roadmap</a>
+      </div>
+
+      <div class="footer">
+        <p>
+          This email was sent to:
+          <strong style="color: #1a5490">{{ .Email }}</strong>
+        </p>
+        <p>© 2026 StudySense. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>

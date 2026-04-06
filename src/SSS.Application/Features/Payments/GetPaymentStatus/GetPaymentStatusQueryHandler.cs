@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SSS.Application.Abstractions.External.Payment.PayOS;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
 using SSS.Domain.Enums;
 
@@ -11,6 +12,7 @@ namespace SSS.Application.Features.Payments.GetPaymentStatus;
 public sealed class GetPaymentStatusQueryHandler(
     IAppDbContext context,
     IPayOsGateway payOsGateway,
+    IPaymentPostProcessService paymentPostProcessService,
     ILogger<GetPaymentStatusQueryHandler> logger
 ) : IRequestHandler<GetPaymentStatusQuery, GetPaymentStatusResult>
 {
@@ -79,6 +81,18 @@ public sealed class GetPaymentStatusQueryHandler(
             if (statusChanged)
             {
                 await context.SaveChangesAsync(ct);
+
+                if (payment.Status == PaymentStatus.Success)
+                {
+                    try
+                    {
+                        await paymentPostProcessService.HandlePaymentSuccessAsync(payment.Id, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Post-payment processing failed after explicit status sync for payment {Id}", payment.Id);
+                    }
+                }
             }
         }
         catch (Exception ex)

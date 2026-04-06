@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudySense Invoice</title>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 22mm 16mm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Calibri, "Segoe UI", Arial, sans-serif;
+        color: #1f2d3d;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .invoice {
+        width: 100%;
+      }
+
+      .header {
+        border-bottom: 2px solid #1a5490;
+        padding-bottom: 14px;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        font-family: Calibri, "Segoe UI", Arial, sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+        color: #1a5490;
+        letter-spacing: 0.4px;
+      }
+
+      .sub {
+        margin-top: 6px;
+        color: #5f6b7a;
+        font-size: 11px;
+      }
+
+      .meta {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 18px;
+      }
+
+      .meta td {
+        vertical-align: top;
+        padding: 2px 0;
+      }
+
+      .meta .label {
+        width: 120px;
+        color: #5f6b7a;
+      }
+
+      .panel {
+        border: 1px solid #d8e2ee;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 14px;
+      }
+
+      .panel-title {
+        font-family: Calibri, "Segoe UI", Arial, sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        color: #1a5490;
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
+
+      .items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+
+      .items th {
+        text-align: left;
+        background: #f4f8fc;
+        color: #314559;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 8px;
+        border-bottom: 1px solid #d8e2ee;
+      }
+
+      .items td {
+        padding: 8px;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      .items td:last-child,
+      .items th:last-child {
+        text-align: right;
+      }
+
+      .total {
+        margin-top: 14px;
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .total td {
+        padding: 4px 0;
+      }
+
+      .total .sum-label {
+        text-align: right;
+        color: #5f6b7a;
+        padding-right: 12px;
+      }
+
+      .total .sum-value {
+        text-align: right;
+        width: 140px;
+      }
+
+      .total .grand {
+        font-weight: 800;
+        color: #1a5490;
+        border-top: 2px solid #d8e2ee;
+        padding-top: 8px;
+      }
+
+      .footer {
+        margin-top: 22px;
+        border-top: 1px solid #d8e2ee;
+        padding-top: 10px;
+        color: #5f6b7a;
+        font-size: 11px;
+      }
+
+      .footer a {
+        color: #1a5490;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice">
+      <div class="header">
+        <div class="brand">StudySense</div>
+        <div class="sub">Invoice for premium membership upgrade</div>
+      </div>
+
+      <table class="meta">
+        <tr>
+          <td>
+            <div><strong>Bill To</strong></div>
+            <div>{{ .CustomerName }}</div>
+            <div>{{ .CustomerEmail }}</div>
+          </td>
+          <td style="text-align: right">
+            <div><strong>Invoice #</strong> {{ .InvoiceNumber }}</div>
+            <div><strong>Date &amp; Time</strong> {{ .InvoiceDate }}</div>
+            <div><strong>Transaction</strong> {{ .TransactionId }}</div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="panel">
+        <div class="panel-title">Payment Detail</div>
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ .PackageName }} Subscription</td>
+              <td>{{ .Amount }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="total">
+          <tr>
+            <td class="sum-label">Payment method:</td>
+            <td class="sum-value">{{ .PaymentMethod }}</td>
+          </tr>
+          <tr>
+            <td class="sum-label grand">Total paid:</td>
+            <td class="sum-value grand">{{ .Amount }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="footer">
+        Need verification? Visit:
+        <a href="{{ .InvoiceUrl }}">{{ .InvoiceUrl }}</a>
+      </div>
+    </div>
+  </body>
+</html>

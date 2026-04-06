@@ -10,7 +10,8 @@ namespace SSS.Application.Features.Payments.Webhook;
 public sealed class PayOsWebhookHandler(
     IAppDbContext context,
     ILogger<PayOsWebhookHandler> logger,
-    SSS.Application.Abstractions.External.Payment.PayOS.IPayOsGateway payOsGateway
+    SSS.Application.Abstractions.External.Payment.PayOS.IPayOsGateway payOsGateway,
+    SSS.Application.Abstractions.Services.IPaymentPostProcessService paymentPostProcessService
 ) : IRequestHandler<PayOsWebhookCommand, PayOsWebhookResult>
 {
     public async Task<PayOsWebhookResult> Handle(PayOsWebhookCommand request, CancellationToken ct)
@@ -71,6 +72,19 @@ public sealed class PayOsWebhookHandler(
         }
 
         await context.SaveChangesAsync(ct);
+
+        if (payload.code == "00")
+        {
+            try
+            {
+                await paymentPostProcessService.HandlePaymentSuccessAsync(payment.Id, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Post-payment processing failed for orderCode: {OrderCode}", payload.data.orderCode);
+            }
+        }
+
         logger.LogInformation("Webhook successfully processed orderCode: {OrderCode}", payload.data.orderCode);
 
         return new PayOsWebhookResult { Success = true };
