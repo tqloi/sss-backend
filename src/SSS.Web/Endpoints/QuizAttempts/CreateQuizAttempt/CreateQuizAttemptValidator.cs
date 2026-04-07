@@ -22,11 +22,12 @@ namespace SSS.Web.Endpoints.QuizAttempts.CreateQuizAttempt
                 .GreaterThan(0)
                 .WithMessage("Study plan module ID must be a positive integer.");
 
-            RuleFor(x => x.CreateQuizAttempt.Level)
-                .NotEmpty()
-                .WithMessage("Level is required.")
-                .Must(level => SupportedLevels.Contains(level, StringComparer.OrdinalIgnoreCase))
-                .WithMessage("Level must be one of: Begineer, Beginner, Intermediate, Advanced.");
+            When(x => !string.IsNullOrWhiteSpace(x.CreateQuizAttempt.Level), () =>
+            {
+                RuleFor(x => x.CreateQuizAttempt.Level)
+                    .Must(level => SupportedLevels.Contains(level, StringComparer.OrdinalIgnoreCase))
+                    .WithMessage("Level must be one of: Begineer, Beginner, Intermediate, Advanced.");
+            });
         }
     }
 }

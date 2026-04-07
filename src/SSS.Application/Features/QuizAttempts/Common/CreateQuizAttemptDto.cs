@@ -6,7 +6,7 @@ namespace SSS.Application.Features.QuizAttempts.Common
     {
         public long StudyPlanModuleId { get; set; }
 
-        public string Level { get; set; } = null!;
+        public string? Level { get; set; }
 
         [JsonIgnore]
         public string UserId { get; set; } = null!;

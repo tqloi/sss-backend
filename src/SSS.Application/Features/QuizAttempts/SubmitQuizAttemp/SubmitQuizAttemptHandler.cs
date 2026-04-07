@@ -6,6 +6,7 @@ using SSS.Application.Abstractions.Services;
 using SSS.Application.Features.QuizAttempts.Common;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Enums;
+using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 {
@@ -58,6 +59,9 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 
             decimal totalScore = 0;
             var submittedAt = DateTime.UtcNow;
+            var questionScore = attemptQuestions.Count == 0
+                ? 0m
+                : 10m / attemptQuestions.Count;
 
             var submittedAnswers = dto.Answers
                 .GroupBy(a => a.QuestionId)
@@ -74,47 +78,62 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
             {
                 submittedAnswers.TryGetValue(question.Id, out var answerDto);
 
-                var correctOption = question.Options.FirstOrDefault(o => o.IsCorrect);
-                var selectedOption = answerDto?.OptionId.HasValue == true
-                    ? question.Options.FirstOrDefault(o => o.Id == answerDto.OptionId.Value)
-                    : null;
+                var correctOptions = question.Options
+                    .Where(o => o.IsCorrect)
+                    .OrderBy(o => o.OrderNo)
+                    .ToList();
 
-                var isCorrect = correctOption is not null
-                    && selectedOption is not null
-                    && selectedOption.Id == correctOption.Id;
+                var selectedOptionIds = GetSelectedOptionIds(answerDto);
+                var selectedOptions = selectedOptionIds.Count == 0
+                    ? new List<QuizQuestionOption>()
+                    : question.Options.Where(o => selectedOptionIds.Contains(o.Id)).ToList();
 
-                var selectedOptionScore = selectedOption?.ScoreValue ?? 0m;
+                var selectedTextValue = answerDto?.TextValue?.Trim();
+                var correctTextValue = correctOptions.Count == 0
+                    ? null
+                    : string.Join(" | ", correctOptions.Select(o => o.DisplayText));
 
-                if (isCorrect && selectedOption != null)
+                var isCorrect = IsCorrectAnswer(question.Type, selectedOptions, selectedTextValue, correctOptions);
+
+                if (isCorrect)
                 {
-                    totalScore += selectedOptionScore;
+                    totalScore += questionScore;
                 }
 
                 if (answerDto is not null)
                 {
+                    var storedTextValue = question.Type == QuizQuestionType.MultipleChoice
+                        ? (selectedOptionIds.Count > 0 ? JsonSerializer.Serialize(selectedOptionIds) : null)
+                        : answerDto.TextValue;
+
                     var quizAnswer = new QuizAnswer
                     {
                         AttemptId = quizAttempt.Id,
                         QuestionId = question.Id,
-                        OptionId = answerDto.OptionId,
-                        TextValue = answerDto.TextValue,
+                        OptionId = selectedOptionIds.FirstOrDefault(),
+                        TextValue = storedTextValue,
                         NumberValue = answerDto.NumberValue,
                         AnsweredAt = submittedAt,
                         ScoredValue = isCorrect
-                            ? selectedOptionScore : 0m
+                            ? questionScore : 0m
                     };
 
-                            answerEntities.Add(quizAnswer);
+                    answerEntities.Add(quizAnswer);
                 }
 
                 questionReviews.Add(new QuizAttemptQuestionReviewDto
                 {
                     QuestionId = question.Id,
                     Prompt = question.Prompt,
-                    SelectedOptionId = selectedOption?.Id,
-                    SelectedOptionText = selectedOption?.DisplayText,
-                    CorrectOptionId = correctOption?.Id,
-                    CorrectOptionText = correctOption?.DisplayText,
+                    Type = question.Type,
+                    SelectedOptionId = selectedOptions.FirstOrDefault()?.Id,
+                    SelectedOptionIds = selectedOptionIds,
+                    SelectedTextValue = selectedTextValue,
+                    SelectedOptionText = selectedOptions.FirstOrDefault()?.DisplayText,
+                    CorrectOptionId = correctOptions.FirstOrDefault()?.Id,
+                    CorrectOptionIds = correctOptions.Select(o => o.Id).ToList(),
+                    CorrectTextValue = correctTextValue,
+                    CorrectOptionText = correctOptions.FirstOrDefault()?.DisplayText,
                     IsCorrect = isCorrect
                 });
             }
@@ -152,6 +171,67 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
             var resultDto = mapper.Map<QuizAttemptDto>(quizAttempt);
 
             return new SubmitQuizAttemptResult(resultDto, questionReviews);
+        }
+
+        private static List<long> GetSelectedOptionIds(SubmitQuizAttemptAnswerDto? answerDto)
+        {
+            if (answerDto is null)
+            {
+                return new List<long>();
+            }
+
+            var optionIds = new List<long>();
+
+            if (answerDto.OptionIds.Count > 0)
+            {
+                optionIds.AddRange(answerDto.OptionIds.Where(optionId => optionId > 0));
+            }
+
+            if (answerDto.OptionId.HasValue && answerDto.OptionId.Value > 0)
+            {
+                optionIds.Add(answerDto.OptionId.Value);
+            }
+
+            return optionIds.Distinct().ToList();
+        }
+
+        private static bool IsCorrectAnswer(
+            QuizQuestionType questionType,
+            List<QuizQuestionOption> selectedOptions,
+            string? selectedTextValue,
+            List<QuizQuestionOption> correctOptions)
+        {
+            if (correctOptions.Count == 0)
+            {
+                return false;
+            }
+
+            return questionType switch
+            {
+                QuizQuestionType.SingleChoice =>
+                    selectedOptions.Count == 1
+                    && correctOptions.Count == 1
+                    && selectedOptions[0].Id == correctOptions[0].Id,
+
+                QuizQuestionType.MultipleChoice =>
+                    selectedOptions.Count > 0
+                    && selectedOptions.Select(option => option.Id).OrderBy(optionId => optionId)
+                        .SequenceEqual(correctOptions.Select(option => option.Id).OrderBy(optionId => optionId)),
+
+                QuizQuestionType.ShortAnswer =>
+                    !string.IsNullOrWhiteSpace(selectedTextValue)
+                    && correctOptions.Any(option => TextMatches(selectedTextValue, option.DisplayText) || TextMatches(selectedTextValue, option.ValueKey)),
+
+                _ => false
+            };
+        }
+
+        private static bool TextMatches(string left, string right)
+        {
+            return string.Equals(
+                left.Trim(),
+                right.Trim(),
+                StringComparison.OrdinalIgnoreCase);
         }
     }
 }

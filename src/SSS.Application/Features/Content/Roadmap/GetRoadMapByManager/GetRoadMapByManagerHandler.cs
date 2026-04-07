@@ -40,6 +40,8 @@ namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
                 query = query.Where(x => x.IsLatest == request.IsLatest.Value);
             }
 
+
+
             // Status filter - placeholder for future implementation
             // If Status field is added in future, implement here
 

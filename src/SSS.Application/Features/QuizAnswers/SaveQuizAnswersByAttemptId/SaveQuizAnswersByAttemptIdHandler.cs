@@ -1,6 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Features.QuizAnswers.Common;
+using SSS.Domain.Entities.Assessment;
+using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
 {
@@ -48,10 +51,14 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
             {
                 if (answerByQuestionId.TryGetValue(existingAnswer.QuestionId, out var updatedAnswer))
                 {
-                    existingAnswer.OptionId = updatedAnswer.OptionId;
-                    existingAnswer.TextValue = updatedAnswer.TextValue;
+                    var selectedOptionIds = NormalizeSelectedOptionIds(updatedAnswer);
+
+                    existingAnswer.OptionId = selectedOptionIds.FirstOrDefault();
+                    existingAnswer.TextValue = selectedOptionIds.Count > 1
+                        ? JsonSerializer.Serialize(selectedOptionIds)
+                        : updatedAnswer.TextValue;
                     existingAnswer.NumberValue = updatedAnswer.NumberValue;
-                    existingAnswer.AnsweredAt = DateTime.UtcNow;
+                    existingAnswer.AnsweredAt = updatedAnswer.AnsweredAt ?? DateTime.UtcNow;
                 }
             }
 
@@ -59,6 +66,23 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
             await db.SaveChangesAsync(ct);
 
             return new SaveQuizAnswersByAttemptIdResult(true, existingAnswers.Count);
+        }
+
+        private static List<long> NormalizeSelectedOptionIds(SaveQuizAnswerByQuestionDto updatedAnswer)
+        {
+            var selectedOptionIds = new List<long>();
+
+            if (updatedAnswer.OptionIds.Count > 0)
+            {
+                selectedOptionIds.AddRange(updatedAnswer.OptionIds.Where(optionId => optionId > 0));
+            }
+
+            if (updatedAnswer.OptionId.HasValue && updatedAnswer.OptionId.Value > 0)
+            {
+                selectedOptionIds.Add(updatedAnswer.OptionId.Value);
+            }
+
+            return selectedOptionIds.Distinct().ToList();
         }
     }
 }

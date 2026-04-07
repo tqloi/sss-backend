@@ -4,6 +4,9 @@ using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.QuizAttempts.Common;
 using SSS.Domain.Constants;
+using SSS.Domain.Entities.Assessment;
+using SSS.Domain.Enums;
+using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
 {
@@ -61,23 +64,7 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
                     .OrderBy(q => q.OrderNo)
                     .ToListAsync(ct);
 
-                var staticQuestions = questions.Select(q => new QuizQuestionWithAnswerDto
-                {
-                    QuestionId = q.Id,
-                    Prompt = q.Prompt,
-                    OrderNo = q.OrderNo,
-                    SelectedOptionId = null,
-                    Options = q.Options
-                        .OrderBy(o => o.OrderNo)
-                        .Select(o => new QuizOptionWithAnswerDto
-                        {
-                            OptionId = o.Id,
-                            ValueKey = o.ValueKey,
-                            DisplayText = o.DisplayText,
-                            OrderNo = o.OrderNo
-                        })
-                        .ToList()
-                }).ToList();
+                var staticQuestions = questions.Select(BuildStaticQuestionDto).ToList();
 
                 staticPayload = new GetQuizzesByQuizAttemptResult(quiz, staticQuestions);
                 await cacheService.SetAsync(staticCacheKey, staticPayload, CacheConstants.DefaultExpiration);
@@ -88,19 +75,71 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
                 .Where(qa => qa.AttemptId == req.AttemptId)
                 .ToListAsync(ct);
 
-            var selectedOptionsByQuestion = quizAnswers
+            var selectedAnswersByQuestion = quizAnswers
                 .GroupBy(qa => qa.QuestionId)
-                .ToDictionary(g => g.Key, g => g.First().OptionId);
+                .ToDictionary(g => g.Key, g => g.ToList());
 
-            var result = staticPayload.Questions.Select(q => new QuizQuestionWithAnswerDto
+            var result = staticPayload.Questions.Select(q =>
+                selectedAnswersByQuestion.TryGetValue(q.QuestionId, out var answersForQuestion)
+                    ? ApplySelectedAnswers(q, answersForQuestion)
+                    : ApplySelectedAnswers(q, null)).ToList();
+
+            return new GetQuizzesByQuizAttemptResult(staticPayload.Quiz, result);
+        }
+
+        private static QuizQuestionWithAnswerDto BuildStaticQuestionDto(QuizQuestion question)
+        {
+            var options = question.Options
+                .OrderBy(o => o.OrderNo)
+                .Select(o => new QuizOptionWithAnswerDto
+                {
+                    OptionId = o.Id,
+                    ValueKey = o.ValueKey,
+                    DisplayText = o.DisplayText,
+                    OrderNo = o.OrderNo
+                })
+                .ToList();
+
+            var correctOptions = question.Options
+                .Where(o => o.IsCorrect)
+                .OrderBy(o => o.OrderNo)
+                .ToList();
+
+            return new QuizQuestionWithAnswerDto
             {
-                QuestionId = q.QuestionId,
-                Prompt = q.Prompt,
-                OrderNo = q.OrderNo,
-                SelectedOptionId = selectedOptionsByQuestion.TryGetValue(q.QuestionId, out var optionId)
-                    ? optionId
-                    : null,
-                Options = q.Options
+                QuestionId = question.Id,
+                Prompt = question.Prompt,
+                Type = question.Type,
+                OrderNo = question.OrderNo,
+                Options = options,
+                CorrectOptionId = correctOptions.FirstOrDefault()?.Id,
+                CorrectOptionIds = correctOptions.Select(o => o.Id).ToList(),
+                CorrectTextValue = correctOptions.Count == 0
+                    ? null
+                    : string.Join(" | ", correctOptions.Select(o => o.DisplayText))
+            };
+        }
+
+        private static QuizQuestionWithAnswerDto ApplySelectedAnswers(
+            QuizQuestionWithAnswerDto question,
+            List<QuizAnswer>? answersForQuestion)
+        {
+            var selectedOptionIds = new List<long>();
+            string? selectedTextValue = null;
+
+            if (answersForQuestion is not null && answersForQuestion.Count > 0)
+            {
+                selectedOptionIds = ExtractSelectedOptionIds(question.Type, answersForQuestion);
+                selectedTextValue = GetSelectedTextValue(question.Type, answersForQuestion);
+            }
+
+            return new QuizQuestionWithAnswerDto
+            {
+                QuestionId = question.QuestionId,
+                Prompt = question.Prompt,
+                Type = question.Type,
+                OrderNo = question.OrderNo,
+                Options = question.Options
                     .OrderBy(o => o.OrderNo)
                     .Select(o => new QuizOptionWithAnswerDto
                     {
@@ -109,10 +148,68 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
                         DisplayText = o.DisplayText,
                         OrderNo = o.OrderNo
                     })
-                    .ToList()
-            }).ToList();
+                    .ToList(),
+                SelectedOptionId = selectedOptionIds.FirstOrDefault(),
+                SelectedOptionIds = selectedOptionIds,
+                SelectedTextValue = selectedTextValue,
+                CorrectOptionId = question.CorrectOptionId,
+                CorrectOptionIds = question.CorrectOptionIds,
+                CorrectTextValue = question.CorrectTextValue
+            };
+        }
 
-            return new GetQuizzesByQuizAttemptResult(staticPayload.Quiz, result);
+        private static List<long> ExtractSelectedOptionIds(
+            QuizQuestionType questionType,
+            List<QuizAnswer> answersForQuestion)
+        {
+            if (questionType == QuizQuestionType.MultipleChoice)
+            {
+                var parsedOptionIds = answersForQuestion
+                    .SelectMany(answer => ParseSelectedOptionIds(answer.TextValue))
+                    .ToList();
+
+                if (parsedOptionIds.Count > 0)
+                {
+                    return parsedOptionIds.Distinct().ToList();
+                }
+            }
+
+            return answersForQuestion
+                .Where(answer => answer.OptionId.HasValue)
+                .Select(answer => answer.OptionId!.Value)
+                .Distinct()
+                .ToList();
+        }
+
+        private static string? GetSelectedTextValue(
+            QuizQuestionType questionType,
+            List<QuizAnswer> answersForQuestion)
+        {
+            if (questionType == QuizQuestionType.ShortAnswer)
+            {
+                return answersForQuestion
+                    .Select(answer => answer.TextValue)
+                    .LastOrDefault(value => !string.IsNullOrWhiteSpace(value));
+            }
+
+            return null;
+        }
+
+        private static List<long> ParseSelectedOptionIds(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return new List<long>();
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<long>>(value) ?? new List<long>();
+            }
+            catch (JsonException)
+            {
+                return new List<long>();
+            }
         }
     }
 }
