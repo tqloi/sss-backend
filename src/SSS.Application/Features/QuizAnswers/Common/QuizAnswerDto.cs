@@ -16,6 +16,7 @@ namespace SSS.Application.Features.QuizAnswers.Common
         public string? QuestionContent { get; set; }
 
         public long? OptionId { get; set; }
+        public List<long> OptionIds { get; set; } = new List<long>();
         public string? OptionContent { get; set; }
 
         public string? TextValue { get; set; }

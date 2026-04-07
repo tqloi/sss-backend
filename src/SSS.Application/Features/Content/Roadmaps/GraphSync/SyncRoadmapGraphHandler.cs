@@ -381,6 +381,24 @@ public sealed class SyncRoadmapGraphHandler(IAppDbContext dbContext)
 
             if (nodesToDelete.Any())
             {
+                var referencedNodeIds = await dbContext.StudyPlanModules
+                    .AsNoTracking()
+                    .Where(m => nodesToDelete.Contains(m.RoadmapNodeId))
+                    .Select(m => m.RoadmapNodeId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+                if (referencedNodeIds.Any())
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return new SyncRoadmapGraphResult
+                    {
+                        Success = false,
+                        Message = $"Cannot delete roadmap nodes in use by study plans: {string.Join(", ", referencedNodeIds)}.",
+                        Data = null
+                    };
+                }
+
                 // Delete edges referencing these nodes first
                 await dbContext.RoadmapEdges
                     .Where(e => nodesToDelete.Contains(e.FromNodeId) || nodesToDelete.Contains(e.ToNodeId))
