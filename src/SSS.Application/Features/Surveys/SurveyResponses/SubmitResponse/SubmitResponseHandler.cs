@@ -1,16 +1,13 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Persistence.Sql;
-using SSS.Domain.Constants;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SSS.Application.Features.Surveys.SurveyResponses.SubmitResponse
 {
     public class SubmitResponseHandler(
-        IAppDbContext db,
-        ISurveyJobDispatcher jobDispatcher)
+        IAppDbContext db)
         : IRequestHandler<SubmitResponseCommand, SubmitResponseResponse>
     {
         public async Task<SubmitResponseResponse> Handle(SubmitResponseCommand request, CancellationToken cancellationToken)
@@ -47,26 +44,6 @@ namespace SSS.Application.Features.Surveys.SurveyResponses.SubmitResponse
                 entity.TriggerReason = request.TriggerReason;
 
                 await db.SaveChangesAsync(cancellationToken);
-
-                // Dispatch the appropriate background job based on survey type
-                var survey = await db.Surveys
-                    .FirstOrDefaultAsync(s => s.Id == request.SurveyId, cancellationToken);
-
-                if (survey != null)
-                {
-                    if (survey.Code == SurveyCodes.LearningBehavior)
-                    {
-                        jobDispatcher.DispatchBehaviorAnalysis(request.ResponseId);
-                    }
-                    else if (survey.Code == SurveyCodes.RoadmapLearningTarget)
-                    {
-                        if (!request.RoadmapId.HasValue)
-                            return new SubmitResponseResponse(false,
-                                "RoadmapId is required when submitting a ROADMAP_LEARNING_TARGET survey.");
-
-                        jobDispatcher.DispatchTargetAnalysis(request.ResponseId, request.RoadmapId.Value);
-                    }
-                }
 
                 return new SubmitResponseResponse(true, "Response submitted successfully.");
             }
