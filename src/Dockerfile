@@ -11,27 +11,15 @@ EXPOSE 8081
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
-
-# WORKDIR trong container
 WORKDIR /src
-
-# Copy các project vào container, bỏ src/ thừa
-COPY ["src/SSS.Web/SSS.Web.csproj", "SSS.Web/"]
-COPY ["src/SSS.Infrastructure/SSS.Infrastructure.csproj", "SSS.Infrastructure/"]
-COPY ["src/SSS.Application/SSS.Application.csproj", "SSS.Application/"]
-COPY ["src/SSS.Domain/SSS.Domain.csproj", "SSS.Domain/"]
-
-# Restore project
-RUN dotnet restore "SSS.Web/SSS.Web.csproj"
-
-# Copy toàn bộ source code
+COPY ["SSS.Web/SSS.Web.csproj", "SSS.Web/"]
+COPY ["SSS.Infrastructure/SSS.Infrastructure.csproj", "SSS.Infrastructure/"]
+COPY ["SSS.Application/SSS.Application.csproj", "SSS.Application/"]
+COPY ["SSS.Domain/SSS.Domain.csproj", "SSS.Domain/"]
+RUN dotnet restore "./SSS.Web/SSS.Web.csproj"
 COPY . .
-
-# Chuyển WORKDIR vào project SSS.Web
 WORKDIR "/src/SSS.Web"
-
-# Build project
-RUN dotnet build "SSS.Web.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./SSS.Web.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
