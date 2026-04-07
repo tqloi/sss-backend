@@ -18,7 +18,6 @@ namespace SSS.Application.Features.StudySessions.GetActiveSession
                         .ThenInclude(t => t.StudyPlanModule)
                             .ThenInclude(m => m.RoadmapNode)
                                 .ThenInclude(n => n!.Roadmap)
-                                    .ThenInclude(r => r!.StudyPlans)
                 .Where(s => s.UserId == req.UserId &&
                             (s.Status == SessionStatus.InProgress || s.Status == SessionStatus.Paused));
 
@@ -36,6 +35,11 @@ namespace SSS.Application.Features.StudySessions.GetActiveSession
                 return new GetActiveSessionResult { Success = true, Data = null };
             }
 
+            if (req.PlanId.HasValue && session.StudyPlanId != req.PlanId.Value)
+            {
+                return new GetActiveSessionResult { Success = true, Data = null };
+            }
+
             var totalElapsed = (int)(DateTime.UtcNow - session.StartAt).TotalSeconds;
             var elapsedSeconds = totalElapsed - session.PauseSeconds;
 
@@ -47,7 +51,6 @@ namespace SSS.Application.Features.StudySessions.GetActiveSession
 
             var firstTask = session.SessionTasks.FirstOrDefault()?.TaskItem;
             var node = firstTask?.StudyPlanModule?.RoadmapNode;
-            var plan = node?.Roadmap?.StudyPlans?.FirstOrDefault();
 
             return new GetActiveSessionResult
             {
@@ -58,7 +61,7 @@ namespace SSS.Application.Features.StudySessions.GetActiveSession
                     Status = session.Status.ToString(),
                     StartAt = session.StartAt,
                     ElapsedSeconds = elapsedSeconds,
-                    PlanId = plan?.Id,
+                    PlanId = session.StudyPlanId,
                     NodeId = node?.Id,
                     NodeTitle = node?.Title,
                     PlanTitle = node?.Roadmap?.Title,

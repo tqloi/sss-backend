@@ -26,7 +26,13 @@ namespace SSS.Infrastructure.Services
         {
             // Check if user has reached roadmap join limit
             var (joinedCount, hasReachedLimit) = await CheckRoadmapLimitAsync(userId, MaxJoinedRoadmaps, ct);
-            if (hasReachedLimit)
+
+            var subscription = db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.SubscriptionType)
+                .FirstOrDefault();
+
+            if (hasReachedLimit && subscription == SubscriptionType.Free)
             {
                 logger.LogWarning(
                     "[StudyPlanService] User {UserId} reached roadmap limit ({JoinedCount}/{MaxRoadmaps}). Cannot create plan for roadmap {RoadmapId}.",

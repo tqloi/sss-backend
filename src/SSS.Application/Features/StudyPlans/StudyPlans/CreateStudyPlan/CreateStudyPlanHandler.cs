@@ -35,7 +35,12 @@ namespace SSS.Application.Features.StudyPlans.StudyPlans.CreateStudyPlan
             var (joinedCount, hasReachedLimit) = await studyPlanService.CheckRoadmapLimitAsync(
                 req.UserId, MaxJoinedRoadmaps, ct);
 
-            if (hasReachedLimit)
+            var subscription = context.Users
+                            .Where(u => u.Id == req.UserId)
+                            .Select(u => u.SubscriptionType)
+                            .FirstOrDefault();
+
+            if (hasReachedLimit && subscription == SubscriptionType.Free)
             {
                 throw new ConflictException(
                     $"Free plan allows up to {MaxJoinedRoadmaps} joined roadmaps. You have already joined {joinedCount} roadmaps. Please upgrade your plan or archive an existing roadmap."
