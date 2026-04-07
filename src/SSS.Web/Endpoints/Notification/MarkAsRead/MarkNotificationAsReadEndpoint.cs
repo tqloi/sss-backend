@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
-using SSS.Application.Abstractions.Persistence.Sql;
+using MediatR;
+using SSS.Application.Features.Notification.MarkAsRead;
 using System.Security.Claims;
 
 namespace SSS.WebApi.Endpoints.Notification.MarkAsRead;
 
 public sealed class MarkNotificationAsReadEndpoint(
-    IAppDbContext dbContext
+    ISender sender
 ) : Endpoint<MarkNotificationAsReadRequest, MarkNotificationAsReadResponse>
 {
     public override void Configure()
@@ -29,27 +29,23 @@ public sealed class MarkNotificationAsReadEndpoint(
             return;
         }
 
-        var entity = await dbContext.UserNotifications
-            .FirstOrDefaultAsync(x => x.Id == req.Id && x.UserId == userId, ct);
+        var result = await sender.Send(new MarkNotificationAsReadCommand
+        {
+            UserId = userId,
+            NotificationId = req.Id
+        }, ct);
 
-        if (entity is null)
+        if (!result.Found)
         {
             await SendNotFoundAsync(ct);
             return;
         }
 
-        if (!entity.IsRead)
-        {
-            entity.IsRead = true;
-            entity.ReadAt = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync(ct);
-        }
-
         await SendOkAsync(new MarkNotificationAsReadResponse
         {
-            Id = entity.Id,
-            IsRead = entity.IsRead,
-            ReadAt = entity.ReadAt
+            Id = result.Id,
+            IsRead = result.IsRead,
+            ReadAt = result.ReadAt
         }, ct);
     }
 }
