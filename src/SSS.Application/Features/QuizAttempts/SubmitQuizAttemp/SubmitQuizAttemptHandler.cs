@@ -67,89 +67,108 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                 .GroupBy(a => a.QuestionId)
                 .ToDictionary(g => g.Key, g => g.Last());
 
-            await db.QuizAnswers
-                .Where(a => a.AttemptId == quizAttempt.Id)
-                .ExecuteDeleteAsync(ct);
-
             var questionReviews = new List<QuizAttemptQuestionReviewDto>();
             var answerEntities = new List<QuizAnswer>(attemptQuestions.Count);
 
-            foreach (var question in attemptQuestions)
+            await db.BeginTransactionAsync(ct);
+
+            try
             {
-                submittedAnswers.TryGetValue(question.Id, out var answerDto);
+                await db.QuizAnswers
+                    .Where(a => a.AttemptId == quizAttempt.Id)
+                    .ExecuteDeleteAsync(ct);
 
-                var correctOptions = question.Options
-                    .Where(o => o.IsCorrect)
-                    .OrderBy(o => o.OrderNo)
-                    .ToList();
-
-                var selectedOptionIds = GetSelectedOptionIds(answerDto);
-                var selectedOptions = selectedOptionIds.Count == 0
-                    ? new List<QuizQuestionOption>()
-                    : question.Options.Where(o => selectedOptionIds.Contains(o.Id)).ToList();
-
-                var selectedTextValue = answerDto?.TextValue?.Trim();
-                var correctTextValue = correctOptions.Count == 0
-                    ? null
-                    : string.Join(" | ", correctOptions.Select(o => o.DisplayText));
-
-                var isCorrect = IsCorrectAnswer(question.Type, selectedOptions, selectedTextValue, correctOptions);
-
-                if (isCorrect)
+                foreach (var question in attemptQuestions)
                 {
-                    totalScore += questionScore;
-                }
+                    submittedAnswers.TryGetValue(question.Id, out var answerDto);
 
-                if (answerDto is not null)
-                {
-                    var storedTextValue = question.Type == QuizQuestionType.MultipleChoice
-                        ? (selectedOptionIds.Count > 0 ? JsonSerializer.Serialize(selectedOptionIds) : null)
-                        : answerDto.TextValue;
+                    var correctOptions = question.Options
+                        .Where(o => o.IsCorrect)
+                        .OrderBy(o => o.OrderNo)
+                        .ToList();
 
-                    var quizAnswer = new QuizAnswer
+                    var selectedOptionIds = GetSelectedOptionIds(answerDto);
+                    var selectedOptions = selectedOptionIds.Count == 0
+                        ? new List<QuizQuestionOption>()
+                        : question.Options.Where(o => selectedOptionIds.Contains(o.Id)).ToList();
+                    var persistedSelectedOptionIds = selectedOptions
+                        .Select(option => option.Id)
+                        .Distinct()
+                        .ToList();
+
+                    var selectedTextValue = answerDto?.TextValue?.Trim();
+                    var correctTextValue = correctOptions.Count == 0
+                        ? null
+                        : string.Join(" | ", correctOptions.Select(o => o.DisplayText));
+
+                    var isCorrect = IsCorrectAnswer(question.Type, selectedOptions, selectedTextValue, correctOptions);
+
+                    if (isCorrect)
                     {
-                        AttemptId = quizAttempt.Id,
-                        QuestionId = question.Id,
-                        OptionId = selectedOptionIds.FirstOrDefault(),
-                        TextValue = storedTextValue,
-                        NumberValue = answerDto.NumberValue,
-                        AnsweredAt = submittedAt,
-                        ScoredValue = isCorrect
-                            ? questionScore : 0m
-                    };
+                        totalScore += questionScore;
+                    }
 
-                    answerEntities.Add(quizAnswer);
+                    if (answerDto is not null)
+                    {
+                        var storedTextValue = question.Type == QuizQuestionType.MultipleChoice
+                            ? (persistedSelectedOptionIds.Count > 0 ? JsonSerializer.Serialize(persistedSelectedOptionIds) : null)
+                            : answerDto.TextValue;
+
+                        var quizAnswer = new QuizAnswer
+                        {
+                            AttemptId = quizAttempt.Id,
+                            QuestionId = question.Id,
+                            OptionId = persistedSelectedOptionIds.Count > 0
+                                ? persistedSelectedOptionIds.First()
+                                : null,
+                            TextValue = storedTextValue,
+                            NumberValue = answerDto.NumberValue,
+                            AnsweredAt = submittedAt,
+                            ScoredValue = isCorrect
+                                ? questionScore : 0m
+                        };
+
+                        answerEntities.Add(quizAnswer);
+                    }
+
+                    questionReviews.Add(new QuizAttemptQuestionReviewDto
+                    {
+                        QuestionId = question.Id,
+                        Prompt = question.Prompt,
+                        Type = question.Type,
+                        SelectedOptionId = persistedSelectedOptionIds.Count > 0
+                            ? persistedSelectedOptionIds.First()
+                            : null,
+                        SelectedOptionIds = persistedSelectedOptionIds,
+                        SelectedTextValue = selectedTextValue,
+                        SelectedOptionText = selectedOptions.FirstOrDefault()?.DisplayText,
+                        CorrectOptionId = correctOptions.FirstOrDefault()?.Id,
+                        CorrectOptionIds = correctOptions.Select(o => o.Id).ToList(),
+                        CorrectTextValue = correctTextValue,
+                        CorrectOptionText = correctOptions.FirstOrDefault()?.DisplayText,
+                        IsCorrect = isCorrect
+                    });
                 }
 
-                questionReviews.Add(new QuizAttemptQuestionReviewDto
+                if (answerEntities.Count > 0)
                 {
-                    QuestionId = question.Id,
-                    Prompt = question.Prompt,
-                    Type = question.Type,
-                    SelectedOptionId = selectedOptions.FirstOrDefault()?.Id,
-                    SelectedOptionIds = selectedOptionIds,
-                    SelectedTextValue = selectedTextValue,
-                    SelectedOptionText = selectedOptions.FirstOrDefault()?.DisplayText,
-                    CorrectOptionId = correctOptions.FirstOrDefault()?.Id,
-                    CorrectOptionIds = correctOptions.Select(o => o.Id).ToList(),
-                    CorrectTextValue = correctTextValue,
-                    CorrectOptionText = correctOptions.FirstOrDefault()?.DisplayText,
-                    IsCorrect = isCorrect
-                });
-            }
+                    await db.QuizAnswers.AddRangeAsync(answerEntities, ct);
+                }
 
-            if (answerEntities.Count > 0)
+                quizAttempt.SubmittedAt = submittedAt;
+                quizAttempt.Score = totalScore;
+                quizAttempt.Status = totalScore >= quiz.PassingScore
+                    ? QuizAttemptStatus.Passed
+                    : QuizAttemptStatus.Failed;
+
+                await db.SaveChangesAsync(ct);
+                await db.CommitTransactionAsync(ct);
+            }
+            catch
             {
-                await db.QuizAnswers.AddRangeAsync(answerEntities, ct);
+                await db.RollbackTransactionAsync(ct);
+                throw;
             }
-
-            quizAttempt.SubmittedAt = submittedAt;
-            quizAttempt.Score = totalScore;
-            quizAttempt.Status = totalScore >= quiz.PassingScore
-                ? QuizAttemptStatus.Passed
-                : QuizAttemptStatus.Failed;
-
-            await db.SaveChangesAsync(ct);
 
             if (quizAttempt.Status == QuizAttemptStatus.Passed)
             {
