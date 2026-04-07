@@ -30,7 +30,7 @@ namespace SSS.Application.Features.Auth.GoogleCallBack
             if (user is null)
             {
                 user = await googleService.AutoProvisionUserAsync(info);
-                await userManager.AddToRoleAsync(user, "Student");
+                await userManager.AddToRoleAsync(user, "User");
             }
 
             // 2) đảm bảo liên kết external
@@ -41,6 +41,9 @@ namespace SSS.Application.Features.Auth.GoogleCallBack
                 if (!add.Succeeded)
                     throw new InvalidOperationException(add.Errors.First().Description);
             }
+
+            if (user.IsActive == false)
+                throw new UnauthorizedAccessException("Account is blocked");
 
             return await jwtService.IssueAsync(user, req.RequestIp, ct);
         }

@@ -22,17 +22,11 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
             .HasColumnType("varchar(255)")
             .IsRequired();
 
-        builder.Property(e => e.TaskId)
-            .HasColumnType("bigint");
 
-        builder.Property(e => e.StudyPlanId)
-            .HasColumnType("bigint");
 
-        builder.Property(e => e.ModuleId)
-            .HasColumnType("bigint");
-
-        builder.Property(e => e.NodeId)
-            .HasColumnType("bigint");
+        builder.Property(e => e.Status)
+            .HasMaxLength(20)
+            .IsRequired();
 
         builder.Property(e => e.StartAt)
             .HasColumnType("datetime(6)")
@@ -41,8 +35,17 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.EndAt)
             .HasColumnType("datetime(6)");
 
+        builder.Property(e => e.PausedAt)
+            .HasColumnType("datetime(6)");
+
         builder.Property(e => e.EndedReason)
             .HasMaxLength(30);
+
+        builder.Property(e => e.TasksCompletedCount)
+            .HasColumnType("int");
+
+        builder.Property(e => e.TotalTasks)
+            .HasColumnType("int");
 
         builder.Property(e => e.PlannedDurationSeconds)
             .HasColumnType("int");
@@ -50,25 +53,10 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.ActualDurationSeconds)
             .HasColumnType("int");
 
-        builder.Property(e => e.ActiveSeconds)
-            .HasColumnType("int");
-
-        builder.Property(e => e.IdleSeconds)
-            .HasColumnType("int");
-
         builder.Property(e => e.PauseCount)
             .HasColumnType("int");
 
         builder.Property(e => e.PauseSeconds)
-            .HasColumnType("int");
-
-        builder.Property(e => e.FocusScore)
-            .HasColumnType("int");
-
-        builder.Property(e => e.ConfidenceActiveLearning)
-            .HasColumnType("decimal(5,4)");
-
-        builder.Property(e => e.FatigueScore)
             .HasColumnType("int");
 
         builder.Property(e => e.SelfRating)
@@ -83,33 +71,17 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)");
 
+        builder.Property(e => e.StudyPlanId)
+            .HasColumnType("bigint");
+
+        builder.Property(e => e.StudyPlanModuleId)
+            .HasColumnType("bigint");
+
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.Task)
-            .WithMany(t => t.StudySessions)
-            .HasForeignKey(e => e.TaskId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(e => e.StudyPlan)
-            .WithMany(p => p.StudySessions)
-            .HasForeignKey(e => e.StudyPlanId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(e => e.Module)
-            .WithMany(m => m.StudySessions)
-            .HasForeignKey(e => e.ModuleId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(e => e.Node)
-            .WithMany(n => n.StudySessions)
-            .HasForeignKey(e => e.NodeId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.HasIndex(e => new { e.UserId, e.StartAt });
-        builder.HasIndex(e => e.TaskId);
-        builder.HasIndex(e => e.StudyPlanId);
     }
 }

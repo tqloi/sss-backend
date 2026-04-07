@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using SSS.Domain.Entities.Identity;
-using SSS.Domain.Entities.Notification;
-using SSS.Domain.Entities.Planning;
-using SSS.Domain.Entities.Content;
-using SSS.Domain.Entities.Tracking;
-using SSS.Domain.Entities.Assessment;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Domain.Entities.Assessment;
+using SSS.Domain.Entities.Content;
+using SSS.Domain.Entities.Identity;
+using SSS.Domain.Entities.Learning;
+using SSS.Domain.Entities.Notification;
+using SSS.Domain.Entities.Payment;
+using SSS.Domain.Entities.Planning;
+using SSS.Domain.Entities.Tracking;
 
 namespace SSS.Infrastructure.Persistence.Sql
 {
@@ -20,6 +22,7 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<RoadmapNode> RoadmapNodes => Set<RoadmapNode>();
         public DbSet<RoadmapEdge> RoadmapEdges => Set<RoadmapEdge>();
         public DbSet<NodeContent> NodeContents => Set<NodeContent>();
+        public DbSet<ContentManagerSubject> ContentManagerSubjects => Set<ContentManagerSubject>();
 
         // Survey & Profile
         public DbSet<Survey> Surveys => Set<Survey>();
@@ -27,18 +30,27 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<SurveyQuestionOption> SurveyQuestionOptions => Set<SurveyQuestionOption>();
         public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
         public DbSet<SurveyAnswer> SurveyAnswers => Set<SurveyAnswer>();
-        public DbSet<UserLearningProfile> UserLearningProfiles => Set<UserLearningProfile>();
+        public DbSet<UserLearningBehavior> UserLearningBehaviors => Set<UserLearningBehavior>();
+        public DbSet<UserLearningTarget> UserLearningTargets => Set<UserLearningTarget>();
+        public DbSet<SurveyFieldSemantic> SurveyFieldSemantics => Set<SurveyFieldSemantic>();
+        public DbSet<SurveyTriggerMapping> SurveyTriggerMappings => Set<SurveyTriggerMapping>();
+
+        public DbSet<SurveyTriggerType> SurveyTriggerTypes => Set<SurveyTriggerType>();
 
         // Study Plan / Tasks / Tracking
         public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
         public DbSet<StudyPlanModule> StudyPlanModules => Set<StudyPlanModule>();
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
         public DbSet<StudySession> StudySessions => Set<StudySession>();
+        public DbSet<SessionTask> SessionTasks => Set<SessionTask>();
 
         // Progress / Behavior
         public DbSet<UserSubjectStat> UserSubjectStats => Set<UserSubjectStat>();
         public DbSet<UserGamification> UserGamifications => Set<UserGamification>();
         public DbSet<UserBehaviorWindow> UserBehaviorWindows => Set<UserBehaviorWindow>();
+
+        // Payment
+        public DbSet<UserPayment> UserPayments => Set<UserPayment>();
 
         // Quiz
         public DbSet<Quiz> Quizzes => Set<Quiz>();
@@ -50,6 +62,8 @@ namespace SSS.Infrastructure.Persistence.Sql
         // Notification
         public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
         public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
+
+       
 
         // Security (non-default identity table)
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -90,7 +104,9 @@ namespace SSS.Infrastructure.Persistence.Sql
                     var ns when ns.Contains("Content") => "Ct_",
                     var ns when ns.Contains("Assessment") => "As_",
                     var ns when ns.Contains("Planning") => "Pl_",
+                    var ns when ns.Contains("Learning") => "Ln_",
                     var ns when ns.Contains("Tracking") => "Tr_",
+                    var ns when ns.Contains("Payment") => "Pm_",
                     var ns when ns.Contains("Notification") => "Nt_", // Sửa lại đúng tên folder bạn đặt
                     _ => ""
                 };

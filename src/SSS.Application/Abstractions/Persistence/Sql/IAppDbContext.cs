@@ -1,9 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.AspNetCore.Identity;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Content;
 using SSS.Domain.Entities.Identity;
+using SSS.Domain.Entities.Learning;
 using SSS.Domain.Entities.Notification;
+using SSS.Domain.Entities.Payment;
 using SSS.Domain.Entities.Planning;
 using SSS.Domain.Entities.Tracking;
 
@@ -18,6 +21,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<RoadmapNode> RoadmapNodes { get; }
         DbSet<RoadmapEdge> RoadmapEdges { get; }
         DbSet<NodeContent> NodeContents { get; }
+        DbSet<ContentManagerSubject> ContentManagerSubjects { get; }
 
         // Survey & Profile
         DbSet<Survey> Surveys { get; }
@@ -25,18 +29,29 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<SurveyQuestionOption> SurveyQuestionOptions { get; }
         DbSet<SurveyResponse> SurveyResponses { get; }
         DbSet<SurveyAnswer> SurveyAnswers { get; }
-        DbSet<UserLearningProfile> UserLearningProfiles { get; }
+        DbSet<UserLearningBehavior> UserLearningBehaviors { get; }
+        DbSet<UserLearningTarget> UserLearningTargets { get; }
+
+        DbSet<SurveyTriggerMapping> SurveyTriggerMappings { get; }
+        DbSet<SurveyTriggerType> SurveyTriggerTypes { get; }
+
+        DbSet<SurveyFieldSemantic> SurveyFieldSemantics { get; }
+
 
         // Planning / Tracking
         DbSet<StudyPlan> StudyPlans { get; }
         DbSet<StudyPlanModule> StudyPlanModules { get; }
         DbSet<TaskItem> TaskItems { get; }
         DbSet<StudySession> StudySessions { get; }
+        DbSet<SessionTask> SessionTasks { get; }
 
         // Progress / Behavior
         DbSet<UserSubjectStat> UserSubjectStats { get; }
         DbSet<UserGamification> UserGamifications { get; }
         DbSet<UserBehaviorWindow> UserBehaviorWindows { get; }
+
+        // Payment
+        DbSet<UserPayment> UserPayments { get; }
 
         // Quiz
         DbSet<Quiz> Quizzes { get; }
@@ -49,8 +64,13 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<UserNotification> UserNotifications { get; }
         DbSet<UserPushToken> UserPushTokens { get; }
 
+        
+
         // Security
         DbSet<RefreshToken> RefreshTokens { get; }
+        DbSet<User> Users { get; }
+        DbSet<IdentityRole> Roles { get; }
+        DbSet<IdentityUserRole<string>> UserRoles { get; }
         Task<int> SaveChangesAsync(CancellationToken ct = default);
         Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
         Task CommitTransactionAsync(CancellationToken ct = default);

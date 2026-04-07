@@ -1,0 +1,7 @@
+using SSS.Application.Features.QuizAttempts.Common;
+namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
+{
+    public sealed record GetQuizzesByQuizAttemptResult(
+        QuizBasicInfoDto Quiz,
+        List<QuizQuestionWithAnswerDto> Questions);
+}

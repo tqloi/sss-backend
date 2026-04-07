@@ -3,6 +3,7 @@ using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using SSS.Application.Abstractions.External.Storage.Gcs;
 
 
 namespace SSS.Infrastructure.External.Storage.Gcs

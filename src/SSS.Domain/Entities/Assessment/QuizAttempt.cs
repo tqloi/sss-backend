@@ -14,7 +14,7 @@ public class QuizAttempt
     public QuizAttemptStatus Status { get; set; } = QuizAttemptStatus.InProgress;
 
     // Navigation
-    public Quiz Quiz { get; set; } = null!;
-    public User User { get; set; } = null!;
-    public ICollection<QuizAnswer> Answers { get; set; } = new HashSet<QuizAnswer>();
+    public virtual Quiz Quiz { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
+    public virtual ICollection<QuizAnswer> Answers { get; set; } = new HashSet<QuizAnswer>();
 }

@@ -9,6 +9,9 @@
 	<ItemGroup>
 		<!-- ORM & Database -->
 		<PackageReference Include="FirebaseDatabase.net" Version="5.0.0" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.14" />
+		<PackageReference Include="Hangfire.Core" Version="1.8.14" />
+		<PackageReference Include="Hangfire.InMemory" Version="0.9.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
 			<PrivateAssets>all</PrivateAssets>
@@ -21,6 +24,7 @@
 		<PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.0" />
 		<PackageReference Include="MongoDB.Driver" Version="3.6.0" />
+		<PackageReference Include="StackExchange.Redis" Version="2.8.0" />
 
 		<!-- Configuration & Options -->
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
@@ -33,14 +37,15 @@
 		<PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0" />
 		<PackageReference Include="Google.Apis.Auth" Version="1.72.0" />
 		<PackageReference Include="MailKit" Version="4.13.0" />
+		<PackageReference Include="OpenAI" Version="2.8.0" />
 		<PackageReference Include="payOS" Version="1.0.9" />
-
+		
 		<!-- API Framework -->
 		<PackageReference Include="FastEndpoints" Version="5.24.0" />
 		<PackageReference Include="FastEndpoints.Swagger" Version="5.24.0" />
 
 		<!-- Mapping -->
-		<PackageReference Include="AutoMapper" Version="15.0.1" />
+		<PackageReference Include="AutoMapper" Version="16.1.1" />
 
 		<!-- PDF Generation -->
 		<PackageReference Include="itext7.pdfhtml" Version="6.2.1" />
@@ -54,6 +59,7 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="External/Communication/Email/Templates/**/*.html" />
+		<EmbeddedResource Include="External/Document/Pdf/Templates/**/*.html" />
 	</ItemGroup>
 
 </Project>

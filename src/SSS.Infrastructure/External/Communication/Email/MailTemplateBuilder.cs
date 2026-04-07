@@ -5,75 +5,114 @@ namespace SSS.Infrastructure.External.Communication.Email
 {
     public class MailTemplateBuilder : IMailTemplateBuilder
     {
-        // ===== Template file names (EmbeddedResource) =====
-        private const string TEMPLATE_CONFIRM = "ConfirmEmailTemplate.html";
-        private const string TEMPLATE_RESET_PASSWORD = "ResetPasswordTemplate.html";
-        private const string TEMPLATE_WELCOME_COURSE = "WelcomeCourseTemplate.html";
-        private const string TEMPLATE_COMPLETION_COURSE = "CourseCompletedTemplate.html";
-        private const string TEMPLATE_OTP = "OtpEmailTemplate.html";
+        private const string ConfirmTemplate = "ConfirmEmailTemplate.html";
+        private const string ResetPasswordTemplate = "ResetPasswordTemplate.html";
+        private const string WelcomeCourseTemplate = "WelcomeCourseTemplate.html";
+        private const string CourseCompletedTemplate = "CourseCompletedTemplate.html";
+        private const string OtpTemplate = "OtpEmailTemplate.html";
+        private const string PlanReadyTemplate = "PlanReadyTemplate.html";
+        private const string PremiumUpgradeTemplate = "PremiumUpgradeTemplate.html";
+        private const string ModuleCompletedTemplate = "ModuleCompletedTemplate.html";
 
-        // ===== Placeholder keys =====
-        private const string PH_CONFIRMATION_URL = "{{ .ConfirmationURL }}";
-        private const string PH_EMAIL = "{{ .Email }}";
-        private const string PH_STUDENT_NAME = "{{ .StudentName }}";
-        private const string PH_COURSE_NAME = "{{ .CourseName }}";
-        private const string PH_COURSE_URL = "{{ .CourseUrl }}";
-        private const string PH_CERT_URL = "{{ .CertificateUrl }}";
-        private const string PH_OTP_CODE = "{{ .OtpCode }}";
+        private const string PhConfirmationUrl = "{{ .ConfirmationURL }}";
+        private const string PhEmail = "{{ .Email }}";
+        private const string PhStudentName = "{{ .StudentName }}";
+        private const string PhCourseName = "{{ .CourseName }}";
+        private const string PhCourseUrl = "{{ .CourseUrl }}";
+        private const string PhCertificateUrl = "{{ .CertificateUrl }}";
+        private const string PhOtpCode = "{{ .OtpCode }}";
+        private const string PhPlanName = "{{ .PlanName }}";
+        private const string PhRoadmapName = "{{ .RoadmapName }}";
+        private const string PhPlanUrl = "{{ .PlanUrl }}";
+        private const string PhPackageName = "{{ .PackageName }}";
+        private const string PhInvoiceNumber = "{{ .InvoiceNumber }}";
+        private const string PhInvoiceDate = "{{ .InvoiceDate }}";
+        private const string PhInvoiceUrl = "{{ .InvoiceUrl }}";
+        private const string PhModuleName = "{{ .ModuleName }}";
+        private const string PhRoadmapUrl = "{{ .RoadmapUrl }}";
 
-        // ===== Public APIs =====
-
-        // Confirm email
         public Task<string> BuildConfirmEmailAsync(string confirmationUrl, string email) =>
-            BuildLinkActionEmailAsync(TEMPLATE_CONFIRM, confirmationUrl, email);
+            BuildFromTemplateAsync(ConfirmTemplate, new Dictionary<string, string?>
+            {
+                [PhConfirmationUrl] = confirmationUrl,
+                [PhEmail] = email
+            });
 
-        // Reset password
         public Task<string> BuildResetPasswordEmailAsync(string resetUrl, string email) =>
-            BuildLinkActionEmailAsync(TEMPLATE_RESET_PASSWORD, resetUrl, email);
+            BuildFromTemplateAsync(ResetPasswordTemplate, new Dictionary<string, string?>
+            {
+                [PhConfirmationUrl] = resetUrl,
+                [PhEmail] = email
+            });
 
-        // Welcome to course (sau khi mua)
-        public async Task<string> BuildWelcomeToCourseEmailAsync(string studentName, string courseName, string courseUrl, string email)
-        {
-            var html = await LoadTemplateAsync(TEMPLATE_WELCOME_COURSE);
+        public Task<string> BuildWelcomeToCourseEmailAsync(string studentName, string courseName, string courseUrl, string email) =>
+            BuildFromTemplateAsync(WelcomeCourseTemplate, new Dictionary<string, string?>
+            {
+                [PhStudentName] = studentName,
+                [PhCourseName] = courseName,
+                [PhCourseUrl] = courseUrl,
+                [PhEmail] = email
+            });
 
-            html = html
-                .Replace(PH_STUDENT_NAME, studentName ?? string.Empty)
-                .Replace(PH_COURSE_NAME, courseName ?? string.Empty)
-                .Replace(PH_COURSE_URL, courseUrl ?? string.Empty)
-                .Replace(PH_EMAIL, email ?? string.Empty);
+        public Task<string> BuildCourseCompletedEmailAsync(string studentName, string courseName, string certificateUrl, string email) =>
+            BuildFromTemplateAsync(CourseCompletedTemplate, new Dictionary<string, string?>
+            {
+                [PhStudentName] = studentName,
+                [PhCourseName] = courseName,
+                [PhCertificateUrl] = certificateUrl,
+                [PhEmail] = email
+            });
 
-            return html;
-        }
+        public Task<string> BuildSendOtpEmailAsync(string otpCode, string email) =>
+            BuildFromTemplateAsync(OtpTemplate, new Dictionary<string, string?>
+            {
+                [PhOtpCode] = otpCode,
+                [PhEmail] = email
+            });
 
-        // Course completed (kèm link certificate)
-        public async Task<string> BuildCourseCompletedEmailAsync(string studentName, string courseName, string certificateUrl, string email)
-        {
-            var html = await LoadTemplateAsync(TEMPLATE_COMPLETION_COURSE);
+        public Task<string> BuildPlanReadyEmailAsync(string studentName, string planName, string roadmapName, string planUrl, string email) =>
+            BuildFromTemplateAsync(PlanReadyTemplate, new Dictionary<string, string?>
+            {
+                [PhStudentName] = studentName,
+                [PhPlanName] = planName,
+                [PhRoadmapName] = roadmapName,
+                [PhPlanUrl] = planUrl,
+                [PhEmail] = email
+            });
 
-            html = html
-                .Replace(PH_STUDENT_NAME, studentName ?? string.Empty)
-                .Replace(PH_COURSE_NAME, courseName ?? string.Empty)
-                .Replace(PH_CERT_URL, certificateUrl ?? string.Empty)
-                .Replace(PH_EMAIL, email ?? string.Empty);
+        public Task<string> BuildPremiumUpgradeEmailAsync(string studentName, string packageName, string invoiceNumber, string invoiceDate, string invoiceUrl, string email) =>
+            BuildFromTemplateAsync(PremiumUpgradeTemplate, new Dictionary<string, string?>
+            {
+                [PhStudentName] = studentName,
+                [PhPackageName] = packageName,
+                [PhInvoiceNumber] = invoiceNumber,
+                [PhInvoiceDate] = invoiceDate,
+                [PhInvoiceUrl] = invoiceUrl,
+                [PhEmail] = email
+            });
 
-            return html;
-        }
+        public Task<string> BuildModuleCompletedEmailAsync(string studentName, string moduleName, string roadmapName, string roadmapUrl, string email) =>
+            BuildFromTemplateAsync(ModuleCompletedTemplate, new Dictionary<string, string?>
+            {
+                [PhStudentName] = studentName,
+                [PhModuleName] = moduleName,
+                [PhRoadmapName] = roadmapName,
+                [PhRoadmapUrl] = roadmapUrl,
+                [PhEmail] = email
+            });
 
-        // ===== Private helpers =====
-
-        // Dùng chung cho Confirm/Reset: template có {{ .ConfirmationURL }} và {{ .Email }}
-        private async Task<string> BuildLinkActionEmailAsync(string templateFileName, string actionUrl, string email)
+        private static async Task<string> BuildFromTemplateAsync(string templateFileName, IReadOnlyDictionary<string, string?> tokens)
         {
             var html = await LoadTemplateAsync(templateFileName);
 
-            html = html
-                .Replace(PH_CONFIRMATION_URL, actionUrl ?? string.Empty)
-                .Replace(PH_EMAIL, email ?? string.Empty);
+            foreach (var token in tokens)
+            {
+                html = html.Replace(token.Key, token.Value ?? string.Empty);
+            }
 
             return html;
         }
 
-        // Đọc EmbeddedResource theo namespace hiện tại
         private static async Task<string> LoadTemplateAsync(string templateFileName)
         {
             var asm = Assembly.GetExecutingAssembly();
@@ -84,17 +123,6 @@ namespace SSS.Infrastructure.External.Communication.Email
 
             using var reader = new StreamReader(stream);
             return await reader.ReadToEndAsync();
-        }
-
-        public async Task<string> BuildSendOtpEmailAsync(string otpCode, string email)
-        {
-            var html = await LoadTemplateAsync(TEMPLATE_OTP);
-
-            html = html
-                .Replace(PH_OTP_CODE, otpCode ?? string.Empty)
-                .Replace(PH_EMAIL, email ?? string.Empty);
-
-            return html;
         }
     }
 }

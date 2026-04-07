@@ -1,7 +1,11 @@
-﻿using FastEndpoints;
+using FastEndpoints;
 using FastEndpoints.Swagger;
+using Hangfire;
 using Microsoft.AspNetCore.HttpOverrides;
 using SSS.Infrastructure;
+using SSS.Infrastructure.Realtime;
+using SSS.Middleware;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,11 +54,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 builder.Services.AddProblemDetails();
-//builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
-//// Seed Database
+// Seed Database
 //using (var scope = app.Services.CreateScope())
 //{
 //    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -73,8 +77,17 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ── Hangfire dashboard (dev only) ─────────────────────────────────────────────
+if (app.Environment.IsDevelopment())
+    app.UseHangfireDashboard("/hangfire");
+
 app.MapControllers();
-app.UseFastEndpoints();
+app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<UserGamificationHub>("/hubs/user-gamification");
+app.UseFastEndpoints(c =>
+{
+    c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
+});
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
     app.UseSwaggerGen();

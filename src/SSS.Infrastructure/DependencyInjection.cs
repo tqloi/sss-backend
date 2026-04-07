@@ -1,11 +1,23 @@
 ﻿using FastEndpoints;
 using FastEndpoints.Swagger;
+using Hangfire;
+using Hangfire.InMemory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SSS.Infrastructure.External.Document.Pdf;
+using SSS.Application.Abstractions.Background;
 using SSS.Application.Features.Auth.Login;
+using SSS.Infrastructure.Background;
+using SSS.Infrastructure.Background.Jobs;
+using SSS.Infrastructure.Caching.Redis;
+using SSS.Infrastructure.External.AI.Gemini;
+using SSS.Infrastructure.External.AI.OpenAI;
 using SSS.Infrastructure.External.Communication.Email;
+using SSS.Infrastructure.External.Communication.OneSignal;
 using SSS.Infrastructure.External.Identity.Google;
+using SSS.Infrastructure.External.Payment.PayOS;
+using SSS.Infrastructure.External.Storage.Gcs;
 using SSS.Infrastructure.Persistence.Mongo;
 using SSS.Infrastructure.Persistence.Sql;
 using SSS.Infrastructure.Sercurity.Jwt;
@@ -23,11 +35,6 @@ namespace SSS.Infrastructure
         {
             services.AddDatabase(config);
             services.AddJwtAuthentication(config);
-            services.AddMailService(config);
-            services.AddGoogleAuthService(config);
-            services.AddMongo(config);
-            //services.AddGcsStorage(config);
-            //services.AddPayOSService(config);
             services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(LoginHandler).Assembly));
             services.AddScopedServicesByConvention
@@ -36,6 +43,39 @@ namespace SSS.Infrastructure
                  infraAssembly: typeof(GoogleAuthService).Assembly
             );
 
+            services.AddGemini(config);
+            services.AddOpenAI(config);
+            services.AddMailService(config);
+            services.AddOneSignal(config);
+            services.AddGoogleAuthService(config);
+            services.AddPayOSService(config);
+            services.AddMongo(config);
+            services.AddRedis(config);
+            services.AddGcsStorage(config);
+
+            // ── Hangfire ──────────────────────────────────────────────────────────
+            services.AddHangfire(cfg => cfg
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseInMemoryStorage());   // swap to .UseMySqlStorage(...) in production
+
+            services.AddHangfireServer(opts =>
+            {
+                opts.WorkerCount = 4;   // concurrent job workers
+            });
+
+            // Dispatcher (not auto-registered: suffix is not Service/Repository/Gateway/Router)
+            services.AddScoped<ISurveyJobDispatcher, HangfireSurveyJobDispatcher>();
+            services.AddScoped<IEmailJobDispatcher, HangfireEmailJobDispatcher>();
+
+            // Jobs must be resolvable by Hangfire's DI activator
+            services.AddScoped<AnalyzeBehaviorJob>();
+            services.AddScoped<AnalyzeTargetJob>();
+            services.AddScoped<AnalyzeModuleBehaviorInsightJob>();
+            services.AddScoped<SendEmailJob>();
+            // ─────────────────────────────────────────────────────────────────────
+            //services.AddPayOSService(config);
             //// Certificate background workers
             //services.AddSingleton<StudentCourseCompletionQueue>();
             //services.AddSingleton<IStudentCourseCompletionQueue>(sp => sp.GetRequiredService<StudentCourseCompletionQueue>());
@@ -45,9 +85,10 @@ namespace SSS.Infrastructure
 
             // FastEndpoints
             services.AddFastEndpoints();
+            services.AddSignalR();
             services.SwaggerDocument(o =>
             {
-                o.AutoTagPathSegmentIndex = 2;
+                //o.AutoTagPathSegmentIndex = 2;
                 o.DocumentSettings = s =>
                 {
                     s.Title = "sss-backend";
@@ -66,9 +107,10 @@ namespace SSS.Infrastructure
             Assembly infraAssembly,
             string[]? allowedSuffixes = null)
         {
-            allowedSuffixes ??= new[] { "Service", "Repository", "Provider", "Generator", "Client", "Gateway", "Sender", "Builder" };
 
-            var appTypes = appAssembly.GetTypes();
+            allowedSuffixes ??= new[] { "Service", "Repository", "Gateway" , "Router" };
+
+            var appTypes = appAssembly.GetTypes();  
             var infraTypes = infraAssembly.GetTypes();
 
             // 1) Lấy tất cả interface hợp lệ trong Application

@@ -16,7 +16,7 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
             .HasColumnType("bigint")
             .ValueGeneratedOnAdd();
 
-        builder.Property(e => e.StudyPlanModuleId)
+        builder.Property(e => e.RoadmapNodeId)
             .HasColumnType("bigint")
             .IsRequired();
 
@@ -29,15 +29,25 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.Property(e => e.TotalScore)
             .HasColumnType("decimal(6,2)");
 
+        builder.Property(e => e.Level)
+            .HasColumnType("varchar(50)")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(e => e.PassingScore)
+            .HasColumnType("decimal(6,2)")
+            .IsRequired();
+
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)")
             .IsRequired();
 
-        builder.HasOne(e => e.StudyPlanModule)
+        builder.HasOne(e => e.RoadmapNode)
             .WithMany(m => m.Quizzes)
-            .HasForeignKey(e => e.StudyPlanModuleId)
+            .HasForeignKey(e => e.RoadmapNodeId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(e => e.StudyPlanModuleId).IsUnique();
+        builder.HasIndex(e => e.RoadmapNodeId);
     }
 }

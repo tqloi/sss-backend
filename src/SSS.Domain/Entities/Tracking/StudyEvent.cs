@@ -1,4 +1,4 @@
-﻿using SSS.Domain.Enums;
+using SSS.Domain.Enums;
 
 namespace SSS.Domain.Entities.Tracking
 {
@@ -6,6 +6,8 @@ namespace SSS.Domain.Entities.Tracking
     {
         public string Id { get; set; } = null!;
         public string SessionId { get; set; } = null!;
+        public string UserId { get; set; } = null!;
+        public string? StudyPlanModuleId { get; set; }
         public StudyEventType EventType { get; set; } = StudyEventType.Start;
         public StudyEventCategory EventCategory { get; set; } = StudyEventCategory.Learning;
         public ContentMode ContentMode { get; set; } = ContentMode.Text;

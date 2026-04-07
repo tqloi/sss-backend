@@ -43,8 +43,8 @@ namespace SSS.WebApi.Endpoints.Auth.ResetPassword
             feResetPath = feResetPath.StartsWith("/") ? feResetPath : "/" + feResetPath;
 
             var resetUrl = $"{feBaseUrl}{feResetPath}"
-                           + $"?userId={user.Id}"
-                           + $"&token={encodedToken}";
+                           + $"?userId={Uri.EscapeDataString(user.Id)}"
+                           + $"&token={Uri.EscapeDataString(encodedToken)}";
             //+ (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}");
 
             var emailBody = await mailTpl.BuildResetPasswordEmailAsync(
@@ -56,7 +56,7 @@ namespace SSS.WebApi.Endpoints.Auth.ResetPassword
             await mail.SendMailAsync(new EmailContent
             {
                 To = user.Email,
-                Subject = "Reset your SSS password",
+                Subject = "Reset your StudySense password",
                 Body = emailBody
             });
 

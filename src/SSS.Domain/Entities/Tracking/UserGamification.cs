@@ -13,5 +13,5 @@ public class UserGamification
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
 }

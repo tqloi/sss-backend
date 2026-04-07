@@ -12,7 +12,7 @@ public class QuizAnswer
     public DateTime AnsweredAt { get; set; }
 
     // Navigation
-    public QuizAttempt Attempt { get; set; } = null!;
-    public QuizQuestion Question { get; set; } = null!;
-    public QuizQuestionOption? Option { get; set; }
+    public virtual QuizAttempt Attempt { get; set; } = null!;
+    public virtual QuizQuestion Question { get; set; } = null!;
+    public virtual QuizQuestionOption? Option { get; set; }
 }

@@ -1,138 +1,139 @@
-﻿//using Google;
-//using Google.Cloud.Storage.V1;
-//using Microsoft.Extensions.Logging;
-//using Microsoft.Extensions.Logging.Abstractions;
-//using Microsoft.Extensions.Options;
+﻿using Google;
+using Google.Cloud.Storage.V1;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using SSS.Application.Abstractions.External.Storage.Gcs;
 
-//namespace SSS.Infrastructure.External.Storage.Gcs
-//{
-//    public class GcsStorageService : IGcsStorageService
-//    {
-//        private readonly ILogger<GcsStorageService> _logger = NullLogger<GcsStorageService>.Instance;
-//        private readonly StorageClient _client;
-//        private readonly UrlSigner _signer;
-//        private readonly string _bucket;
+namespace SSS.Infrastructure.External.Storage.Gcs
+{
+    public class GcsStorageService : IGcsStorageService
+    {
+        private readonly ILogger<GcsStorageService> _logger = NullLogger<GcsStorageService>.Instance;
+        private readonly StorageClient _client;
+        private readonly UrlSigner _signer;
+        private readonly string _bucket;
 
-//        public GcsStorageService(StorageClient client, UrlSigner signer, IOptions<GcsStorageOptions> opt)
-//        {
-//            _logger = NullLogger<GcsStorageService>.Instance;
-//            _client = client;
-//            _signer = signer;
-//            _bucket = opt.Value.Bucket ?? throw new ArgumentNullException(nameof(opt.Value.Bucket));
-//        }
+        public GcsStorageService(StorageClient client, UrlSigner signer, IOptions<GcsStorageOptions> opt)
+        {
+            _logger = NullLogger<GcsStorageService>.Instance;
+            _client = client;
+            _signer = signer;
+            _bucket = opt.Value.Bucket ?? throw new ArgumentNullException(nameof(opt.Value.Bucket));
+        }
 
-//        public async Task<string> UploadAsync(Stream stream, string objectName, string contentType, CancellationToken ct = default)
-//        {
-//            if (string.IsNullOrWhiteSpace(objectName))
-//                throw new ArgumentException("Object name is required.", nameof(objectName));
-//            if (string.IsNullOrWhiteSpace(contentType))
-//                throw new ArgumentException("Content-Type is required.", nameof(contentType));
+        public async Task<string> UploadAsync(Stream stream, string objectName, string contentType, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
+                throw new ArgumentException("Object name is required.", nameof(objectName));
+            if (string.IsNullOrWhiteSpace(contentType))
+                throw new ArgumentException("Content-Type is required.", nameof(contentType));
 
-//            if (stream.CanSeek) stream.Position = 0;
+            if (stream.CanSeek) stream.Position = 0;
 
-//            var obj = await _client.UploadObjectAsync(
-//                bucket: _bucket,
-//                objectName: objectName,
-//                contentType: contentType,
-//                source: stream,
-//                // options: new UploadObjectOptions { CacheControl = "public, max-age=31536000" },
-//                cancellationToken: ct);
+            var obj = await _client.UploadObjectAsync(
+                bucket: _bucket,
+                objectName: objectName,
+                contentType: contentType,
+                source: stream,
+                // options: new UploadObjectOptions { CacheControl = "public, max-age=31536000" },
+                cancellationToken: ct);
 
-//            return obj.Name;
-//        }
+            return obj.Name;
+        }
 
-//        public string GetPublicUrl(string objectName)
-//            => $"https://storage.googleapis.com/{_bucket}/{Uri.EscapeDataString(objectName)}";
+        public string GetPublicUrl(string objectName)
+            => $"https://storage.googleapis.com/{_bucket}/{Uri.EscapeDataString(objectName)}";
 
-//        public string GetSignedReadUrl(string objectName, TimeSpan ttl)
-//        {
-//            if (ttl <= TimeSpan.Zero)
-//                throw new ArgumentOutOfRangeException(nameof(ttl));
+        public string GetSignedReadUrl(string objectName, TimeSpan ttl)
+        {
+            if (ttl <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(ttl));
 
-//            return _signer.Sign(_bucket, objectName, ttl, HttpMethod.Get);
-//        }
+            return _signer.Sign(_bucket, objectName, ttl, HttpMethod.Get);
+        }
 
-//        public string GetSignedWriteUrl(string objectName, string contentType, TimeSpan ttl)
-//        {
-//            if (ttl <= TimeSpan.Zero)
-//                throw new ArgumentOutOfRangeException(nameof(ttl));
-//            if (string.IsNullOrWhiteSpace(contentType))
-//                throw new ArgumentException("Content-Type is required.", nameof(contentType));
+        public string GetSignedWriteUrl(string objectName, string contentType, TimeSpan ttl)
+        {
+            if (ttl <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(ttl));
+            if (string.IsNullOrWhiteSpace(contentType))
+                throw new ArgumentException("Content-Type is required.", nameof(contentType));
 
-//            var template = UrlSigner.RequestTemplate
-//                .FromBucket(_bucket)
-//                .WithObjectName(objectName)
-//                .WithHttpMethod(HttpMethod.Put)
-//                .WithContentHeaders(new[]
-//                {
-//                    new KeyValuePair<string, IEnumerable<string>>("Content-Type", new[] { contentType })
-//                });
+            var template = UrlSigner.RequestTemplate
+                .FromBucket(_bucket)
+                .WithObjectName(objectName)
+                .WithHttpMethod(HttpMethod.Put)
+                .WithContentHeaders(new[]
+                {
+                    new KeyValuePair<string, IEnumerable<string>>("Content-Type", new[] { contentType })
+                });
 
-//            var options = UrlSigner.Options.FromDuration(ttl);
-//            return _signer.Sign(template, options);
-//        }
+            var options = UrlSigner.Options.FromDuration(ttl);
+            return _signer.Sign(template, options);
+        }
 
-//        public string GetSignedResumableInitiationUrl(string objectName, string contentType, TimeSpan ttl)
-//        {
-//            if (ttl <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(ttl));
-//            if (string.IsNullOrWhiteSpace(contentType)) throw new ArgumentException("Content-Type is required.", nameof(contentType));
+        public string GetSignedResumableInitiationUrl(string objectName, string contentType, TimeSpan ttl)
+        {
+            if (ttl <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(ttl));
+            if (string.IsNullOrWhiteSpace(contentType)) throw new ArgumentException("Content-Type is required.", nameof(contentType));
 
-//            var template = UrlSigner.RequestTemplate
-//                .FromBucket(_bucket)
-//                .WithObjectName(objectName)
-//                // Quan trọng: dùng "ResumableHttpMethod" để ký POST + header x-goog-resumable:start
-//                .WithHttpMethod(UrlSigner.ResumableHttpMethod)
-//                .WithContentHeaders(new[]
-//                {
-//            new KeyValuePair<string, IEnumerable<string>>("Content-Type", new[] { contentType })
-//                });
+            var template = UrlSigner.RequestTemplate
+                .FromBucket(_bucket)
+                .WithObjectName(objectName)
+                // Quan trọng: dùng "ResumableHttpMethod" để ký POST + header x-goog-resumable:start
+                .WithHttpMethod(UrlSigner.ResumableHttpMethod)
+                .WithContentHeaders(new[]
+                {
+            new KeyValuePair<string, IEnumerable<string>>("Content-Type", new[] { contentType })
+                });
 
-//            var options = UrlSigner.Options.FromDuration(ttl);
-//            return _signer.Sign(template, options);
-//        }
+            var options = UrlSigner.Options.FromDuration(ttl);
+            return _signer.Sign(template, options);
+        }
 
-//        // Not Implemented
-//        public async Task<bool> DeleteAsync(string objectName, CancellationToken ct = default)
-//        {
-//            if (string.IsNullOrWhiteSpace(objectName))
-//                throw new ArgumentException("objectName is required.", nameof(objectName));
+        // Not Implemented
+        public async Task<bool> DeleteAsync(string objectName, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
+                throw new ArgumentException("objectName is required.", nameof(objectName));
 
-//            objectName = NormalizeObjectName(objectName);
+            objectName = NormalizeObjectName(objectName);
 
-//            try
-//            {
-//                await _client.DeleteObjectAsync(_bucket, objectName, cancellationToken: ct);
-//                return true; // existed & deleted
-//            }
-//            catch (GoogleApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
-//            {
-//                _logger.LogInformation($"GCS delete: not found. bucket={_bucket}, name={objectName}");
-//                return false; // didn't exist
-//            }
-//        }
+            try
+            {
+                await _client.DeleteObjectAsync(_bucket, objectName, cancellationToken: ct);
+                return true; // existed & deleted
+            }
+            catch (GoogleApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogInformation($"GCS delete: not found. bucket={_bucket}, name={objectName}");
+                return false; // didn't exist
+            }
+        }
 
-//        private string NormalizeObjectName(string input)
-//        {
-//            var s = input.Trim();
+        private string NormalizeObjectName(string input)
+        {
+            var s = input.Trim();
 
-//            // Nếu là URL thì parse để lấy phần sau bucket
-//            // ví dụ: https://storage.googleapis.com/SSS-storage/public/user-avatars/a.png
-//            if (s.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-//            {
-//                if (Uri.TryCreate(s, UriKind.Absolute, out var uri))
-//                {
-//                    // Path = /SSS-storage/public/user-avatars/a.png  hoặc /public/user-avatars/a.png (tuỳ dạng URL)
-//                    var path = uri.AbsolutePath.Trim('/');
-//                    // Nếu path bắt đầu bằng bucket → cắt bỏ
-//                    if (path.StartsWith(_bucket + "/", StringComparison.Ordinal))
-//                        path = path.Substring(_bucket.Length + 1);
-//                    s = path;
-//                }
-//            }
+            // Nếu là URL thì parse để lấy phần sau bucket
+            // ví dụ: https://storage.googleapis.com/SSS-storage/public/user-avatars/a.png
+            if (s.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                if (Uri.TryCreate(s, UriKind.Absolute, out var uri))
+                {
+                    // Path = /SSS-storage/public/user-avatars/a.png  hoặc /public/user-avatars/a.png (tuỳ dạng URL)
+                    var path = uri.AbsolutePath.Trim('/');
+                    // Nếu path bắt đầu bằng bucket → cắt bỏ
+                    if (path.StartsWith(_bucket + "/", StringComparison.Ordinal))
+                        path = path.Substring(_bucket.Length + 1);
+                    s = path;
+                }
+            }
 
-//            // Bỏ leading slash nếu có
-//            s = s.Trim().TrimStart('/');
-//            return s;
-//        }
-//    }
-//}
+            // Bỏ leading slash nếu có
+            s = s.Trim().TrimStart('/');
+            return s;
+        }
+    }
+}

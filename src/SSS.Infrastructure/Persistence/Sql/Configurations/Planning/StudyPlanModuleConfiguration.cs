@@ -27,6 +27,9 @@ public class StudyPlanModuleConfiguration : IEntityTypeConfiguration<StudyPlanMo
         builder.Property(e => e.Status)
             .HasMaxLength(20);
 
+        builder.Property(e => e.CompletedAt)
+            .HasColumnType("datetime(6)");
+
         builder.HasOne(e => e.StudyPlan)
             .WithMany(p => p.Modules)
             .HasForeignKey(e => e.StudyPlanId)

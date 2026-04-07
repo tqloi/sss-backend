@@ -10,9 +10,9 @@ namespace SSS.Infrastructure.External.Communication.Email
     public class SmtpEmailSender : ISmtpEmailSender
     {
         private readonly EmailOptions _emailOptions;
-        private readonly ILogger<MailService> _logger;
+        private readonly ILogger<SmtpEmailSender> _logger;
 
-        public SmtpEmailSender(IOptions<EmailOptions> mailOptions, ILogger<MailService> logger)
+        public SmtpEmailSender(IOptions<EmailOptions> mailOptions, ILogger<SmtpEmailSender> logger)
         {
             _emailOptions = mailOptions.Value;
             _logger = logger;

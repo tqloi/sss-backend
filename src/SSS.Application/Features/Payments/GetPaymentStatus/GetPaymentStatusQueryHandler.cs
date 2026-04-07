@@ -1,0 +1,109 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SSS.Application.Abstractions.External.Payment.PayOS;
+using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
+using SSS.Application.Common.Exceptions;
+using SSS.Domain.Enums;
+
+namespace SSS.Application.Features.Payments.GetPaymentStatus;
+
+public sealed class GetPaymentStatusQueryHandler(
+    IAppDbContext context,
+    IPayOsGateway payOsGateway,
+    IPaymentPostProcessService paymentPostProcessService,
+    ILogger<GetPaymentStatusQueryHandler> logger
+) : IRequestHandler<GetPaymentStatusQuery, GetPaymentStatusResult>
+{
+    public async Task<GetPaymentStatusResult> Handle(GetPaymentStatusQuery request, CancellationToken ct)
+    {
+        var payment = await context.UserPayments
+            .FirstOrDefaultAsync(p => p.Id == request.PaymentId, ct)
+            ?? throw new NotFoundException("Payment not found");
+
+        // If it's already processed via Webhook or previous sync, just return it
+        if (payment.Status != PaymentStatus.Pending)
+        {
+            return new GetPaymentStatusResult { Status = payment.Status };
+        }
+
+        // It is Pending. We should explicitly sync with PayOS because Webhook might not have arrived
+        // or the environment is local and cannot receive webhooks!
+        try
+        {
+            var payOsData = await payOsGateway.GetPaymentLinkInformationAsync(payment.Id, ct);
+
+            bool statusChanged = false;
+
+            if (payOsData.status == "PAID")
+            {
+                if (payment.Status != PaymentStatus.Success)
+                {
+                    payment.Status = PaymentStatus.Success;
+                    payment.PaymentDate = DateTime.UtcNow;
+
+                    var user = await context.Users.FirstOrDefaultAsync(u => u.Id == payment.UserId, ct);
+                    if (user != null)
+                    {
+                        var now = DateTime.UtcNow;
+                        var baseDate = user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate > now
+                            ? user.SubscriptionEndDate.Value
+                            : now;
+
+                        user.SubscriptionType = payment.SubscriptionType;
+                        user.SubscriptionStartDate ??= now;
+                        user.SubscriptionEndDate = baseDate.AddMonths(payment.SubscriptionDuration);
+                    }
+
+                    statusChanged = true;
+                    logger.LogInformation("Payment {Id} explicitly synced as Success via PayOS status check", payment.Id);
+                }
+            }
+            else if (payOsData.status == "CANCELLED")
+            {
+                payment.Status = PaymentStatus.Canceled;
+
+                statusChanged = true;
+                logger.LogInformation("Payment {Id} explicitly synced as Canceled via PayOS status check", payment.Id);
+            }
+            else
+            {
+                payment.Status = PaymentStatus.Failed;
+
+                statusChanged = true;
+                logger.LogInformation(
+                    "Payment {Id} explicitly synced as Failed via PayOS status check",
+                    payment.Id
+                );
+            }
+
+            if (statusChanged)
+            {
+                await context.SaveChangesAsync(ct);
+
+                if (payment.Status == PaymentStatus.Success)
+                {
+                    try
+                    {
+                        await paymentPostProcessService.HandlePaymentSuccessAsync(payment.Id, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Post-payment processing failed after explicit status sync for payment {Id}", payment.Id);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to verify payment status from PayOS for {Id}. Ignoring.", payment.Id);
+            // We ignore errors here. The status remains Pending.
+        }
+
+        return new GetPaymentStatusResult
+        {
+            Status = payment.Status
+        };
+    }
+}

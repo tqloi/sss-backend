@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -45,10 +45,27 @@ namespace SSS.Infrastructure.Sercurity.Jwt
                         ValidAudience = s.Audience,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(s.Key)),
                     };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+
+                            if (!string.IsNullOrWhiteSpace(accessToken)
+                                && (path.StartsWithSegments("/hubs/notifications") || path.StartsWithSegments("/hubs/user-gamification")))
+                            {
+                                context.Token = accessToken;
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             services.AddAuthorization();
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            //services.AddScoped<IJwtTokenService, JwtTokenService>();
             return services;
         }
     }

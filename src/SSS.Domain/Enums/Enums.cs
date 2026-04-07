@@ -1,26 +1,52 @@
-﻿namespace SSS.Domain.Enums
+namespace SSS.Domain.Enums
 {
-    public enum StudyPlanStatus { Draft, Active, Archived }
+    public enum RoadmapStatus { Draft, Active, Archived }
+    public enum StudyPlanStatus { Draft, Active, Archived, GeneratingTasks, Ready, Failed }
     public enum StudyPlanStrategy { Balanced, Speed, Depth }
     public enum ModuleStatus { Locked, Active, Completed, Skipped }
     public enum TaskStatus { Pending, Scheduled, InProgress, Completed, Skipped, Archived }
 
     // Sessions
-    public enum SessionEndedReason { Completed, Stopped, Timeout, Abandoned, Error }
+    public enum SessionStatus { NotStarted, InProgress, Paused, Completed, Cancelled }
+    public enum SessionEndedReason { Completed, TimedOut, Cancelled, SystemTerminated }
     public enum LocalTimeBlock { Morning, Afternoon, Evening, Night }
+    public enum SessionEventType
+    {
+        SessionStart,
+        SessionPause,
+        SessionResume,
+        SessionEnd,
+        TaskStart,
+        TaskComplete,
+        TaskSkip,
+        FeedbackSubmitted
+    }
 
     // Survey
     public enum SurveyStatus { Draft, Published, Archived }
     public enum SurveyTriggerReason { Initial, Resurvey, Manual }
     public enum SurveyQuestionType { SingleChoice, MultipleChoice, Scale, ShortAnswer, FreeText }
+    public enum TargetStatus
+    {
+        active,
+        archived,
+        completed
+    }
+
+    public enum DisciplineType
+    {
+        OnTime,
+        LateButDone,
+        DropMidway
+    }
 
     // Quiz
     public enum QuizQuestionType { SingleChoice, MultipleChoice, Scale, ShortAnswer }
-    public enum QuizAttemptStatus { InProgress, Submitted, Graded }
+    public enum QuizAttemptStatus { InProgress, Passed, Failed }
 
     // Roadmap / Content
     public enum NodeDifficulty { Beginner, Intermediate, Advanced }
-    public enum ContentType { Video, Article, Book, Course, Exercise, Quiz, Project }
+    public enum ContentType { Video, Article, Book, Course, Exercise, Quiz, Project, }
     public enum EdgeType { Prerequisite, Recommended, Next }
 
     // Notification
@@ -47,7 +73,9 @@
     {
         Lesson = 1,
         Course = 2,
-        StudySession = 3
+        StudySession = 3,
+        Module = 4,
+        Task = 5
     }
 
     /* =======================
@@ -77,5 +105,20 @@
         Text = 2,
         Quiz = 3,
         Practice = 4
+    }
+
+    public enum SubscriptionType
+    {
+        Free = 1,
+        Premium = 2,
+        Pro = 3
+    }
+
+    public enum PaymentStatus
+    {
+        Pending = 0,
+        Success = 1,
+        Failed = 2,
+        Canceled = 3
     }
 }

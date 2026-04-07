@@ -7,7 +7,7 @@ using SSS.Infrastructure.Persistence.Sql;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Persistence.Sql.Migrations
+namespace SSS.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -159,7 +159,15 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<long>("StudyPlanModuleId")
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<decimal>("PassingScore")
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<long>("RoadmapNodeId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Title")
@@ -171,8 +179,7 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudyPlanModuleId")
-                        .IsUnique();
+                    b.HasIndex("RoadmapNodeId");
 
                     b.ToTable("As_Quizzes", (string)null);
                 });
@@ -260,6 +267,11 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("OrderNo")
                         .HasColumnType("int");
@@ -391,6 +403,42 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.ToTable("As_SurveyAnswers", (string)null);
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyFieldSemantic", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AIHint")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DimensionCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Evaluates")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<long>("SurveyQuestionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<double?>("Weight")
+                        .HasColumnType("double");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SurveyQuestionId");
+
+                    b.ToTable("As_SurveyFieldSemantics", (string)null);
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyQuestion", b =>
                 {
                     b.Property<long>("Id")
@@ -505,60 +553,110 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.ToTable("As_SurveyResponses", (string)null);
                 });
 
-            modelBuilder.Entity("SSS.Domain.Entities.Assessment.UserLearningProfile", b =>
+            modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyTriggerMapping", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    b.Property<string>("AvailableDaysJson")
-                        .HasColumnType("json");
-
-                    b.Property<decimal?>("ConfOverall")
-                        .HasColumnType("decimal(5,4)");
+                    b.Property<int?>("CooldownDays")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("CurrentLevel")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
 
-                    b.Property<string>("PreferredTimeBlocksJson")
-                        .HasColumnType("json");
-
-                    b.Property<int>("ProfileVersion")
+                    b.Property<int?>("MaxAttempts")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SessionLengthPrefMinutes")
-                        .HasColumnType("int");
+                    b.Property<long>("SurveyId")
+                        .HasColumnType("bigint");
 
-                    b.Property<int?>("TargetDeadlineMonths")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TargetRole")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("UserId")
+                    b.Property<string>("TriggerType")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<decimal?>("WPractice")
-                        .HasColumnType("decimal(6,4)");
-
-                    b.Property<decimal?>("WReading")
-                        .HasColumnType("decimal(6,4)");
-
-                    b.Property<decimal?>("WVisual")
-                        .HasColumnType("decimal(6,4)");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "ProfileVersion")
+                    b.HasIndex("TriggerType");
+
+                    b.HasIndex("SurveyId", "TriggerType")
                         .IsUnique();
 
-                    b.ToTable("As_UserLearningProfiles", (string)null);
+                    b.ToTable("As_SurveyTriggerMappings", (string)null);
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyTriggerType", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("Code");
+
+                    b.ToTable("As_SurveyTriggerTypes", (string)null);
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Content.ContentManagerSubject", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("AssignedBy")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ContentManagerId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
+                    b.Property<long>("SubjectId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedBy");
+
+                    b.HasIndex("ContentManagerId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("ContentManagerId", "SubjectId")
+                        .IsUnique();
+
+                    b.ToTable("Ct_ContentManagerSubject", (string)null);
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.LearningCategory", b =>
@@ -651,7 +749,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NodeId", "OrderNo");
+                    b.HasIndex("NodeId", "OrderNo")
+                        .IsUnique();
 
                     b.ToTable("Ct_NodeContents", (string)null);
                 });
@@ -662,8 +761,24 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<string>("CreateById")
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsLatest")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<long>("SubjectId")
                         .HasColumnType("bigint");
@@ -673,9 +788,19 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("varchar(300)");
 
+                    b.Property<int>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("CreateById");
+
+                    b.HasIndex("SubjectId", "Title", "IsLatest");
+
+                    b.HasIndex("SubjectId", "Title", "Version")
+                        .IsUnique();
 
                     b.ToTable("Ct_Roadmaps", (string)null);
                 });
@@ -824,13 +949,16 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FirstName")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Gender")
                         .HasColumnType("longtext");
 
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
@@ -859,6 +987,15 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("SubscriptionEndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("SubscriptionStartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SubscriptionType")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
 
@@ -878,11 +1015,129 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.ToTable("Id_Users", (string)null);
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Learning.UserLearningBehavior", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AvailableDaysJson")
+                        .HasColumnType("json");
+
+                    b.Property<string>("CommonDifficultiesJson")
+                        .HasColumnType("json");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DisciplineType")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("PreferredTimeBlocksJson")
+                        .HasColumnType("json");
+
+                    b.Property<int?>("SessionLengthPrefMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SnapshotAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("SnapshotVersion")
+                        .HasColumnType("int");
+
+                    b.Property<long>("SourceSurveyResponseId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<decimal>("WPractice")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.Property<decimal>("WReading")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.Property<decimal>("WVisual")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Ln_UserLearningBehaviors", (string)null);
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Learning.UserLearningTarget", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CurrentLevel")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("GoalDescription")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProfileVersion")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RoadmapId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("SnapshotAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<long>("SourceSurveyResponseId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int?>("TargetDeadlineMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "RoadmapId", "Status");
+
+                    b.ToTable("Ln_UserLearningTargets", (string)null);
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Notification.UserNotification", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    b.Property<string>("ActionUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -890,6 +1145,10 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DedupeKey")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool>("IsRead")
                         .ValueGeneratedOnAdd()
@@ -911,6 +1170,10 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
 
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -926,6 +1189,9 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DedupeKey")
+                        .IsUnique();
 
                     b.HasIndex("RelatedSessionId");
 
@@ -974,6 +1240,53 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.ToTable("Nt_UserPushTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Payment.UserPayment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasDefaultValue("VND");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<int>("SubscriptionDuration")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubscriptionType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentDate");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Pm_UserPayments", (string)null);
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Planning.StudyPlan", b =>
                 {
                     b.Property<long>("Id")
@@ -1005,7 +1318,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.HasIndex("RoadmapId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "RoadmapId")
+                        .IsUnique();
 
                     b.ToTable("Pl_StudyPlans", (string)null);
                 });
@@ -1016,6 +1330,9 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<long>("RoadmapNodeId")
                         .HasColumnType("bigint");
 
@@ -1025,6 +1342,9 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Property<long>("StudyPlanId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("isTaskGenerated")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 
@@ -1044,6 +1364,12 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("EstimatedDurationSeconds")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("date");
@@ -1069,6 +1395,41 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.ToTable("Pl_TaskItems", (string)null);
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Tracking.SessionTask", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("EndTimeUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("StartTimeUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("StudySessionId")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("char(24)")
+                        .IsFixedLength();
+
+                    b.Property<long>("TaskId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudySessionId");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("Tr_SessionTasks", (string)null);
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Tracking.StudySession", b =>
                 {
                     b.Property<string>("Id")
@@ -1076,14 +1437,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasColumnType("char(24)")
                         .IsFixedLength();
 
-                    b.Property<int?>("ActiveSeconds")
-                        .HasColumnType("int");
-
                     b.Property<int?>("ActualDurationSeconds")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("ConfidenceActiveLearning")
-                        .HasColumnType("decimal(5,4)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -1095,30 +1450,18 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
 
-                    b.Property<int?>("FatigueScore")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("FocusScore")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("IdleSeconds")
-                        .HasColumnType("int");
-
                     b.Property<string>("LocalTimeBlock")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<long?>("ModuleId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("NodeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int?>("PauseCount")
+                    b.Property<int>("PauseCount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PauseSeconds")
+                    b.Property<int>("PauseSeconds")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("PausedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int?>("PlannedDurationSeconds")
                         .HasColumnType("int");
@@ -1129,29 +1472,32 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Property<DateTime>("StartAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<long?>("StudyPlanId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("TaskId")
+                    b.Property<long?>("StudyPlanModuleId")
                         .HasColumnType("bigint");
+
+                    b.Property<int?>("TasksCompletedCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("Timezone")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<int?>("TotalTasks")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ModuleId");
-
-                    b.HasIndex("NodeId");
-
-                    b.HasIndex("StudyPlanId");
-
-                    b.HasIndex("TaskId");
 
                     b.HasIndex("UserId", "StartAt");
 
@@ -1318,13 +1664,12 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.Quiz", b =>
                 {
-                    b.HasOne("SSS.Domain.Entities.Planning.StudyPlanModule", "StudyPlanModule")
+                    b.HasOne("SSS.Domain.Entities.Content.RoadmapNode", "RoadmapNode")
                         .WithMany("Quizzes")
-                        .HasForeignKey("StudyPlanModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RoadmapNodeId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("StudyPlanModule");
+                    b.Navigation("RoadmapNode");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.QuizAnswer", b =>
@@ -1420,6 +1765,17 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Navigation("Response");
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyFieldSemantic", b =>
+                {
+                    b.HasOne("SSS.Domain.Entities.Assessment.SurveyQuestion", "SurveyQuestion")
+                        .WithMany("Semantics")
+                        .HasForeignKey("SurveyQuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SurveyQuestion");
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyQuestion", b =>
                 {
                     b.HasOne("SSS.Domain.Entities.Assessment.Survey", "Survey")
@@ -1461,15 +1817,49 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SSS.Domain.Entities.Assessment.UserLearningProfile", b =>
+            modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyTriggerMapping", b =>
                 {
-                    b.HasOne("SSS.Domain.Entities.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                    b.HasOne("SSS.Domain.Entities.Assessment.Survey", "Survey")
+                        .WithMany("TriggerMappings")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SSS.Domain.Entities.Assessment.SurveyTriggerType", "SurveyTriggerType")
+                        .WithMany("TriggerMappings")
+                        .HasForeignKey("TriggerType")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Survey");
+
+                    b.Navigation("SurveyTriggerType");
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Content.ContentManagerSubject", b =>
+                {
+                    b.HasOne("SSS.Domain.Entities.Identity.User", "AssignedByUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SSS.Domain.Entities.Identity.User", "ContentManager")
+                        .WithMany()
+                        .HasForeignKey("ContentManagerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SSS.Domain.Entities.Content.LearningSubject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssignedByUser");
+
+                    b.Navigation("ContentManager");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.LearningSubject", b =>
@@ -1496,11 +1886,18 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.Roadmap", b =>
                 {
+                    b.HasOne("SSS.Domain.Entities.Identity.User", "CreateBy")
+                        .WithMany()
+                        .HasForeignKey("CreateById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SSS.Domain.Entities.Content.LearningSubject", "Subject")
                         .WithMany("Roadmaps")
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("CreateBy");
 
                     b.Navigation("Subject");
                 });
@@ -1639,41 +2036,32 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Navigation("StudyPlanModule");
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Tracking.SessionTask", b =>
+                {
+                    b.HasOne("SSS.Domain.Entities.Tracking.StudySession", "StudySession")
+                        .WithMany("SessionTasks")
+                        .HasForeignKey("StudySessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SSS.Domain.Entities.Planning.TaskItem", "TaskItem")
+                        .WithMany("SessionTasks")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("StudySession");
+
+                    b.Navigation("TaskItem");
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Tracking.StudySession", b =>
                 {
-                    b.HasOne("SSS.Domain.Entities.Planning.StudyPlanModule", "Module")
-                        .WithMany("StudySessions")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("SSS.Domain.Entities.Content.RoadmapNode", "Node")
-                        .WithMany("StudySessions")
-                        .HasForeignKey("NodeId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("SSS.Domain.Entities.Planning.StudyPlan", "StudyPlan")
-                        .WithMany("StudySessions")
-                        .HasForeignKey("StudyPlanId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("SSS.Domain.Entities.Planning.TaskItem", "Task")
-                        .WithMany("StudySessions")
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("SSS.Domain.Entities.Identity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Module");
-
-                    b.Navigation("Node");
-
-                    b.Navigation("StudyPlan");
-
-                    b.Navigation("Task");
 
                     b.Navigation("User");
                 });
@@ -1748,6 +2136,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Navigation("Questions");
 
                     b.Navigation("Responses");
+
+                    b.Navigation("TriggerMappings");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyQuestion", b =>
@@ -1755,6 +2145,8 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
                     b.Navigation("Answers");
 
                     b.Navigation("Options");
+
+                    b.Navigation("Semantics");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyQuestionOption", b =>
@@ -1765,6 +2157,11 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
             modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyResponse", b =>
                 {
                     b.Navigation("Answers");
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Assessment.SurveyTriggerType", b =>
+                {
+                    b.Navigation("TriggerMappings");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.LearningCategory", b =>
@@ -1794,9 +2191,9 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
 
                     b.Navigation("OutgoingEdges");
 
-                    b.Navigation("StudyPlanModules");
+                    b.Navigation("Quizzes");
 
-                    b.Navigation("StudySessions");
+                    b.Navigation("StudyPlanModules");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Identity.RefreshToken", b =>
@@ -1812,22 +2209,21 @@ namespace SSS.Infrastructure.Persistence.Sql.Migrations
             modelBuilder.Entity("SSS.Domain.Entities.Planning.StudyPlan", b =>
                 {
                     b.Navigation("Modules");
-
-                    b.Navigation("StudySessions");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Planning.StudyPlanModule", b =>
                 {
-                    b.Navigation("Quizzes");
-
-                    b.Navigation("StudySessions");
-
                     b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Planning.TaskItem", b =>
                 {
-                    b.Navigation("StudySessions");
+                    b.Navigation("SessionTasks");
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Tracking.StudySession", b =>
+                {
+                    b.Navigation("SessionTasks");
                 });
 #pragma warning restore 612, 618
         }

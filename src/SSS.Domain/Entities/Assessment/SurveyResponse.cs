@@ -14,7 +14,7 @@ public class SurveyResponse
     public string? SnapshotJson { get; set; }
 
     // Navigation
-    public Survey Survey { get; set; } = null!;
-    public User User { get; set; } = null!;
-    public ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
+    public virtual Survey Survey { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
+    public virtual ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
 }

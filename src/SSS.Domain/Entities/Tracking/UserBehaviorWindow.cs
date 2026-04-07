@@ -15,5 +15,5 @@ public class UserBehaviorWindow
     public DateTime ComputedAt { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
 }

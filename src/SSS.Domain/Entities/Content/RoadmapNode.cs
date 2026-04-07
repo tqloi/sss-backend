@@ -1,3 +1,4 @@
+using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Planning;
 using SSS.Domain.Entities.Tracking;
 using SSS.Domain.Enums;
@@ -14,10 +15,11 @@ public class RoadmapNode
     public int? OrderNo { get; set; }
 
     // Navigation
-    public Roadmap Roadmap { get; set; } = null!;
-    public ICollection<NodeContent> Contents { get; set; } = new HashSet<NodeContent>();
-    public ICollection<RoadmapEdge> OutgoingEdges { get; set; } = new HashSet<RoadmapEdge>();
-    public ICollection<RoadmapEdge> IncomingEdges { get; set; } = new HashSet<RoadmapEdge>();
-    public ICollection<StudyPlanModule> StudyPlanModules { get; set; } = new HashSet<StudyPlanModule>();
-    public ICollection<StudySession> StudySessions { get; set; } = new HashSet<StudySession>();
+    public virtual Roadmap Roadmap { get; set; } = null!;
+    public virtual ICollection<Quiz> Quizzes { get; set; } = new HashSet<Quiz>();
+    public virtual ICollection<NodeContent> Contents { get; set; } = new HashSet<NodeContent>();
+    public virtual ICollection<RoadmapEdge> OutgoingEdges { get; set; } = new HashSet<RoadmapEdge>();
+    public virtual ICollection<RoadmapEdge> IncomingEdges { get; set; } = new HashSet<RoadmapEdge>();
+    public virtual ICollection<StudyPlanModule> StudyPlanModules { get; set; } = new HashSet<StudyPlanModule>();
+
 }

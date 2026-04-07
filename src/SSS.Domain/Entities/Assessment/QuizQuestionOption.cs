@@ -11,6 +11,6 @@ public class QuizQuestionOption
     public int OrderNo { get; set; }
 
     // Navigation
-    public QuizQuestion Question { get; set; } = null!;
-    public ICollection<QuizAnswer> Answers { get; set; } = new HashSet<QuizAnswer>();
+    public virtual QuizQuestion Question { get; set; } = null!;
+    public virtual ICollection<QuizAnswer> Answers { get; set; } = new HashSet<QuizAnswer>();
 }

@@ -1,4 +1,4 @@
-﻿using MongoDB.Bson;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using SSS.Domain.Enums;
 
@@ -18,8 +18,15 @@ namespace SSS.Infrastructure.Persistence.Mongo.Documents
         public string MessageContent { get; set; } = null!;
 
         [BsonIgnoreIfNull]
-        public object? Context { get; set; }
+        public MessageContextDocument? Context { get; set; }
 
         public DateTime Timestamp { get; set; }
     }
+
+    public class MessageContextDocument
+    {
+        public List<long> ModuleIds { get; set; } = new();
+        public List<long> TaskIds { get; set; } = new();
+    }
 }
+

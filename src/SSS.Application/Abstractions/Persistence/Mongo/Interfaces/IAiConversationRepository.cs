@@ -1,5 +1,4 @@
-﻿using SSS.Domain.Entities.AI;
-using SSS.Domain.Enums;
+using SSS.Domain.Entities.AI;
 
 namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
 {
@@ -8,7 +7,8 @@ namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
     {
         Task<IEnumerable<AiConversation>> GetByUserIdAsync(string userId);
         Task<AiConversation?> GetActiveByUserAsync(string userId);
-        Task<IEnumerable<AiConversation>> GetByRelatedEntityAsync(
-            RelatedEntityType type, string relatedId);
+        Task<AiConversation?> GetByUserAndRoadmapAsync(string userId, long roadmapId);
+        Task<IEnumerable<AiConversation>> GetByUserAndRoadmapListAsync(string userId, long roadmapId);
     }
 }
+

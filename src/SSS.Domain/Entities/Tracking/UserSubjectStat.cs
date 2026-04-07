@@ -14,6 +14,6 @@ public class UserSubjectStat
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation
-    public User User { get; set; } = null!;
-    public LearningSubject Subject { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
+    public virtual LearningSubject Subject { get; set; } = null!;
 }   

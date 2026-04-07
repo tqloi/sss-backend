@@ -11,6 +11,6 @@ public class SurveyQuestionOption
     public bool AllowFreeText { get; set; }
 
     // Navigation
-    public SurveyQuestion Question { get; set; } = null!;
-    public ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
+    public virtual SurveyQuestion Question { get; set; } = null!;
+    public virtual ICollection<SurveyAnswer> Answers { get; set; } = new HashSet<SurveyAnswer>();
 }
