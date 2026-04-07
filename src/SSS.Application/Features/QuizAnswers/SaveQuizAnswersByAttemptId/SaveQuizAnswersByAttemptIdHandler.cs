@@ -51,12 +51,22 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
             {
                 if (answerByQuestionId.TryGetValue(existingAnswer.QuestionId, out var updatedAnswer))
                 {
-                    var selectedOptionIds = NormalizeSelectedOptionIds(updatedAnswer);
+                    var selectedOptionIds = QuizAnswerExtractionHelper.NormalizeIncomingOptionIds(updatedAnswer);
 
-                    existingAnswer.OptionId = selectedOptionIds.FirstOrDefault();
-                    existingAnswer.TextValue = selectedOptionIds.Count > 1
-                        ? JsonSerializer.Serialize(selectedOptionIds)
-                        : updatedAnswer.TextValue;
+                    // Always store selected option IDs as JSON for consistency
+                    // This ensures multi-select answers are fully preserved regardless of count
+                    if (selectedOptionIds.Count > 0)
+                    {
+                        existingAnswer.OptionId = selectedOptionIds.First(); // First ID for backward compat
+                        existingAnswer.TextValue = JsonSerializer.Serialize(selectedOptionIds); // All IDs as JSON
+                    }
+                    else
+                    {
+                        // No options selected (e.g., ShortAnswer or cleared selection)
+                        existingAnswer.OptionId = null;
+                        existingAnswer.TextValue = updatedAnswer.TextValue; // Preserve original TextValue (for ShortAnswer)
+                    }
+
                     existingAnswer.NumberValue = updatedAnswer.NumberValue;
                     existingAnswer.AnsweredAt = updatedAnswer.AnsweredAt ?? DateTime.UtcNow;
                 }
@@ -66,23 +76,6 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
             await db.SaveChangesAsync(ct);
 
             return new SaveQuizAnswersByAttemptIdResult(true, existingAnswers.Count);
-        }
-
-        private static List<long> NormalizeSelectedOptionIds(SaveQuizAnswerByQuestionDto updatedAnswer)
-        {
-            var selectedOptionIds = new List<long>();
-
-            if (updatedAnswer.OptionIds.Count > 0)
-            {
-                selectedOptionIds.AddRange(updatedAnswer.OptionIds.Where(optionId => optionId > 0));
-            }
-
-            if (updatedAnswer.OptionId.HasValue && updatedAnswer.OptionId.Value > 0)
-            {
-                selectedOptionIds.Add(updatedAnswer.OptionId.Value);
-            }
-
-            return selectedOptionIds.Distinct().ToList();
         }
     }
 }

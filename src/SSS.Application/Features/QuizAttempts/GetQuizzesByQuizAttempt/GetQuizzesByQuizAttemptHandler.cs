@@ -2,11 +2,11 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Features.QuizAnswers.Common;
 using SSS.Application.Features.QuizAttempts.Common;
 using SSS.Domain.Constants;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Enums;
-using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
 {
@@ -129,7 +129,8 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
 
             if (answersForQuestion is not null && answersForQuestion.Count > 0)
             {
-                selectedOptionIds = ExtractSelectedOptionIds(question.Type, answersForQuestion);
+                // Use unified extraction for consistent option retrieval
+                selectedOptionIds = ExtractAllSelectedOptionIds(question.Type, answersForQuestion);
                 selectedTextValue = GetSelectedTextValue(question.Type, answersForQuestion);
             }
 
@@ -158,27 +159,23 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
             };
         }
 
-        private static List<long> ExtractSelectedOptionIds(
+        /// <summary>
+        /// Extracts all selected option IDs from answered questions using unified helper.
+        /// Works consistently for both single-choice and multi-choice questions.
+        /// </summary>
+        private static List<long> ExtractAllSelectedOptionIds(
             QuizQuestionType questionType,
             List<QuizAnswer> answersForQuestion)
         {
-            if (questionType == QuizQuestionType.MultipleChoice)
-            {
-                var parsedOptionIds = answersForQuestion
-                    .SelectMany(answer => ParseSelectedOptionIds(answer.TextValue))
-                    .ToList();
+            var allOptionIds = new List<long>();
 
-                if (parsedOptionIds.Count > 0)
-                {
-                    return parsedOptionIds.Distinct().ToList();
-                }
+            foreach (var answer in answersForQuestion)
+            {
+                var optionIds = QuizAnswerExtractionHelper.ExtractSelectedOptionIds(answer);
+                allOptionIds.AddRange(optionIds);
             }
 
-            return answersForQuestion
-                .Where(answer => answer.OptionId.HasValue)
-                .Select(answer => answer.OptionId!.Value)
-                .Distinct()
-                .ToList();
+            return allOptionIds.Distinct().ToList();
         }
 
         private static string? GetSelectedTextValue(
@@ -193,23 +190,6 @@ namespace SSS.Application.Features.QuizAttempts.GetQuizzesByQuizAttempt
             }
 
             return null;
-        }
-
-        private static List<long> ParseSelectedOptionIds(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return new List<long>();
-            }
-
-            try
-            {
-                return JsonSerializer.Deserialize<List<long>>(value) ?? new List<long>();
-            }
-            catch (JsonException)
-            {
-                return new List<long>();
-            }
         }
     }
 }
