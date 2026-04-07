@@ -109,13 +109,21 @@ namespace SSS.Infrastructure.Services
                 .Take(100)
                 .ToList();
 
+            var recentNodeIds = await GetRecentRoadmapNodeIdsAsync(plan.RoadmapId, module.RoadmapNodeId, 3, ct);
+
+            var recentModuleIds = await _context.StudyPlanModules
+                .AsNoTracking()
+                .Where(m => m.StudyPlanId == module.StudyPlanId && recentNodeIds.Contains(m.RoadmapNodeId))
+                .Select(m => m.Id)
+                .ToListAsync(ct);
+
             var quizAttempts = await _context.QuizAttempts
                .AsNoTracking()
                .Include(a => a.Quiz)
                .Include(a => a.Answers)
-               .Where(a => a.UserId == userId && a.Quiz.RoadmapNodeId == module.RoadmapNodeId)
+               .Where(a => a.UserId == userId && recentNodeIds.Contains(a.Quiz.RoadmapNodeId))
                .OrderByDescending(a => a.SubmittedAt ?? a.StartedAt)
-               .Take(20)
+               .Take(50)
                .ToListAsync(ct);
 
             var sessions = await _context.StudySessions
@@ -123,13 +131,16 @@ namespace SSS.Infrastructure.Services
                 .Include(s => s.SessionTasks)
                     .ThenInclude(st => st.TaskItem)
                 .Where(s => s.UserId == userId &&
-                            (s.StudyPlanModuleId == moduleId ||
-                             s.SessionTasks.Any(st => st.TaskItem.StudyPlanModuleId == moduleId)))
+                            ((s.StudyPlanModuleId.HasValue && recentModuleIds.Contains(s.StudyPlanModuleId.Value)) ||
+                             s.SessionTasks.Any(st => recentModuleIds.Contains(st.TaskItem.StudyPlanModuleId))))
                 .OrderByDescending(s => s.EndAt ?? s.StartAt)
                 .Take(20)
                 .ToListAsync(ct);
 
-            var completedTaskCount = module.Tasks.Count(t => t.Status == SSS.Domain.Enums.TaskStatus.Completed || t.CompletedAt.HasValue);
+            var completedTaskCount = await _context.TaskItems
+                .AsNoTracking()
+                .CountAsync(t => recentModuleIds.Contains(t.StudyPlanModuleId) &&
+                                 (t.Status == SSS.Domain.Enums.TaskStatus.Completed || t.CompletedAt.HasValue), ct);
             var completedQuizCount = quizAttempts.Count(a => a.Status != QuizAttemptStatus.InProgress || a.SubmittedAt.HasValue);
 
             var moduleDto = mapper.Map<BehaviorModuleDto>(module);
@@ -138,7 +149,7 @@ namespace SSS.Infrastructure.Services
             foreach (var sessionDto in sessionDtos)
             {
                 sessionDto.Tasks = sessionDto.Tasks
-                    .Where(t => t.StudyPlanModuleId == moduleId)
+                    .Where(t => recentModuleIds.Contains(t.StudyPlanModuleId))
                     .ToList();
             }
             var quizAttemptDtos = mapper.Map<List<BehaviorQuizAttemptDto>>(quizAttempts);
@@ -170,6 +181,11 @@ namespace SSS.Infrastructure.Services
 
             var behaviorContext = new
             {
+                NodeScope = new
+                {
+                    CurrentNodeId = module.RoadmapNodeId,
+                    RecentNodeIds = recentNodeIds
+                },
                 Module = moduleDto,
                 Sessions = sessionDtos,
                 QuizAttempts = quizAttemptDtos,
@@ -249,6 +265,47 @@ namespace SSS.Infrastructure.Services
                 to: user.Email,
                 subject: "StudySense - Module Completed",
                 body: emailBody);
+        }
+
+        private async Task<List<long>> GetRecentRoadmapNodeIdsAsync(long roadmapId, long currentNodeId, int take, CancellationToken ct)
+        {
+            var recentNodeIds = new List<long> { currentNodeId };
+            var visited = new HashSet<long> { currentNodeId };
+            var currentLayer = new HashSet<long> { currentNodeId };
+
+            while (recentNodeIds.Count < take && currentLayer.Count > 0)
+            {
+                var incomingEdges = await _context.RoadmapEdges
+                    .AsNoTracking()
+                    .Where(e => e.RoadmapId == roadmapId
+                                && e.EdgeType == EdgeType.Recommended
+                                && currentLayer.Contains(e.ToNodeId))
+                    .OrderBy(e => e.OrderNo ?? int.MaxValue)
+                    .ThenBy(e => e.Id)
+                    .ToListAsync(ct);
+
+                var nextLayer = new HashSet<long>();
+
+                foreach (var fromNodeId in incomingEdges.Select(e => e.FromNodeId).Distinct())
+                {
+                    if (!visited.Add(fromNodeId))
+                    {
+                        continue;
+                    }
+
+                    recentNodeIds.Add(fromNodeId);
+                    nextLayer.Add(fromNodeId);
+
+                    if (recentNodeIds.Count >= take)
+                    {
+                        break;
+                    }
+                }
+
+                currentLayer = nextLayer;
+            }
+
+            return recentNodeIds;
         }
     }
 }

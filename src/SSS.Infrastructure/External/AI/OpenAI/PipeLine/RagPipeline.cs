@@ -5,6 +5,7 @@ using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Application.Features.AI.Common;
 using SSS.Domain.Entities.Planning;
+using System.Text.Json;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
@@ -62,7 +63,10 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
         public async Task<string> GenerateBehaviorResultAsync(string studyBehaviorContextJson, CancellationToken ct = default)
         {
             var systemPrompt = """
-You are an AI system that analyzes user learning behavior from:
+You are an AI system that analyzes user learning behavior for vector retrieval.
+
+Input may include:
+- NodeScope (current node + recent linked nodes)
 - Module data
 - StudySession and SessionTask data
 - QuizAttempt data
@@ -70,26 +74,33 @@ You are an AI system that analyzes user learning behavior from:
 - StudyEventSummary (aggregated interaction counts)
 
 Your task:
-- Generate ONE concise paragraph in English.
-- Evaluate completion discipline (on-time vs late tendency) from module/session/task signals.
-- Evaluate assessment behavior from quiz attempts (consistency, completion, potential struggle signals).
-- Evaluate engagement behavior from study events (interaction frequency, category/type patterns, content mode usage).
-- Mention consistency, missed/skipped/incomplete patterns, and overall study discipline.
+- Generate EXACTLY ONE concise paragraph in English.
 - Base conclusions strictly on provided data only.
+- The paragraph MUST explicitly cover all 4 dimensions:
+  1) Task discipline and deadline adherence
+  2) Quiz performance consistency and completion quality
+  3) Learning engagement from event activity
+  4) Overall study discipline verdict
 
-Important rules:
-- Do NOT invent any facts.
-- Do NOT output JSON, markdown, or bullet points.
-- Output plain natural language text only.
-- Keep tone factual, neutral, embedding-friendly.
+Deadline adherence rules (mandatory):
+- A task is on-time only if CompletedAt/EndTime <= ScheduledDate.
+- You MUST explicitly state whether behavior is mostly on-time, mixed, or mostly late.
+- If timestamps are insufficient, explicitly state deadline evidence is limited.
 
-Reasoning guidance:
-- A task is on-time if completion/end time is on or before scheduled date.
-- For StudyEvents, infer engagement only from observed frequency, recency, and distribution across event types/categories/content modes.
-- Treat Payload fields (e.g., contentId, contentTitle, contentType, nodeId, studyPlanId) as contextual evidence of learning interaction.
-- If evidence is weak or sparse in any area, explicitly state that evidence is limited.
+Quiz rules:
+- Use quiz attempts to describe completion consistency, score level/trend, and struggle signals.
+- If quiz evidence is sparse, explicitly state evidence is limited.
 
-The output will be stored in Qdrant for later retrieval; keep it compact and semantically rich.
+Engagement rules:
+- Infer engagement only from observed frequency, recency, and distribution across event types/categories/content modes.
+- Treat Payload fields (e.g., contentId, contentTitle, contentType, nodeId, studyPlanId) as contextual interaction evidence.
+- If engagement evidence is sparse, explicitly state evidence is limited.
+
+Output rules:
+- Plain text only. No JSON, markdown, or bullet points.
+- Neutral, factual, compact, semantically rich.
+- Do not provide recommendations or advice.
+- Do not invent facts.
 """;
             var userPromptWithContext = $"""
 Analyze the following user learning behavior dataset and generate one paragraph behavior summary:
@@ -98,11 +109,11 @@ StudyExecutionData:
 {studyBehaviorContextJson}
 
 Focus on:
-- Completion discipline (on-time/late)
+- Completion discipline with explicit on-time vs late conclusion
 - Quiz behavior quality and consistency
 - Learning engagement from StudyEvents and StudyEventSummary
 - Completion vs skip/incomplete balance
-- Overall study discipline
+- Overall study discipline (good / average / needs improvement based on evidence)
 """;
 
             var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
@@ -428,6 +439,8 @@ REQUIRED JSON SHAPE
             // 1. Build context từ vector DB
             var context = await BuildStudyPlanContextAsync(userId, studyPlanId, ct);
             Console.WriteLine(context);
+            var roadmapJson = roadmap is string roadmapText ? roadmapText : JsonSerializer.Serialize(roadmap);
+            var roadmapNodeJson = roadmapnode is string nodeText ? nodeText : JsonSerializer.Serialize(roadmapnode);
             var currrentDate = DateTime.UtcNow;
             var dayName = currrentDate.DayOfWeek.ToString();
 
@@ -451,6 +464,7 @@ CRITICAL RULES (MUST FOLLOW)
 6. Do NOT infer or expand to other roadmap nodes
 7. Decisions MUST be driven by the user's survey context
 8. If behavior signals are present in context, adapt plan pacing and duration accordingly
+9. Tasks MUST stay strictly aligned with the target node title/description/difficulty and node-level content cues
 
 ======================
 INPUT GUARANTEES
@@ -466,6 +480,67 @@ The roadmap is provided ONLY to understand progression and difficulty.
 The roadmap node is the ONLY entity you are allowed to generate tasks for.
 
 If behavior context exists, it has higher priority than generic pacing assumptions.
+
+======================
+PERSONALIZATION PRIORITY
+======================
+
+Use the context in this priority order:
+1) User behavior context (latest signals from vector DB)
+2) User survey/profile context
+3) Target roadmap node details
+
+Behavior adaptation expectations:
+- If behavior suggests mostly late/mixed completion, use lighter pacing, longer durations, and wider spacing.
+- If behavior suggests mostly on-time and stable completion, keep normal durations and moderate spacing.
+- If behavior evidence is limited, apply neutral pacing.
+
+Do not copy behavior text. Use it only to adapt schedule realism and workload.
+
+======================
+LEVEL ALIGNMENT RULES (MANDATORY)
+======================
+
+- Detect user level from USER SURVEY CONTEXT (e.g., CurrentLevel).
+- Calibrate task depth by combining: user level + target node difficulty.
+- Never output a plan that is purely beginner review when user level is Intermediate or above.
+
+If user level is Beginner:
+- Focus on fundamentals, guided practice, and basic implementation.
+- Keep terminology simple and step-by-step.
+- Require at least 3 beginner-friendly tasks on fundamentals (syntax, control flow, methods, or basic OOP).
+- Include at most 1 task that involves refactor/debug/optimization.
+- Keep cognitive load gradual: concept introduction -> guided practice -> small integration task.
+- Each task should have a clear, concrete outcome (e.g., write X snippet, complete Y mini exercise).
+
+If user level is Intermediate:
+- Limit pure syntax/fundamental review to at most 1 task.
+- Require at least 2 tasks involving application/implementation/debugging/refactoring.
+- Include at least 1 task that validates quality (testing, edge cases, or error handling strategy).
+- Require at least 1 implementation task that combines multiple concepts from the same node.
+- Emphasize decision quality: code structure, readability, maintainability, and bug prevention.
+- Avoid beginner-style wording (e.g., "learn what X is", "introduction to").
+
+If user level is Advanced:
+- Stay strictly within TARGET NODE scope, but increase cognitive depth and rigor.
+- Require at least 1 task that compares two implementation approaches and justifies trade-offs.
+- Require at least 1 task that defines explicit quality gates (testability, error-path coverage, maintainability).
+- Require at least 2 tasks focused on hardening: defensive coding, null-safety, robustness, and refactoring rationale.
+- Limit beginner-style review to at most 1 brief refresher task.
+- Every advanced task should include a concrete deliverable such as decision notes, validation checklist, or refactor rationale.
+- Avoid introductory explanations.
+
+If level evidence is missing/ambiguous:
+- Use neutral intermediate-safe depth and explicitly avoid overly basic repetition.
+
+======================
+NODE GROUNDING RULES
+======================
+
+- Every task must be clearly attributable to the TARGET ROADMAP NODE only.
+- Task titles/descriptions must reference skills/topics implied by the target node content.
+- Do not include concepts that belong to other roadmap nodes, even if related.
+- Keep progression inside the same node: foundational -> practice -> implementation/validation.
 
 ======================
 OUTPUT SCHEMA (STRICT)
@@ -501,6 +576,9 @@ TASK DESIGN RULES
 - scheduledDate MUST be based on CURRENT DATETIME above, but the time part must always be 01:00:00Z
 - scheduledDate MUST be >= current datetime
 - scheduledDate MUST increase progressively
+- Avoid same timestamp for all tasks; spread tasks realistically
+- Task sequence must increase in cognitive depth from earlier to later tasks
+- Avoid near-duplicate tasks with only wording changes
 
 ======================
 BEHAVIOR-ADAPTIVE RULES
@@ -535,10 +613,10 @@ USER SURVEY CONTEXT:
 ${{context}}
 
 ROADMAP (FOR CONTEXT ONLY):
-${{roadmap}}
+${{roadmapJson}}
 
 TARGET ROADMAP NODE (GENERATE TASKS FOR THIS NODE ONLY):
-${{roadmapnode}}
+${{roadmapNodeJson}}
 
 CURRENT DATETIME (UTC, SOURCE OF TRUTH):
 {{{currrentDate: yyyy-MM-ddTHH:mm:ssZ}}}
@@ -553,6 +631,13 @@ GOAL
 
 Generate task items ONLY for the TARGET ROADMAP NODE above.
 All tasks MUST use its roadmapNodeId.
+
+Before finalizing, self-check:
+- Is difficulty calibrated to user level from survey context?
+- Is content still strictly inside target node scope?
+- Are later tasks deeper than earlier tasks?
+- For Beginner: are at least 3 tasks truly foundational and step-by-step?
+- For Intermediate: is there no more than 1 pure review task and at least 1 quality-validation task?
 """;
 
 
