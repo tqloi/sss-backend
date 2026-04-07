@@ -45,7 +45,7 @@
 		<PackageReference Include="FastEndpoints.Swagger" Version="5.24.0" />
 
 		<!-- Mapping -->
-		<PackageReference Include="AutoMapper" Version="15.0.1" />
+		<PackageReference Include="AutoMapper" Version="16.1.1" />
 
 		<!-- PDF Generation -->
 		<PackageReference Include="itext7.pdfhtml" Version="6.2.1" />
@@ -59,6 +59,7 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="External/Communication/Email/Templates/**/*.html" />
+		<EmbeddedResource Include="External/Document/Pdf/Templates/**/*.html" />
 	</ItemGroup>
 
 </Project>

@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SSS.Application.Abstractions.Background;
+using SSS.Application.Abstractions.External.Communication.Email;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Domain.Entities.Planning;
@@ -10,6 +13,9 @@ namespace SSS.Infrastructure.Services
     public class StudyPlanService(
         IAppDbContext db,
         INotificationService notificationService,
+        IEmailJobDispatcher emailJobDispatcher,
+        IMailTemplateBuilder mailTemplateBuilder,
+        IConfiguration configuration,
         ILogger<StudyPlanService> logger) : IStudyPlanService
     {
         public async Task<StudyPlan> CreatePlanWithModulesAsync(
@@ -132,11 +138,66 @@ namespace SSS.Infrastructure.Services
                     isPush: false,
                     ct: ct
                 );
+
+                if (status == StudyPlanStatus.Ready)
+                {
+                    await DispatchPlanReadyEmailAsync(plan, ct);
+                }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "[StudyPlanService] Failed to dispatch notification for plan {PlanId}", plan.Id);
             }
+        }
+
+        private async Task DispatchPlanReadyEmailAsync(StudyPlan plan, CancellationToken ct)
+        {
+            var user = await db.Users
+                .AsNoTracking()
+                .Where(u => u.Id == plan.UserId)
+                .Select(u => new
+                {
+                    u.Email,
+                    u.FirstName,
+                    u.LastName,
+                    u.UserName
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (user is null || string.IsNullOrWhiteSpace(user.Email))
+                return;
+
+            var roadmap = await db.Roadmaps
+                .AsNoTracking()
+                .Where(r => r.Id == plan.RoadmapId)
+                .Select(r => new
+                {
+                    r.Title
+                })
+                .FirstOrDefaultAsync(ct);
+
+            var displayName = string.Join(" ", new[] { user.FirstName, user.LastName }
+                .Where(x => !string.IsNullOrWhiteSpace(x))).Trim();
+
+            if (string.IsNullOrWhiteSpace(displayName))
+                displayName = user.UserName ?? "Learner";
+
+            var feBaseUrl = (configuration["Frontend:BaseUrl"] ?? string.Empty).TrimEnd('/');
+            var planUrl = string.IsNullOrWhiteSpace(feBaseUrl)
+                ? string.Empty
+                : $"{feBaseUrl}/dashboard/{plan.Id}";
+
+            var emailBody = await mailTemplateBuilder.BuildPlanReadyEmailAsync(
+                studentName: displayName,
+                planName: $"Study plan #{plan.Id}",
+                roadmapName: roadmap?.Title ?? $"Roadmap {plan.RoadmapId}",
+                planUrl: planUrl,
+                email: user.Email);
+
+            emailJobDispatcher.DispatchSendEmail(
+                to: user.Email,
+                subject: "StudySense - Your plan is ready",
+                body: emailBody);
         }
     }
 }

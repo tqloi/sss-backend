@@ -553,7 +553,7 @@ OUTPUT SCHEMA (STRICT)
     "description": string | null,
     "status": "Planned",
     "estimatedDurationSeconds": number,
-    "scheduledDate": "YYYY-MM-DDTHH:mm:ss"
+    "scheduledDate": "YYYY-MM-DDT01:00:00Z"
   }
 ]
 
@@ -573,7 +573,7 @@ TASK DESIGN RULES
 - Complex or implementation-heavy tasks → longer duration
 - scheduledDate must be realistic and progressive
 - Do NOT generate tasks for any other node
-- scheduledDate MUST be based on CURRENT DATETIME above
+- scheduledDate MUST be based on CURRENT DATETIME above, but the time part must always be 01:00:00Z
 - scheduledDate MUST be >= current datetime
 - scheduledDate MUST increase progressively
 - Avoid same timestamp for all tasks; spread tasks realistically
@@ -619,7 +619,7 @@ TARGET ROADMAP NODE (GENERATE TASKS FOR THIS NODE ONLY):
 ${{roadmapNodeJson}}
 
 CURRENT DATETIME (UTC, SOURCE OF TRUTH):
-{{{currrentDate: yyyy-MM-ddTHH:mm:ss}}}
+{{{currrentDate: yyyy-MM-ddTHH:mm:ssZ}}}
 {{{dayName}}}
 
 SCHEDULING PREFERENCE:

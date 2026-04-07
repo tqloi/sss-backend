@@ -1,16 +1,15 @@
 ﻿using AutoMapper;
-using iText.Commons.Bouncycastle.Cert.Ocsp;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Ocsp;
+using Microsoft.Extensions.Configuration;
 using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.External.AI.PipeLine;
+using SSS.Application.Abstractions.External.Communication.Email;
 using SSS.Application.Abstractions.Persistence.Mongo.Interfaces;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
 using SSS.Application.Features.AI.CreateAiAddBehaviorDb;
-using SSS.Domain.Entities.Planning;
 using SSS.Domain.Enums;
 using SSS.Infrastructure.Persistence.Sql;
 using System.Text.Json;
@@ -24,22 +23,38 @@ namespace SSS.Infrastructure.Services
         private readonly IStudyEventRepository _studyEventRepository;
         private readonly IMapper mapper;
         private readonly IPipeLine pipeLine;
-        private readonly ISurveyJobDispatcher _jobDispatcher;
+        private readonly ISurveyJobDispatcher _surveyJobDispatcher;
+        private readonly IEmailJobDispatcher _emailJobDispatcher;
+        private readonly IMailTemplateBuilder _mailTemplateBuilder;
+        private readonly IConfiguration _configuration;
 
-        public ModuleService(AppDbContext context, ICacheService cacheService, IStudyEventRepository studyEvent, IMapper mapper, IPipeLine pipeLine, ISurveyJobDispatcher jobDispatcher)
+        public ModuleService(
+            AppDbContext context,
+            ICacheService cacheService,
+            IStudyEventRepository studyEvent,
+            IMapper mapper,
+            IPipeLine pipeLine,
+            ISurveyJobDispatcher surveyJobDispatcher,
+            IEmailJobDispatcher emailJobDispatcher,
+            IMailTemplateBuilder mailTemplateBuilder,
+            IConfiguration configuration)
         {
             _context = context;
             _cacheService = cacheService;
             _studyEventRepository = studyEvent;
             this.mapper = mapper;
             this.pipeLine = pipeLine;
-            _jobDispatcher = jobDispatcher;
+            _surveyJobDispatcher = surveyJobDispatcher;
+            _emailJobDispatcher = emailJobDispatcher;
+            _mailTemplateBuilder = mailTemplateBuilder;
+            _configuration = configuration;
         }
 
         public async Task CompleteModuleAsync(int moduleId, CancellationToken ct)
         {
             // Lấy module
             var module = await _context.StudyPlanModules
+                .Include(x => x.RoadmapNode) // eager load để lấy title khi gửi email
                 .FirstOrDefaultAsync(m => m.Id == moduleId, ct);
 
             if (module == null)
@@ -47,6 +62,7 @@ namespace SSS.Infrastructure.Services
 
             // Lấy study plan để biết userId và roadmapId (dùng cho cache key)
             var plan = await _context.StudyPlans
+                .Include(x => x.Roadmap) // eager load roadmap để lấy title khi gửi email
                 .FirstOrDefaultAsync(p => p.Id == module.StudyPlanId, ct);
 
             if (plan == null)
@@ -195,7 +211,60 @@ namespace SSS.Infrastructure.Services
             var vectorStudyPlanId = plan?.Id.ToString() ?? module.StudyPlanId.ToString();
             await pipeLine.IngestBehaviorAsync(vectorStudyPlanId, userId, moduleId.ToString(), chunks, ct);
 
-            _jobDispatcher.DispatchModuleBehaviorInsight(plan.Id, moduleId, userId);
+            _surveyJobDispatcher.DispatchModuleBehaviorInsight(plan!.Id, moduleId, userId);
+
+            await DispatchModuleCompletedEmailAsync(
+                userId: userId,
+                studyPlanId: plan.Id,
+                moduleName: module.RoadmapNode.Title,
+                roadmapName: plan.Roadmap.Title,
+                ct: ct);
+        }
+
+        private async Task DispatchModuleCompletedEmailAsync(
+            string userId,
+            long studyPlanId,
+            string moduleName,
+            string roadmapName,
+            CancellationToken ct)
+        {
+            var user = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => new
+                {
+                    u.Email,
+                    u.FirstName,
+                    u.LastName,
+                    u.UserName
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (user is null || string.IsNullOrWhiteSpace(user.Email))
+                return;
+
+            var displayName = string.Join(" ", new[] { user.FirstName, user.LastName }
+                .Where(x => !string.IsNullOrWhiteSpace(x))).Trim();
+
+            if (string.IsNullOrWhiteSpace(displayName))
+                displayName = user.UserName ?? "Learner";
+
+            var feBaseUrl = (_configuration["Frontend:BaseUrl"] ?? string.Empty).TrimEnd('/');
+            var roadmapUrl = string.IsNullOrWhiteSpace(feBaseUrl)
+                ? string.Empty
+                : $"{feBaseUrl}/study-plans/{studyPlanId}";
+
+            var emailBody = await _mailTemplateBuilder.BuildModuleCompletedEmailAsync(
+                studentName: displayName,
+                moduleName: moduleName,
+                roadmapName: roadmapName,
+                roadmapUrl: roadmapUrl,
+                email: user.Email);
+
+            _emailJobDispatcher.DispatchSendEmail(
+                to: user.Email,
+                subject: "StudySense - Module Completed",
+                body: emailBody);
         }
 
         private async Task<List<long>> GetRecentRoadmapNodeIdsAsync(long roadmapId, long currentNodeId, int take, CancellationToken ct)
