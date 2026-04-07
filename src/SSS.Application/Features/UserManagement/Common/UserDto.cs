@@ -1,5 +1,11 @@
 ﻿namespace SSS.Application.Features.UserManagement.Common
 {
+    public sealed class AssignedSubjectDto
+    {
+        public long SubjectId { get; set; }
+        public string SubjectName { get; set; } = string.Empty;
+    }
+
     public sealed class UserDto
     {
         public string Id { get; set; } = default!;
@@ -12,5 +18,6 @@
         public List<string> RoleNames { get; set; } = new();
         public long? AssignedSubjectId { get; set; }
         public string? AssignedSubjectName { get; set; }
+        public List<AssignedSubjectDto> AssignedSubjects { get; set; } = new();
     }
 }

@@ -14,7 +14,11 @@ namespace SSS.Application.Features.AI.CreateAiRoadMap
             CreateAiRoadMapCommand request,
             CancellationToken cancellationToken)
         {
-            var contentManagerSubject = await dbContext.ContentManagerSubjects.AsNoTracking().FirstOrDefaultAsync(cms => cms.ContentManagerId == request.ManagerId);
+            var contentManagerSubject = await dbContext.ContentManagerSubjects
+                .AsNoTracking()
+                .Where(cms => cms.ContentManagerId == request.ManagerId && cms.IsActive)
+                .OrderByDescending(cms => cms.AssignedAt)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (contentManagerSubject == null) {
                 return new CreateAiRoadMapResult
