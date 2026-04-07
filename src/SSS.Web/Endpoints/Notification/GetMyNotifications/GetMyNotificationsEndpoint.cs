@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
-using SSS.Application.Abstractions.Persistence.Sql;
+using MediatR;
+using SSS.Application.Features.Notification.GetMyNotifications;
 using System.Security.Claims;
 
 namespace SSS.WebApi.Endpoints.Notification.GetMyNotifications;
 
 public sealed class GetMyNotificationsEndpoint(
-    IAppDbContext dbContext
+    ISender sender
 ) : Endpoint<GetMyNotificationsRequest, GetMyNotificationsResponse>
 {
     public override void Configure()
@@ -29,20 +29,20 @@ public sealed class GetMyNotificationsEndpoint(
             return;
         }
 
-        var total = await dbContext.UserNotifications
-            .Where(x => x.UserId == userId)
-            .CountAsync(ct);
+        var result = await sender.Send(new GetMyNotificationsQuery
+        {
+            UserId = userId,
+            Page = req.Page,
+            PageSize = req.PageSize
+        }, ct);
 
-        var unreadCount = await dbContext.UserNotifications
-            .Where(x => x.UserId == userId && !x.IsRead)
-            .CountAsync(ct);
-
-        var items = await dbContext.UserNotifications
-            .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.CreatedAt)
-            .Skip((req.Page - 1) * req.PageSize)
-            .Take(req.PageSize)
-            .Select(x => new GetMyNotificationsResponse.NotificationItem
+        await SendOkAsync(new GetMyNotificationsResponse
+        {
+            Page = result.Page,
+            PageSize = result.PageSize,
+            Total = result.Total,
+            UnreadCount = result.UnreadCount,
+            Items = result.Items.Select(x => new GetMyNotificationsResponse.NotificationItem
             {
                 Id = x.Id,
                 Title = x.Title,
@@ -54,16 +54,7 @@ public sealed class GetMyNotificationsEndpoint(
                 IsRead = x.IsRead,
                 ReadAt = x.ReadAt,
                 CreatedAt = x.CreatedAt
-            })
-            .ToListAsync(ct);
-
-        await SendOkAsync(new GetMyNotificationsResponse
-        {
-            Page = req.Page,
-            PageSize = req.PageSize,
-            Total = total,
-            UnreadCount = unreadCount,
-            Items = items
+            }).ToList()
         }, ct);
     }
 }
