@@ -56,7 +56,7 @@ namespace SSS.Infrastructure.Services
 
             // Call AI service to analyze
             _logger.LogDebug("Calling AI for behavior analysis using LlmTask.SurveyAnalysis");
-            var llmProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var llmProvider = _llmRouter.Resolve(LlmTask.SurveyAnalysis);
             var aiResult = await llmProvider.AskAsync(systemPrompt, userPrompt, ct);
 
             // Parse AI result and build UserLearningBehavior object
@@ -92,7 +92,7 @@ namespace SSS.Infrastructure.Services
 
             // Call AI service to analyze
             _logger.LogDebug("Calling AI for target analysis using LlmTask.SurveyAnalysis");
-            var llmProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var llmProvider = _llmRouter.Resolve(LlmTask.SurveyAnalysis);
             var aiResult = await llmProvider.AskAsync(systemPrompt, userPrompt, ct);
 
             // Parse AI result and build UserLearningTarget object
