@@ -9,7 +9,7 @@ namespace SSS.Web.Endpoints.StudyPlans.StudyPlans.GetStudyPlanById
     {
         public override void Configure()
         {
-            Get("/api/study-plans/{StudyPlanId}");
+            Get("/api/study-plans/{StudyPlanId:long}");
             Description(d => d.WithTags("StudyPlans"));
             Summary(s => s.Summary = "Get study plan by ID");
         }
