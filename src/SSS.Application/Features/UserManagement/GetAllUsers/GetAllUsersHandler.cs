@@ -121,7 +121,7 @@ namespace SSS.Application.Features.UserManagement.GetAllUsers
                     })
                 .ToListAsync(ct);
 
-            var assignmentByUserId = assignmentRows
+            var latestAssignmentByUserId = assignmentRows
                 .GroupBy(x => x.ContentManagerId)
                 .ToDictionary(
                     g => g.Key,
@@ -130,12 +130,31 @@ namespace SSS.Application.Features.UserManagement.GetAllUsers
                         .First()
                 );
 
+            var assignmentsByUserId = assignmentRows
+                .GroupBy(x => x.ContentManagerId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g
+                        .OrderBy(x => x.SubjectName)
+                        .Select(x => new AssignedSubjectDto
+                        {
+                            SubjectId = x.SubjectId,
+                            SubjectName = x.SubjectName,
+                        })
+                        .ToList()
+                );
+
             foreach (var user in users)
             {
-                if (assignmentByUserId.TryGetValue(user.Id, out var assignment))
+                if (latestAssignmentByUserId.TryGetValue(user.Id, out var assignment))
                 {
                     user.AssignedSubjectId = assignment.SubjectId;
                     user.AssignedSubjectName = assignment.SubjectName;
+                }
+
+                if (assignmentsByUserId.TryGetValue(user.Id, out var assignments))
+                {
+                    user.AssignedSubjects = assignments;
                 }
             }
 

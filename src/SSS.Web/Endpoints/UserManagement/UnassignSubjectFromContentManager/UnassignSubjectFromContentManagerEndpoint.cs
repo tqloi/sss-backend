@@ -18,13 +18,14 @@ namespace SSS.Web.Endpoints.UserManagement.UnassignSubjectFromContentManager
             Summary(s =>
             {
                 s.Summary = "Unassign subject from content manager";
-                s.Description = "Removes active subject assignment from a content manager user.";
+                s.Description = "Removes active subject assignment(s) from a content manager user. Provide subjectId query to remove one subject only.";
             });
         }
 
         public override async Task HandleAsync(CancellationToken ct)
         {
             var contentManagerId = Route<string>("id");
+            var subjectId = Query<long?>("subjectId", false);
 
             if (string.IsNullOrWhiteSpace(contentManagerId))
             {
@@ -62,6 +63,7 @@ namespace SSS.Web.Endpoints.UserManagement.UnassignSubjectFromContentManager
             var unassigned = await sender.Send(new UnassignSubjectFromContentManagerCommand
             {
                 ContentManagerId = contentManagerId,
+                SubjectId = subjectId,
             }, ct);
 
             if (!unassigned)

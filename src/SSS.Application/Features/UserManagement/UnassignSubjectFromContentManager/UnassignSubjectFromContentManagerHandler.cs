@@ -9,8 +9,16 @@ namespace SSS.Application.Features.UserManagement.UnassignSubjectFromContentMana
     {
         public async Task<bool> Handle(UnassignSubjectFromContentManagerCommand request, CancellationToken ct)
         {
-            var activeAssignments = await dbContext.ContentManagerSubjects
-                .Where(x => x.ContentManagerId == request.ContentManagerId && x.IsActive)
+            var activeAssignmentsQuery = dbContext.ContentManagerSubjects
+                .Where(x => x.ContentManagerId == request.ContentManagerId && x.IsActive);
+
+            if (request.SubjectId.HasValue)
+            {
+                activeAssignmentsQuery = activeAssignmentsQuery
+                    .Where(x => x.SubjectId == request.SubjectId.Value);
+            }
+
+            var activeAssignments = await activeAssignmentsQuery
                 .ToListAsync(ct);
 
             if (activeAssignments.Count == 0)
