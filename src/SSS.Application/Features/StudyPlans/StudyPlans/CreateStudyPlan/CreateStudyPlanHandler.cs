@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
 using SSS.Application.Features.StudyPlans.StudyPlans.Common;
 using SSS.Domain.Entities.Planning;
@@ -12,17 +13,32 @@ namespace SSS.Application.Features.StudyPlans.StudyPlans.CreateStudyPlan
 {
     public class CreateStudyPlanHandler(
         IAppDbContext context,
-        IMapper mapper
+        IMapper mapper,
+        IStudyPlanService studyPlanService
         ) : IRequestHandler<CreateStudyPlanCommand, CreateStudyPlanResult>
     {
+        private const int MaxJoinedRoadmaps = 2;
+
         public async Task<CreateStudyPlanResult> Handle(CreateStudyPlanCommand req, CancellationToken ct)
         {
+            // Check if study plan already exists for this roadmap
             if (await context.StudyPlans.AnyAsync(
                 sp => sp.UserId == req.UserId &&
                 sp.RoadmapId == req.RoadmapId, ct))
             {
                 throw new ConflictException(
                     "Study plan already exists for this roadmap"
+                );
+            }
+
+            // Check if user has reached roadmap join limit (free plan only)
+            var (joinedCount, hasReachedLimit) = await studyPlanService.CheckRoadmapLimitAsync(
+                req.UserId, MaxJoinedRoadmaps, ct);
+
+            if (hasReachedLimit)
+            {
+                throw new ConflictException(
+                    $"Free plan allows up to {MaxJoinedRoadmaps} joined roadmaps. You have already joined {joinedCount} roadmaps. Please upgrade your plan or archive an existing roadmap."
                 );
             }
 
