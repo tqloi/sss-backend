@@ -2,6 +2,7 @@ using Hangfire;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SSS.Application.Common.Exceptions;
 using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
@@ -22,6 +23,7 @@ namespace SSS.Infrastructure.Background.Jobs
         IAppDbContext db,
         ILogger<AnalyzeTargetJob> logger)
     {
+        [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
         public async Task ExecuteAsync(long responseId, long roadmapId, CancellationToken ct = default)
         {
             logger.LogInformation("[AnalyzeTargetJob] Starting for responseId={ResponseId} roadmapId={RoadmapId}", responseId, roadmapId);
@@ -42,7 +44,22 @@ namespace SSS.Infrastructure.Background.Jobs
             logger.LogInformation("[AnalyzeTargetJob] UserLearningTarget saved for userId={UserId}", target.UserId);
 
             // 2. Create StudyPlan + one module per RoadmapNode (status = GeneratingTasks)
-            var plan = await studyPlanService.CreatePlanWithModulesAsync(target.UserId, roadmapId, ct);
+            // Handle known business conflicts (e.g. roadmap limit reached) without throwing,
+            // so one failed business case does not trigger repeated AI calls.
+            var plan = default(SSS.Domain.Entities.Planning.StudyPlan);
+            try
+            {
+                plan = await studyPlanService.CreatePlanWithModulesAsync(target.UserId, roadmapId, ct);
+            }
+            catch (ConflictException ex)
+            {
+                logger.LogWarning(ex,
+                    "[AnalyzeTargetJob] Skipping plan creation due to business conflict. ResponseId={ResponseId}, RoadmapId={RoadmapId}, UserId={UserId}",
+                    responseId,
+                    roadmapId,
+                    target.UserId);
+                return;
+            }
 
             // Ingest QDrant
             var behavior = await db.UserLearningBehaviors
@@ -85,7 +102,7 @@ namespace SSS.Infrastructure.Background.Jobs
                     ct);
             }
 
-            logger.LogInformation("[AnalyzeTargetJob] StudyPlan {PlanId} created with modules. Enqueueing GenerateTasksJob.", plan.Id);
+            logger.LogInformation("[AnalyzeTargetJob] StudyPlan {PlanId} created with modules. Enqueueing GenerateTasksJob.", plan!.Id);
 
             // 3. Chain task-generation job — runs after this job succeeds
             //BackgroundJob.Enqueue<GenerateTasksJob>(j => j.ExecuteAsync(plan.Id, CancellationToken.None));
