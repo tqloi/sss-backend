@@ -15,5 +15,11 @@ namespace SSS.Application.Abstractions.Services
         /// Updates the Status field of a StudyPlan by its ID.
         /// </summary>
         Task SetStatusAsync(long studyPlanId, StudyPlanStatus status, CancellationToken ct = default);
+
+        /// <summary>
+        /// Checks if user has reached the roadmap join limit.
+        /// Returns count of joined roadmaps and whether limit is reached.
+        /// </summary>
+        Task<(int joinedCount, bool hasReachedLimit)> CheckRoadmapLimitAsync(string userId, int maxRoadmaps, CancellationToken ct = default);
     }
 }
