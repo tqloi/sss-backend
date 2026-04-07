@@ -5,6 +5,7 @@ using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.External.Communication.Email;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
+using SSS.Application.Common.Exceptions;
 using SSS.Domain.Entities.Planning;
 using SSS.Domain.Enums;
 
@@ -18,9 +19,45 @@ namespace SSS.Infrastructure.Services
         IConfiguration configuration,
         ILogger<StudyPlanService> logger) : IStudyPlanService
     {
+        private const int MaxJoinedRoadmaps = 2;
+
         public async Task<StudyPlan> CreatePlanWithModulesAsync(
             string userId, long roadmapId, CancellationToken ct = default)
         {
+            // Check if user has reached roadmap join limit
+            var (joinedCount, hasReachedLimit) = await CheckRoadmapLimitAsync(userId, MaxJoinedRoadmaps, ct);
+            if (hasReachedLimit)
+            {
+                logger.LogWarning(
+                    "[StudyPlanService] User {UserId} reached roadmap limit ({JoinedCount}/{MaxRoadmaps}). Cannot create plan for roadmap {RoadmapId}.",
+                    userId, joinedCount, MaxJoinedRoadmaps, roadmapId);
+
+                // Send notification to user about limit
+                try
+                {
+                    await notificationService.CreateAndDispatchAsync(
+                        userId: userId,
+                        title: "Roadmap Limit Reached",
+                        content: $"You have reached the maximum of {MaxJoinedRoadmaps} joined roadmaps. Please upgrade your plan or archive an existing roadmap to continue.",
+                        type: NotificationType.System,
+                        relatedType: NotificationRelatedType.Plan,
+                        status: "LimitReached",
+                        actionUrl: "/membership",
+                        dedupeKey: $"roadmapLimit:{userId}:{roadmapId}",
+                        isPush: true,
+                        ct: ct
+                    );
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "[StudyPlanService] Failed to send roadmap limit notification to user {UserId}", userId);
+                }
+
+                throw new ConflictException(
+                    $"Free plan allows up to {MaxJoinedRoadmaps} joined roadmaps. You have already joined {joinedCount} roadmaps. Please upgrade your plan or archive an existing roadmap."
+                );
+            }
+
             // Load all nodes of the roadmap ordered by their sequence
             var nodes = await db.RoadmapNodes
                 .Where(n => n.RoadmapId == roadmapId)
@@ -198,6 +235,25 @@ namespace SSS.Infrastructure.Services
                 to: user.Email,
                 subject: "StudySense - Your plan is ready",
                 body: emailBody);
+        }
+
+        public async Task<(int joinedCount, bool hasReachedLimit)> CheckRoadmapLimitAsync(
+            string userId, int maxRoadmaps, CancellationToken ct = default)
+        {
+            var joinedRoadmaps = await db.StudyPlans
+                .AsNoTracking()
+                .Where(sp => sp.UserId == userId && sp.Status != StudyPlanStatus.Archived)
+                .Select(sp => sp.RoadmapId)
+                .Distinct()
+                .CountAsync(ct);
+
+            var hasReachedLimit = joinedRoadmaps >= maxRoadmaps;
+
+            logger.LogInformation(
+                "[StudyPlanService] User {UserId} has {JoinedCount} joined roadmaps (max: {MaxRoadmaps}, limit reached: {HasReachedLimit})",
+                userId, joinedRoadmaps, maxRoadmaps, hasReachedLimit);
+
+            return (joinedRoadmaps, hasReachedLimit);
         }
     }
 }

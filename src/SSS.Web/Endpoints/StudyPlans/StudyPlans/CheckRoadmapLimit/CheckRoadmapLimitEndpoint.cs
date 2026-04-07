@@ -1,12 +1,11 @@
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
-using SSS.Domain.Enums;
+using SSS.Application.Abstractions.Services;
 using System.Security.Claims;
 
 namespace SSS.Web.Endpoints.StudyPlans.StudyPlans.CheckRoadmapLimit
 {
-    public class CheckRoadmapLimitEndpoint(IAppDbContext db)
+    public class CheckRoadmapLimitEndpoint(IAppDbContext db, IStudyPlanService studyPlanService)
         : EndpointWithoutRequest<CheckRoadmapLimitResponse>
     {
         private const int MaxJoinedRoadmaps = 2;
@@ -27,18 +26,13 @@ namespace SSS.Web.Endpoints.StudyPlans.StudyPlans.CheckRoadmapLimit
                 return;
             }
 
-            var joinedRoadmaps = await db.StudyPlans
-                .AsNoTracking()
-                .Where(sp => sp.UserId == userId && sp.Status != StudyPlanStatus.Archived)
-                .Select(sp => sp.RoadmapId)
-                .Distinct()
-                .CountAsync(ct);
+            var (joinedRoadmaps, hasReachedLimit) = await studyPlanService.CheckRoadmapLimitAsync(userId, MaxJoinedRoadmaps, ct);
 
             await SendOkAsync(new CheckRoadmapLimitResponse
             {
                 MaxRoadmaps = MaxJoinedRoadmaps,
                 JoinedRoadmaps = joinedRoadmaps,
-                HasReachedLimit = joinedRoadmaps >= MaxJoinedRoadmaps
+                HasReachedLimit = hasReachedLimit
             }, ct);
         }
     }
