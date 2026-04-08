@@ -36,6 +36,10 @@ namespace SSS.Infrastructure.External.AI
 
                 LlmTask.GenerateRoadmap => _providers[LlmProvider.Gpt],
                 LlmTask.GenerateStudyPlan => _providers[LlmProvider.Gpt],
+                LlmTask.GenerateQuiz => _providers[LlmProvider.Gpt],
+                LlmTask.GenerateResultsSummary => _providers[LlmProvider.Gpt],  
+                LlmTask.GenerateBehavioralAnalysis => _providers[LlmProvider.Gpt],
+                LlmTask.GenerateSurveyAnalysis => _providers[LlmProvider.Gpt],
 
 
                 _ => _providers[LlmProvider.Gemini] // default

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.QuizAttempts.Common;
 using SSS.Domain.Entities.Assessment;
+using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.QuizAttempts.CreateQuizAttempt
 {
@@ -13,16 +14,45 @@ namespace SSS.Application.Features.QuizAttempts.CreateQuizAttempt
         public async Task<CreateQuizAttemptResult> Handle(CreateQuizAttemptCommand req, CancellationToken ct)
         {
             var dto = req.CreateQuizAttempt;
-            var normalizedLevel = NormalizeLevel(dto.Level);
+            var requestedLevel = string.IsNullOrWhiteSpace(dto.Level)
+                ? null
+                : NormalizeLevel(dto.Level);
 
             var studyPlanModule = await db.StudyPlanModules
                 .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == dto.StudyPlanModuleId, ct);
+                .Where(m => m.Id == dto.StudyPlanModuleId && m.StudyPlan.UserId == dto.UserId)
+                .Select(m => new
+                {
+                    m.Id,
+                    m.RoadmapNodeId,
+                    m.StudyPlan.RoadmapId
+                })
+                .FirstOrDefaultAsync(ct);
 
             if (studyPlanModule is null)
             {
-                throw new KeyNotFoundException($"Study plan module with id {dto.StudyPlanModuleId} not found.");
+                throw new KeyNotFoundException($"Study plan module with id {dto.StudyPlanModuleId} not found for this user.");
             }
+
+            var currentLevel = await db.UserLearningTargets
+                .AsNoTracking()
+                .Where(t =>
+                    t.UserId == dto.UserId
+                    && t.RoadmapId == studyPlanModule.RoadmapId
+                    && t.Status == TargetStatus.active)
+                .OrderByDescending(t => t.SnapshotAt)
+                .ThenByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Select(t => t.CurrentLevel)
+                .FirstOrDefaultAsync(ct);
+
+            if (string.IsNullOrWhiteSpace(currentLevel))
+            {
+                throw new KeyNotFoundException(
+                    $"No active learning target found for user {dto.UserId} and roadmap {studyPlanModule.RoadmapId}.");
+            }
+
+            var normalizedLevel = requestedLevel ?? NormalizeLevel(currentLevel);
 
             var quiz = await db.Quizzes
                 .Include(q => q.Questions)
@@ -64,9 +94,14 @@ namespace SSS.Application.Features.QuizAttempts.CreateQuizAttempt
 
             var resultDto = mapper.Map<QuizAttemptDto>(quizAttempt);
 
+            var totalQuestionCount = quiz.Questions.Count;
+            var questionCount = totalQuestionCount < 10
+                ? Math.Min(5, totalQuestionCount)
+                : Math.Min(10, totalQuestionCount);
+
             var randomQuestions = quiz.Questions
                 .OrderBy(_ => Guid.NewGuid())
-                .Take(10)
+                .Take(questionCount)
                 .ToList();
 
             var quizAnswers = randomQuestions

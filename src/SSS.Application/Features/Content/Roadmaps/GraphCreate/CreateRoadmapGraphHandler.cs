@@ -139,6 +139,7 @@ public sealed class CreateRoadmapGraphHandler(IAppDbContext dbContext)
                 Description = request.Roadmap.Description,
                 CreateById = request.Roadmap.CreateById,
                 CreatedAt = DateTime.UtcNow,
+                Status = Domain.Enums.RoadmapStatus.Draft,
                 Version = 1,
                 IsLatest = true,
             };

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Dtos;
 using SSS.Application.Features.Content.Roadmap.Common;
+using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Content.Roadmap.GetAll
 {
@@ -37,8 +38,11 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
                 query = query.Where(x => x.IsLatest == request.IsLatest.Value);
             }
 
-            // Status filter - placeholder, no actual field exists yet
-            // If Status field is added in future, implement here
+            // Filter by Status if provided
+            if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<RoadmapStatus>(request.Status, out var status))
+            {
+                query = query.Where(x => x.Status == status);
+            }
 
             // Order by Id descending
             query = query.OrderByDescending(x => x.Id);

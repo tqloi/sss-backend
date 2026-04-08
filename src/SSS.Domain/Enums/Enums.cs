@@ -1,6 +1,6 @@
 namespace SSS.Domain.Enums
 {
-    public enum RoadmapStatus { Draft, Active, Archived }
+    public enum RoadmapStatus { Draft, Active, Disabled }
     public enum StudyPlanStatus { Draft, Active, Archived, GeneratingTasks, Ready, Failed }
     public enum StudyPlanStrategy { Balanced, Speed, Depth }
     public enum ModuleStatus { Locked, Active, Completed, Skipped }
@@ -41,7 +41,7 @@ namespace SSS.Domain.Enums
     }
 
     // Quiz
-    public enum QuizQuestionType { SingleChoice, MultipleChoice, Scale, ShortAnswer }
+    public enum QuizQuestionType { SingleChoice, MultipleChoice, ShortAnswer }
     public enum QuizAttemptStatus { InProgress, Passed, Failed }
 
     // Roadmap / Content

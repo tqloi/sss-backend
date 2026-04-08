@@ -18,6 +18,7 @@ namespace SSS.Application.Abstractions.External.AI.PipeLine
         Task<string> GenerateRoadmapAsync(string question, string subjectid,  CancellationToken ct = default);
         Task<string> GenerateSurveyResultAsync(UserLearningTargetDto target, UserLearningBehaviorDto behavior, CancellationToken ct = default);
         Task<string> GenerateBehaviorResultAsync(string studyBehaviorContextJson, CancellationToken ct = default);
+        Task<string> GenerateModuleBehaviorInsightAsync(string context, CancellationToken ct = default);
         Task<string> GenerateQuizQuestionsAsync(object roadmap, object roadmapnode, string level, int questionCount, CancellationToken ct = default);
     }
 }

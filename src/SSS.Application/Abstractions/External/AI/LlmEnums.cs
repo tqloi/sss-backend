@@ -6,7 +6,11 @@
         LearningProfile,
         GenerateRoadmap,
         GenerateStudyPlan,
-        SimpleChat
+        SimpleChat,
+        GenerateQuiz,
+        GenerateResultsSummary,
+        GenerateBehavioralAnalysis,
+        GenerateSurveyAnalysis,
     }
 
     public enum LlmProvider

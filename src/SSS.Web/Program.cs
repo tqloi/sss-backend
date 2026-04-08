@@ -16,17 +16,24 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
     options.AppendTrailingSlash = false;
 });
+
+var secretAppsettingsPath = "/secrets/sss-appsettings/sss-appsettings";
+if (File.Exists(secretAppsettingsPath))
+    builder.Configuration.AddJsonFile(secretAppsettingsPath, optional: false, reloadOnChange: true);
+
+var gcpKeyPath = "/secrets/sss-gcp-key/sss-gcp-key";
+if (File.Exists(gcpKeyPath))
+    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", gcpKeyPath);
+
 builder.Services.AddCoreInfrastructure(builder.Configuration);
 builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(p => p
-        //.WithOrigins(
-        //     "http://localhost:5173",   // Vite dev server HTTP
-        //     "https://localhost:5173",  // Vite dev server HTTPS
-        //     "http://localhost:4200",   // Angular dev server HTTP
-        //     "https://localhost:4200"   // Angular dev server HTTPS
-        // )
-        .AllowAnyOrigin()
+        .WithOrigins(
+             "https://studysense-frontend.vercel.app/",
+             "http://localhost:3000/", 
+             "https://localhost:3000/" 
+         )
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
@@ -71,7 +78,10 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
-app.UseForwardedHeaders();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto
+});
 app.UseCors();
 
 app.UseAuthentication();
