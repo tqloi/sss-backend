@@ -1,15 +1,25 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Domain.Constants;
 using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.AdminAnalytics.GetOverview
 {
-    public sealed class GetAdminDashboardOverviewHandler(IAppDbContext dbContext)
+    public sealed class GetAdminDashboardOverviewHandler(IAppDbContext dbContext, ICacheService cacheService)
         : IRequestHandler<GetAdminDashboardOverviewQuery, GetAdminDashboardOverviewResult>
     {
         public async Task<GetAdminDashboardOverviewResult> Handle(GetAdminDashboardOverviewQuery request, CancellationToken ct)
         {
+            const string cacheKey = "admin:dashboard:overview";
+
+            var cachedOverview = await cacheService.GetAsync<AdminDashboardOverviewDto>(cacheKey);
+            if (cachedOverview is not null)
+            {
+                return new GetAdminDashboardOverviewResult(cachedOverview);
+            }
+
             var totalUsers = await dbContext.Users
                 .AsNoTracking()
                 .LongCountAsync(ct);
@@ -77,11 +87,7 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
                 .AsNoTracking()
                 .LongCountAsync(r => r.IsLatest && r.Status == RoadmapStatus.Active, ct);
 
-            var archivedRoadmaps = await dbContext.Roadmaps
-                .AsNoTracking()
-                .LongCountAsync(r => r.IsLatest && r.Status == RoadmapStatus.Archived, ct);
-
-            var knownStatusRoadmaps = draftRoadmaps + activeRoadmaps + archivedRoadmaps;
+            var knownStatusRoadmaps = draftRoadmaps + activeRoadmaps ;
             var unknownRoadmaps = Math.Max(0, totalLatestRoadmaps - knownStatusRoadmaps);
 
             var result = new AdminDashboardOverviewDto
@@ -140,12 +146,13 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
                 {
                     Active = activeRoadmaps,
                     Draft = draftRoadmaps,
-                    Archived = archivedRoadmaps,
                     Unknown = unknownRoadmaps,
                     Total = totalLatestRoadmaps,
                     ActiveRate = CalculateRate(activeRoadmaps, totalLatestRoadmaps)
                 }
             };
+
+            await cacheService.SetAsync(cacheKey, result, CacheConstants.DefaultExpiration);
 
             return new GetAdminDashboardOverviewResult(result);
         }
