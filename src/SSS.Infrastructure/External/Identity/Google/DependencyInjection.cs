@@ -31,7 +31,12 @@ namespace SSS.Infrastructure.External.Identity.Google
 
                 options.Events.OnRedirectToAuthorizationEndpoint = context =>
                 {
-                    context.RedirectUri = context.RedirectUri.Replace("http://", "https://");
+                    if (context.RedirectUri.StartsWith("http://"))
+                    {
+                        context.RedirectUri = context.RedirectUri.Replace("http://", "https://");
+                    }
+                    // Thực hiện redirect thực sự
+                    context.Response.Redirect(context.RedirectUri);
                     return Task.CompletedTask;
                 };
 
