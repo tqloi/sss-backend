@@ -56,8 +56,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     o.ForwardLimit = 2;
     o.RequireHeaderSymmetry = false;
-    //o.KnownNetworks.Clear();
-    //o.KnownProxies.Clear();
+    o.KnownNetworks.Clear();
+    o.KnownProxies.Clear();
 });
 
 builder.Services.AddProblemDetails();
@@ -78,10 +78,7 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedProto
-});
+app.UseForwardedHeaders();
 app.UseCors();
 
 app.UseAuthentication();

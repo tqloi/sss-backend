@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,6 +28,13 @@ namespace SSS.Infrastructure.External.Identity.Google
 
                 // Map the picture to a claim
                 options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
+
+                options.Events.OnRedirectToAuthorizationEndpoint = context =>
+                {
+                    context.RedirectUri = context.RedirectUri.Replace("http://", "https://");
+                    return Task.CompletedTask;
+                };
+
                 options.Events.OnRemoteFailure = context =>
                 {
                     context.Response.Redirect("/api/auth/google-callback?error=access_denied");
