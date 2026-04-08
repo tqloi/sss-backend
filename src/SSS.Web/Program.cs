@@ -53,6 +53,8 @@ builder.Services.AddControllers();
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    o.ForwardLimit = 2;
+    o.RequireHeaderSymmetry = false;
     o.KnownNetworks.Clear();
     o.KnownProxies.Clear();
 });
@@ -76,7 +78,8 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment())
+// Avoid redirect surprises in local development where frontend/backend are mixed HTTP/HTTPS.
+if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 
 app.UseCors();
