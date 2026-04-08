@@ -8,6 +8,7 @@ namespace SSS.Web.Endpoints.StudySessions.GetSessionStatistics
     public class GetSessionStatisticsRequest
     {
         [QueryParam] public string? Period { get; set; }
+        [QueryParam] public long? PlanId { get; set; }
     }
 
     public class GetSessionStatisticsEndpoint(ISender sender, IHttpContextAccessor httpContext)
@@ -27,7 +28,8 @@ namespace SSS.Web.Endpoints.StudySessions.GetSessionStatistics
             var query = new GetSessionStatisticsQuery
             {
                 UserId = userId!,
-                Period = req.Period
+                Period = req.Period,
+                PlanId = req.PlanId
             };
 
             var result = await sender.Send(query, ct);

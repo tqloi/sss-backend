@@ -1,6 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SSS.Application.Features.QuizAnswers.Common;
+using SSS.Domain.Entities.Assessment;
+using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
 {
@@ -48,10 +51,24 @@ namespace SSS.Application.Features.QuizAnswers.SaveQuizAnswersByAttemptId
             {
                 if (answerByQuestionId.TryGetValue(existingAnswer.QuestionId, out var updatedAnswer))
                 {
-                    existingAnswer.OptionId = updatedAnswer.OptionId;
-                    existingAnswer.TextValue = updatedAnswer.TextValue;
+                    var selectedOptionIds = QuizAnswerExtractionHelper.NormalizeIncomingOptionIds(updatedAnswer);
+
+                    // Always store selected option IDs as JSON for consistency
+                    // This ensures multi-select answers are fully preserved regardless of count
+                    if (selectedOptionIds.Count > 0)
+                    {
+                        existingAnswer.OptionId = selectedOptionIds.First(); // First ID for backward compat
+                        existingAnswer.TextValue = JsonSerializer.Serialize(selectedOptionIds); // All IDs as JSON
+                    }
+                    else
+                    {
+                        // No options selected (e.g., ShortAnswer or cleared selection)
+                        existingAnswer.OptionId = null;
+                        existingAnswer.TextValue = updatedAnswer.TextValue; // Preserve original TextValue (for ShortAnswer)
+                    }
+
                     existingAnswer.NumberValue = updatedAnswer.NumberValue;
-                    existingAnswer.AnsweredAt = DateTime.UtcNow;
+                    existingAnswer.AnsweredAt = updatedAnswer.AnsweredAt ?? DateTime.UtcNow;
                 }
             }
 

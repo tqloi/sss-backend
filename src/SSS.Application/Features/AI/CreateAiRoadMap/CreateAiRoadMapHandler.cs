@@ -1,32 +1,22 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.External.AI.PipeLine;
-using SSS.Application.Abstractions.Persistence.Sql;
 using System.Text.Json;
 
 namespace SSS.Application.Features.AI.CreateAiRoadMap
 {
     public sealed class CreateAiRoadMapHandler(IPipeLine pipeLine,
-    IMediator mediator, IAppDbContext dbContext
+    IMediator mediator
 ) : IRequestHandler<CreateAiRoadMapCommand, CreateAiRoadMapResult>
     {
         public async Task<CreateAiRoadMapResult> Handle(
             CreateAiRoadMapCommand request,
             CancellationToken cancellationToken)
         {
-            var contentManagerSubject = await dbContext.ContentManagerSubjects.AsNoTracking().FirstOrDefaultAsync(cms => cms.ContentManagerId == request.ManagerId);
-
-            if (contentManagerSubject == null) {
-                return new CreateAiRoadMapResult
-                {
-                    Success = false,
-                    Message = $"Content manager with ID {request.ManagerId} not found"
-                };
-            }
             // 1. Call GPT
             var rawJson = await pipeLine.GenerateRoadmapAsync(
                 request.Message,
-                contentManagerSubject.SubjectId.ToString(),
+                request.SubjectId.ToString(),
                 ct: cancellationToken
             );
             Console.Write(rawJson);

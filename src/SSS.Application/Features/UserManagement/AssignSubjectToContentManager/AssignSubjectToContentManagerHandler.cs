@@ -10,15 +10,6 @@ namespace SSS.Application.Features.UserManagement.AssignSubjectToContentManager
     {
         public async Task<bool> Handle(AssignSubjectToContentManagerCommand request, CancellationToken ct)
         {
-            var activeAssignments = await dbContext.ContentManagerSubjects
-                .Where(x => x.ContentManagerId == request.ContentManagerId && x.IsActive)
-                .ToListAsync(ct);
-
-            foreach (var assignment in activeAssignments)
-            {
-                assignment.IsActive = false;
-            }
-
             var currentAssignment = await dbContext.ContentManagerSubjects
                 .FirstOrDefaultAsync(
                     x => x.ContentManagerId == request.ContentManagerId && x.SubjectId == request.SubjectId,

@@ -15,6 +15,11 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                 .AsNoTracking()
                 .Where(s => s.UserId == req.UserId);
 
+            if (req.PlanId.HasValue)
+            {
+                baseQuery = baseQuery.Where(s => s.StudyPlanId == req.PlanId.Value);
+            }
+
             // Period filter
             var now = DateTime.UtcNow;
             DateTime? periodStart = req.Period?.ToLower() switch

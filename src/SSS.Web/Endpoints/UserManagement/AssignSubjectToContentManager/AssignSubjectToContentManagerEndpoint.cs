@@ -19,7 +19,7 @@ namespace SSS.Web.Endpoints.UserManagement.AssignSubjectToContentManager
             Summary(s =>
             {
                 s.Summary = "Assign a subject to content manager";
-                s.Description = "Assigns exactly one active subject to a content manager user.";
+                s.Description = "Assigns or reactivates a subject for a content manager user. A manager can have multiple active subjects.";
             });
         }
 

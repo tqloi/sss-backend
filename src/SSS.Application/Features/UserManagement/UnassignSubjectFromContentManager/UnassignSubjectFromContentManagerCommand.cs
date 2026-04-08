@@ -5,5 +5,6 @@ namespace SSS.Application.Features.UserManagement.UnassignSubjectFromContentMana
     public sealed class UnassignSubjectFromContentManagerCommand : IRequest<bool>
     {
         public string ContentManagerId { get; set; } = null!;
+        public long? SubjectId { get; set; }
     }
 }

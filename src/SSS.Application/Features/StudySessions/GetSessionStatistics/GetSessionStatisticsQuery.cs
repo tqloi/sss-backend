@@ -8,5 +8,6 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
         [JsonIgnore]
         public string UserId { get; set; } = null!;
         public string? Period { get; set; } // week, month, all
+        public long? PlanId { get; set; }
     }
 }

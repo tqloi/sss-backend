@@ -34,6 +34,11 @@ namespace SSS.Application.Features.Content.Roadmap.Update
                 entity.Description = request.Description;
             }
 
+            if (request.Status.HasValue)
+            {
+                entity.Status = request.Status.Value;
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
             return new UpdateRoadmapResult
@@ -45,7 +50,8 @@ namespace SSS.Application.Features.Content.Roadmap.Update
                     Id = entity.Id,
                     SubjectId = entity.SubjectId,
                     Title = entity.Title,
-                    Description = entity.Description
+                    Description = entity.Description,
+                    Status = entity.Status
                 }
             };
         }

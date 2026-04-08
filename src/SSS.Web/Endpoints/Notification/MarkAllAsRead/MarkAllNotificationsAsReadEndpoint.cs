@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
-using SSS.Application.Abstractions.Persistence.Sql;
+using MediatR;
+using SSS.Application.Features.Notification.MarkAllAsRead;
 using System.Security.Claims;
 
 namespace SSS.WebApi.Endpoints.Notification.MarkAllAsRead;
 
 public sealed class MarkAllNotificationsAsReadEndpoint(
-    IAppDbContext dbContext
+    ISender sender
 ) : EndpointWithoutRequest<MarkAllNotificationsAsReadResponse>
 {
     public override void Configure()
@@ -29,28 +29,14 @@ public sealed class MarkAllNotificationsAsReadEndpoint(
             return;
         }
 
-        var unreadItems = await dbContext.UserNotifications
-            .Where(x => x.UserId == userId && !x.IsRead)
-            .ToListAsync(ct);
-
-        if (unreadItems.Count == 0)
+        var result = await sender.Send(new MarkAllNotificationsAsReadCommand
         {
-            await SendOkAsync(new MarkAllNotificationsAsReadResponse { UpdatedCount = 0 }, ct);
-            return;
-        }
-
-        var now = DateTime.UtcNow;
-        foreach (var item in unreadItems)
-        {
-            item.IsRead = true;
-            item.ReadAt = now;
-        }
-
-        await dbContext.SaveChangesAsync(ct);
+            UserId = userId
+        }, ct);
 
         await SendOkAsync(new MarkAllNotificationsAsReadResponse
         {
-            UpdatedCount = unreadItems.Count
+            UpdatedCount = result.UpdatedCount
         }, ct);
     }
 }
