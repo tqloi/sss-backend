@@ -23,7 +23,6 @@ namespace SSS.Infrastructure.Services
         private readonly IStudyEventRepository _studyEventRepository;
         private readonly IMapper mapper;
         private readonly IPipeLine pipeLine;
-        private readonly ISurveyJobDispatcher _surveyJobDispatcher;
         private readonly IEmailJobDispatcher _emailJobDispatcher;
         private readonly IMailTemplateBuilder _mailTemplateBuilder;
         private readonly IConfiguration _configuration;
@@ -34,7 +33,6 @@ namespace SSS.Infrastructure.Services
             IStudyEventRepository studyEvent,
             IMapper mapper,
             IPipeLine pipeLine,
-            ISurveyJobDispatcher surveyJobDispatcher,
             IEmailJobDispatcher emailJobDispatcher,
             IMailTemplateBuilder mailTemplateBuilder,
             IConfiguration configuration)
@@ -44,7 +42,6 @@ namespace SSS.Infrastructure.Services
             _studyEventRepository = studyEvent;
             this.mapper = mapper;
             this.pipeLine = pipeLine;
-            _surveyJobDispatcher = surveyJobDispatcher;
             _emailJobDispatcher = emailJobDispatcher;
             _mailTemplateBuilder = mailTemplateBuilder;
             _configuration = configuration;
@@ -210,8 +207,6 @@ namespace SSS.Infrastructure.Services
 
             var vectorStudyPlanId = plan?.Id.ToString() ?? module.StudyPlanId.ToString();
             await pipeLine.IngestBehaviorAsync(vectorStudyPlanId, userId, moduleId.ToString(), chunks, ct);
-
-            _surveyJobDispatcher.DispatchModuleBehaviorInsight(plan!.Id, moduleId, userId);
 
             await DispatchModuleCompletedEmailAsync(
                 userId: userId,
