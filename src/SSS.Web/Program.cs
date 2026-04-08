@@ -10,7 +10,6 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
@@ -54,8 +53,6 @@ builder.Services.AddControllers();
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.ForwardLimit = null;
-    o.RequireHeaderSymmetry = false;
     o.KnownNetworks.Clear();
     o.KnownProxies.Clear();
 });
@@ -78,7 +75,10 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseForwardedHeaders();
-app.UseHttpsRedirection();
+
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
 app.UseCors();
 
 app.UseAuthentication();

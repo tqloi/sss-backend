@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,17 +27,6 @@ namespace SSS.Infrastructure.External.Identity.Google
 
                 // Map the picture to a claim
                 options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
-
-                options.Events.OnRedirectToAuthorizationEndpoint = context =>
-                {
-                    if (context.RedirectUri.StartsWith("http://"))
-                    {
-                        context.RedirectUri = context.RedirectUri.Replace("http://", "https://");
-                    }
-                    // Thực hiện redirect thực sự
-                    context.Response.Redirect(context.RedirectUri);
-                    return Task.CompletedTask;
-                };
 
                 options.Events.OnRemoteFailure = context =>
                 {
