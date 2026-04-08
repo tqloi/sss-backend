@@ -32,7 +32,8 @@ namespace SSS.Application.Features.Content.Roadmap.Create
                 CreateById = request.CreatedById,
                 CreatedAt = DateTime.UtcNow,
                 Version = 1,
-                IsLatest = true
+                IsLatest = true,
+                Status = Domain.Enums.RoadmapStatus.Draft
             };
 
             dbContext.Roadmaps.Add(entity);
@@ -51,7 +52,8 @@ namespace SSS.Application.Features.Content.Roadmap.Create
                     CreatedById = entity.CreateById,
                     CreatedAt = entity.CreatedAt,
                     Version = entity.Version,
-                    IsLatest = entity.IsLatest
+                    IsLatest = entity.IsLatest,
+                    Status = entity.Status
                 }
             };
         }

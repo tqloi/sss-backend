@@ -19,6 +19,10 @@ namespace SSS.Web.Endpoints.Content.Roadmap.GetAll
                 .GreaterThan(0).WithMessage("SubjectId must be greater than 0.")
                 .When(x => x.SubjectId.HasValue);
 
+            RuleFor(x => x.CategoryId)
+                .GreaterThan(0).WithMessage("CategoryId must be greater than 0.")
+                .When(x => x.CategoryId.HasValue);
+
             RuleFor(x => x.Version)
                 .GreaterThan(0).WithMessage("Version must be greater than 0.")
                 .When(x => x.Version.HasValue);

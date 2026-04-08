@@ -14,6 +14,14 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
         {
             var query = dbContext.Roadmaps.AsNoTracking();
 
+            // Filter by CategoryId if provided
+            if (request.CategoryId.HasValue)
+            {
+                query = query.Where(x => dbContext.LearningSubjects
+                    .AsNoTracking()
+                    .Any(s => s.Id == x.SubjectId && s.CategoryId == request.CategoryId.Value));
+            }
+
             // Filter by SubjectId if provided
             if (request.SubjectId.HasValue)
             {
