@@ -10,7 +10,6 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
@@ -30,9 +29,9 @@ builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(p => p
         .WithOrigins(
-             "https://studysense-frontend.vercel.app/",
-             "http://localhost:3000/", 
-             "https://localhost:3000/" 
+             "https://studysense-frontend.vercel.app",
+             "http://localhost:3000", 
+             "https://localhost:3000" 
          )
         .AllowAnyHeader()
         .AllowAnyMethod());
@@ -54,10 +53,8 @@ builder.Services.AddControllers();
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.ForwardLimit = 2;
-    o.RequireHeaderSymmetry = false;
-    //o.KnownNetworks.Clear();
-    //o.KnownProxies.Clear();
+    o.KnownNetworks.Clear();
+    o.KnownProxies.Clear();
 });
 
 builder.Services.AddProblemDetails();
@@ -77,11 +74,11 @@ var app = builder.Build();
 //}
 
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedProto
-});
+app.UseForwardedHeaders();
+
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
 app.UseCors();
 
 app.UseAuthentication();
