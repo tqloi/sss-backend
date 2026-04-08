@@ -4,7 +4,6 @@ using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Domain.Entities.Planning;
-using SSS.Domain.Enums;
 using System.Text.Json;
 
 namespace SSS.Infrastructure.Services
