@@ -116,7 +116,46 @@ Focus on:
 - Overall study discipline (good / average / needs improvement based on evidence)
 """;
 
-            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateBehavioralAnalysis);
+            var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
+            return response;
+        }
+
+        public async Task<string> GenerateModuleBehaviorInsightAsync(string context, CancellationToken ct = default)
+        {
+            var prompt = $"""
+You are an assistant that writes a very simple learning summary for users.
+Use the context to summarize current learning progress.
+
+Important extraction rules:
+- Prioritize ACTUAL study time from session evidence (for example: "actual duration", "EndAt-StartAt", "duration", "seconds/minutes/hours").
+- If both planned and actual time exist, ALWAYS use actual time only.
+- If multiple actual durations exist, sum them and report one total.
+- Convert time to a user-friendly form (e.g., "13 seconds", "25 minutes", "1 hour 10 minutes").
+- For quiz, report concise result trend from available attempts (e.g., "2/10 then 8/10").
+- If exact values are missing, write "No data" for that field.
+
+Evaluation rules (choose exactly one):
+- Good: mostly on-time/consistent with clear engagement.
+- Average: mixed evidence or inconsistent results.
+- Need improvement: weak engagement, very inconsistent performance, or unclear completion quality.
+
+Output format rules (strict):
+- Plain text only.
+- Exactly 3 short lines, in this exact order:
+  1) Total study time spent: <value or No data>
+  2) Quiz score/result: <value or No data>
+  3) Basic evaluation: <Good|Average|Need improvement>
+- Do not include any extra text.
+- Do not include technical terms.
+
+Context:
+{context}
+""";
+
+            var systemPrompt = "You are a helpful AI assistant.";
+            var userPromptWithContext = $"QUESTION:\n{prompt}";
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateResultsSummary);
             var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
             return response;
         }
@@ -156,7 +195,7 @@ UserLearningBehavior:
   - Practice: {behavior.WPractice}
 """;
 
-            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateRoadmap);
+            var llmChatProvider = _llmRouter.Resolve(LlmTask.GenerateSurveyAnalysis);
             var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
             return response;
         }
@@ -739,7 +778,7 @@ Scope validation before output:
 - Remove any question that could belong to the roadmap in general but not specifically to the target node.
 """;
 
-            var llm = _llmRouter.Resolve(LlmTask.GenerateStudyPlan);
+            var llm = _llmRouter.Resolve(LlmTask.GenerateQuiz);
             return await llm.AskAsync(systemPrompt, userPrompt, ct);
         }
 
