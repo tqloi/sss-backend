@@ -31,8 +31,8 @@ builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p
         .WithOrigins(
              "https://studysense-frontend.vercel.app/",
-             "http://localhost:3000", 
-             "https://localhost:3000" 
+             "http://localhost:3000/", 
+             "https://localhost:3000/" 
          )
         .AllowAnyHeader()
         .AllowAnyMethod());
