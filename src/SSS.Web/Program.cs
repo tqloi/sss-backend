@@ -30,9 +30,9 @@ builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(p => p
         .WithOrigins(
-             "https://studysense-frontend.vercel.app/",
-             "http://localhost:3000/", 
-             "https://localhost:3000/" 
+             "https://studysense-frontend.vercel.app",
+             "http://localhost:3000", 
+             "https://localhost:3000" 
          )
         .AllowAnyHeader()
         .AllowAnyMethod());
@@ -54,7 +54,7 @@ builder.Services.AddControllers();
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.ForwardLimit = 2;
+    o.ForwardLimit = null;
     o.RequireHeaderSymmetry = false;
     o.KnownNetworks.Clear();
     o.KnownProxies.Clear();
@@ -77,8 +77,8 @@ var app = builder.Build();
 //}
 
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
 app.UseForwardedHeaders();
+app.UseHttpsRedirection();
 app.UseCors();
 
 app.UseAuthentication();
