@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 using Microsoft.AspNetCore.Identity;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Content;
@@ -14,6 +15,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
 {
     public interface IAppDbContext
     {
+
         // Content
         DbSet<LearningCategory> LearningCategories { get; }
         DbSet<LearningSubject> LearningSubjects { get; }
@@ -73,6 +75,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<IdentityUserRole<string>> UserRoles { get; }
         Task<int> SaveChangesAsync(CancellationToken ct = default);
         Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
+        Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken ct = default);
         Task CommitTransactionAsync(CancellationToken ct = default);
         Task RollbackTransactionAsync(CancellationToken ct = default);
     }
