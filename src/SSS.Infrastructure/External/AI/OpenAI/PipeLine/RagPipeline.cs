@@ -829,14 +829,18 @@ Scope rules (mandatory):
 - Use "Roadmap" only as lightweight background metadata (title/description).
 - If a topic is not clearly inferable from the target node, exclude it.
 
-Difficulty progression is mandatory:
-- Questions must become harder from first to last.
-- orderNo must represent ascending difficulty (lowest difficulty first).
-- The first questions should test fundamentals/recall.
-- Middle questions should test understanding/application.
-- Final questions should test analysis/problem-solving in realistic scenarios.
-- Do not mix a hard question before an easier one.
-- scoreWeight should be non-decreasing with orderNo.
+Difficulty alignment is mandatory:
+- All questions must stay consistent with the input target level.
+- Do NOT enforce increasing difficulty from first to last.
+- Do NOT create an easy-to-hard progression.
+- Keep cognitive complexity stable across questions for the selected level.
+- Apply level distribution strictly:
+  - Beginner: 70% fundamentals/recall, 20% understanding/application, 10% analysis/problem-solving in realistic scenarios.
+  - Intermediate: 70% understanding/application, 20% analysis/problem-solving in realistic scenarios, 10% fundamentals/recall.
+  - Advanced: 70% analysis/problem-solving in realistic scenarios, 30% understanding/application.
+- Convert the percentage mix to question counts based on questionCount.
+- Use nearest-integer allocation and ensure total allocated questions equals questionCount.
+- scoreWeight should stay appropriate for the selected level and remain non-decreasing with orderNo.
 
 Each questionKey must be unique within the response and must look random, not sequential.
 Use uppercase letters, digits, or underscores only.
@@ -885,7 +889,14 @@ Rules for questionKey:
 
 Rules for difficulty:
 - orderNo must start from 1 and increase continuously.
-- difficulty must increase with orderNo.
+- do NOT increase difficulty with orderNo.
+- all questions must be aligned to the same target level input.
+- apply this distribution strictly:
+  - Beginner => 70% fundamentals/recall, 20% understanding/application, 10% analysis/problem-solving in realistic scenarios
+  - Intermediate => 70% understanding/application, 20% analysis/problem-solving in realistic scenarios, 10% fundamentals/recall
+  - Advanced => 70% analysis/problem-solving in realistic scenarios, 30% understanding/application
+- convert percentages into integer question counts based on questionCount.
+- after rounding, adjust counts so total always equals questionCount.
 - keep scoreWeight non-decreasing from first to last question.
 - overall complexity must align with the target level.
 
