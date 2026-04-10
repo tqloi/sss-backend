@@ -12,7 +12,9 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
     {
         public async Task<GetAllRoadmapsResult> Handle(GetAllRoadmapsQuery request, CancellationToken cancellationToken)
         {
-            var query = dbContext.Roadmaps.AsNoTracking();
+            var query = dbContext.Roadmaps
+                .Include(x => x.Subject)
+                .AsNoTracking();
 
             // Public roadmap listing should only expose active records.
             query = query.Where(x => x.Status == RoadmapStatus.Active);
@@ -59,6 +61,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
             {
                 Id = roadmap.Id,
                 SubjectId = roadmap.SubjectId,
+                SubjectName = roadmap.Subject.Name,
                 Title = roadmap.Title,
                 Description = roadmap.Description,
                 Version = roadmap.Version,

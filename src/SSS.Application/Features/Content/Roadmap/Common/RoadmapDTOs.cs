@@ -6,6 +6,7 @@ namespace SSS.Application.Features.Content.Roadmap.Common
     {
         public long Id { get; set; }
         public long SubjectId { get; set; }
+        public string? SubjectName { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string? CreatedById { get; set; }
@@ -19,6 +20,7 @@ namespace SSS.Application.Features.Content.Roadmap.Common
     {
         public long Id { get; set; }
         public long SubjectId { get; set; }
+        public string? SubjectName { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string? CreatedById { get; set; }
