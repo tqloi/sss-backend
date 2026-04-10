@@ -29,7 +29,7 @@ namespace SSS.Infrastructure.External.AI
         {
             return task switch
             {
-                LlmTask.SurveyAnalysis => _providers[LlmProvider.Gemini],
+                LlmTask.SurveyAnalysis => _providers[LlmProvider.Gpt],
                 LlmTask.LearningProfile => _providers[LlmProvider.Gemini],
                 LlmTask.SimpleChat => _providers[LlmProvider.Gemini],
 

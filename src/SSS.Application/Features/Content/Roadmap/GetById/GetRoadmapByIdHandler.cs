@@ -11,6 +11,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetById
         public async Task<GetRoadmapByIdResult> Handle(GetRoadmapByIdQuery request, CancellationToken cancellationToken)
         {
             var roadmap = await dbContext.Roadmaps
+                .Include(r => r.Subject)
                 .Include(r => r.Nodes)
                 .Include(r => r.Edges)
                 .AsNoTracking()
@@ -32,6 +33,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetById
                 {
                     Id = roadmap.Id,
                     SubjectId = roadmap.SubjectId,
+                    SubjectName = roadmap.Subject.Name,
                     Title = roadmap.Title,
                     Description = roadmap.Description,
                     CreatedAt = roadmap.CreatedAt,
