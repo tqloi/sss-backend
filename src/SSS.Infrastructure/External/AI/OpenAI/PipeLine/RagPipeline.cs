@@ -166,9 +166,8 @@ Evaluation rules (choose exactly one):
 Output format rules (strict):
 - Plain text only.
 - Exactly 3 short lines, in this exact order:
-  1) Total study time spent: <value or No data>
-  2) Quiz score/result: <value or No data>
-  3) Basic evaluation: <Good|Average|Need improvement>
+  1) Quiz score/result: <value or No data>
+  2) Basic evaluation: <Good|Average|Need improvement>
 - Do not include any extra text.
 - Do not include technical terms.
 
