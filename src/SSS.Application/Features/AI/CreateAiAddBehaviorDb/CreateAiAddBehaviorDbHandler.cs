@@ -143,6 +143,7 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
             };
 
             var behaviorContextJson = JsonSerializer.Serialize(behaviorContext);
+            Console.WriteLine(behaviorContextJson);
 
             var result = await pipeLine.GenerateBehaviorResultAsync(behaviorContextJson, ct);
 

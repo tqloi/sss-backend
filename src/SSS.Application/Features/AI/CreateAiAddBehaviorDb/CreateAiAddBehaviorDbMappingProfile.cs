@@ -16,7 +16,8 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
                 .ForMember(d => d.QuizTitle, o => o.MapFrom(s => s.Quiz.Title))
                 .ForMember(d => d.AnswersCount, o => o.MapFrom(s => s.Answers.Count));
 
-            CreateMap<StudySession, BehaviorSessionDto>();
+            CreateMap<StudySession, BehaviorSessionDto>()
+                .ForMember(d => d.Tasks, o => o.MapFrom(s => s.SessionTasks));
             CreateMap<SessionTask, BehaviorSessionTaskDto>()
                 .ForMember(d => d.SessionTaskStatus, o => o.MapFrom(s => s.Status))
                 .ForMember(d => d.TaskTitle, o => o.MapFrom(s => s.TaskItem.Title))

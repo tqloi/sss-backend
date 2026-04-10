@@ -52,6 +52,7 @@ namespace SSS.Infrastructure.Services
             // Lấy module
             var module = await _context.StudyPlanModules
                 .Include(x => x.RoadmapNode) // eager load để lấy title khi gửi email
+                .Include(x => x.Tasks)
                 .FirstOrDefaultAsync(m => m.Id == moduleId, ct);
 
             if (module == null)
@@ -106,7 +107,7 @@ namespace SSS.Infrastructure.Services
                 .Take(100)
                 .ToList();
 
-            var recentNodeIds = await GetRecentRoadmapNodeIdsAsync(plan.RoadmapId, module.RoadmapNodeId, 3, ct);
+            var recentNodeIds = await GetRecentCompletedRoadmapNodeIdsAsync(plan.Id, plan.RoadmapId, module.RoadmapNodeId, 3, ct);
 
             var recentModuleIds = await _context.StudyPlanModules
                 .AsNoTracking()
@@ -134,10 +135,32 @@ namespace SSS.Infrastructure.Services
                 .Take(20)
                 .ToListAsync(ct);
 
-            var completedTaskCount = await _context.TaskItems
+            var recentSessionTaskSnapshots = await _context.SessionTasks
                 .AsNoTracking()
-                .CountAsync(t => recentModuleIds.Contains(t.StudyPlanModuleId) &&
-                                 (t.Status == SSS.Domain.Enums.TaskStatus.Completed || t.CompletedAt.HasValue), ct);
+                .Where(st => st.StudySession.UserId == userId
+                             && recentModuleIds.Contains(st.TaskItem.StudyPlanModuleId))
+                .Select(st => new
+                {
+                    st.TaskId,
+                    st.Status,
+                    st.EndTimeUtc,
+                    st.TaskItem.CompletedAt,
+                    st.TaskItem.ScheduledDate
+                })
+                .ToListAsync(ct);
+
+            var completedSessionTasks = recentSessionTaskSnapshots
+                .Where(st => st.Status == "COMPLETED" && (st.EndTimeUtc.HasValue || st.CompletedAt.HasValue))
+                .GroupBy(st => st.TaskId)
+                .Select(g => g
+                    .OrderByDescending(x => x.EndTimeUtc ?? x.CompletedAt ?? DateTime.MinValue)
+                    .First())
+                .ToList();
+
+            var completedTaskCount = completedSessionTasks.Count;
+            var onTimeCompletedTaskCount = completedSessionTasks
+                .Count(st => (st.EndTimeUtc ?? st.CompletedAt) <= st.ScheduledDate);
+            var lateCompletedTaskCount = completedTaskCount - onTimeCompletedTaskCount;
             var completedQuizCount = quizAttempts.Count(a => a.Status != QuizAttemptStatus.InProgress || a.SubmittedAt.HasValue);
 
             var moduleDto = mapper.Map<BehaviorModuleDto>(module);
@@ -180,18 +203,27 @@ namespace SSS.Infrastructure.Services
             {
                 NodeScope = new
                 {
+                    CurrentModuleId = module.Id,
                     CurrentNodeId = module.RoadmapNodeId,
                     RecentNodeIds = recentNodeIds
                 },
                 Module = moduleDto,
                 Sessions = sessionDtos,
                 QuizAttempts = quizAttemptDtos,
+                LearningSummary = new
+                {
+                    CompletedTaskCount = completedTaskCount,
+                    OnTimeCompletedTaskCount = onTimeCompletedTaskCount,
+                    LateCompletedTaskCount = lateCompletedTaskCount,
+                    CompletedQuizCount = completedQuizCount
+                },
                 StudyEvents = studyEventDetails,
                 StudyEventSummary = studyEventSummary,
 
             };
 
             var behaviorContextJson = JsonSerializer.Serialize(behaviorContext);
+            Console.WriteLine(behaviorContextJson);
 
             var result = await pipeLine.GenerateBehaviorResultAsync(behaviorContextJson, ct);
 
@@ -262,9 +294,23 @@ namespace SSS.Infrastructure.Services
                 body: emailBody);
         }
 
-        private async Task<List<long>> GetRecentRoadmapNodeIdsAsync(long roadmapId, long currentNodeId, int take, CancellationToken ct)
+        private async Task<List<long>> GetRecentCompletedRoadmapNodeIdsAsync(long studyPlanId, long roadmapId, long currentNodeId, int take, CancellationToken ct)
         {
-            var recentNodeIds = new List<long> { currentNodeId };
+            var completedNodeIds = (await _context.StudyPlanModules
+                .AsNoTracking()
+                .Where(m => m.StudyPlanId == studyPlanId && m.Status == ModuleStatus.Completed)
+                .Select(m => m.RoadmapNodeId)
+                .Distinct()
+                .ToListAsync(ct))
+                .ToHashSet();
+
+            var recentNodeIds = new List<long>();
+
+            if (completedNodeIds.Contains(currentNodeId))
+            {
+                recentNodeIds.Add(currentNodeId);
+            }
+
             var visited = new HashSet<long> { currentNodeId };
             var currentLayer = new HashSet<long> { currentNodeId };
 
@@ -273,9 +319,10 @@ namespace SSS.Infrastructure.Services
                 var incomingEdges = await _context.RoadmapEdges
                     .AsNoTracking()
                     .Where(e => e.RoadmapId == roadmapId
-                                && e.EdgeType == EdgeType.Recommended
+                                && (e.EdgeType == EdgeType.Recommended || e.EdgeType == EdgeType.Next)
                                 && currentLayer.Contains(e.ToNodeId))
-                    .OrderBy(e => e.OrderNo ?? int.MaxValue)
+                    .OrderBy(e => e.EdgeType == EdgeType.Recommended ? 0 : 1)
+                    .ThenBy(e => e.OrderNo ?? int.MaxValue)
                     .ThenBy(e => e.Id)
                     .ToListAsync(ct);
 
@@ -288,7 +335,11 @@ namespace SSS.Infrastructure.Services
                         continue;
                     }
 
-                    recentNodeIds.Add(fromNodeId);
+                    if (completedNodeIds.Contains(fromNodeId))
+                    {
+                        recentNodeIds.Add(fromNodeId);
+                    }
+
                     nextLayer.Add(fromNodeId);
 
                     if (recentNodeIds.Count >= take)
