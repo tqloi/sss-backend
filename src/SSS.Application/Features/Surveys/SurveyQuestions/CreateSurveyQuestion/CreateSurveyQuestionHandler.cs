@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MediatR;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.Surveys.Common;
 using SSS.Domain.Entities.Assessment;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace SSS.Application.Features.Surveys.SurveyQuestions.CreateSurveyQuestion
 {
-    public class CreateSurveyQuestionHandler(IAppDbContext db,IMapper mapper) : IRequestHandler<CreateSurveyQuestionCommand, CreateSurveyQuestionResponse>
+    public class CreateSurveyQuestionHandler(IAppDbContext db, IMapper mapper, ICacheService cacheService) : IRequestHandler<CreateSurveyQuestionCommand, CreateSurveyQuestionResponse>
     {
         public async Task<CreateSurveyQuestionResponse> Handle(CreateSurveyQuestionCommand request, CancellationToken cancellationToken)
         {
@@ -32,6 +33,8 @@ namespace SSS.Application.Features.Surveys.SurveyQuestions.CreateSurveyQuestion
                 var entity = mapper.Map<SurveyQuestion>(request);
                 await db.SurveyQuestions.AddAsync(entity, cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
+
+                await cacheService.RemoveAsync($"survey:questions:{request.SurveyId}");
 
                 //var dto = new SurveyQuestionDto(
 
