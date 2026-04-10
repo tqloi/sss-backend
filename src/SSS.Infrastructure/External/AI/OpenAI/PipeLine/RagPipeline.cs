@@ -5,12 +5,29 @@ using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Application.Features.AI.Common;
 using SSS.Domain.Entities.Planning;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
     public class RagPipeline : IPipeLine
     {
+        private static readonly HashSet<string> GenericRoadmapInputs = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "alo", "hello", "hi", "hey", "yo", "ok", "oke", "test", "chao", "xin chao"
+        };
+
+        private static readonly string[] RoadmapIntentKeywords =
+        {
+            "roadmap", "learning path", "study plan", "plan", "lộ trình", "lo trinh", "kế hoạch", "ke hoach", "learn", "học", "hoc"
+        };
+
+        private static readonly string[] BackendTechKeywords =
+        {
+            ".net", "dotnet", "asp.net", "c#", "java", "spring", "node", "nodejs", "nestjs", "express",
+            "python", "django", "flask", "golang", "go", "php", "laravel", "backend", "api", "microservice", "database", "sql", "nosql"
+        };
+
         private readonly ILlmRouter _llmRouter;
         private readonly IEmbeddingProvider _emp;
         private readonly IQdrantClient _vec;
@@ -201,6 +218,9 @@ UserLearningBehavior:
         }
         public async Task<string> GenerateRoadmapAsync(string question, string subjectid, CancellationToken ct = default)
         {
+            ValidateRoadmapQuestion(question);
+            await VerifyRoadmapQuestionWithAiAsync(question, ct);
+
             var systemPrompt = """
 You are an AI that generates detailed learning roadmaps in JSON strictly for a backend technology specified by the user.
 
@@ -426,6 +446,92 @@ REQUIRED JSON SHAPE
             var response = await llmChatProvider.AskAsync(systemPrompt, userPromptWithContext, ct);
             return response;
         }
+
+        private static void ValidateRoadmapQuestion(string question)
+        {
+            if (string.IsNullOrWhiteSpace(question))
+                throw new ValidationException("Roadmap request cannot be empty.");
+
+            var normalized = question.Trim();
+            var compact = new string(normalized.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+
+            if (GenericRoadmapInputs.Contains(normalized) || GenericRoadmapInputs.Contains(compact))
+                throw new ValidationException("Roadmap request is too generic. Please provide backend technology and learning goal.");
+
+            var lower = normalized.ToLowerInvariant();
+            var tokens = lower.Split(new[] { ' ', '\t', '\r', '\n', ',', '.', ';', ':', '!', '?', '-', '_', '/', '\\', '|', '(', ')', '[', ']', '{', '}', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (tokens.Length < 2 || compact.Length < 6)
+                throw new ValidationException("Roadmap request is too short. Please describe your target backend technology and objective.");
+
+            var score = 0;
+            if (ContainsAny(lower, RoadmapIntentKeywords)) score++;
+            if (ContainsAny(lower, BackendTechKeywords)) score++;
+            if (tokens.Length >= 4) score++;
+
+            if (score < 2)
+                throw new ValidationException("Roadmap request is unclear. Include backend technology (e.g., .NET, Java, Node.js) and a concrete goal.");
+        }
+
+        private async Task VerifyRoadmapQuestionWithAiAsync(string question, CancellationToken ct)
+        {
+            var verifier = _llmRouter.Resolve(LlmTask.VerifyMessageCreateRoadmap);
+
+            const string systemPrompt = """
+You are a strict validator for backend roadmap requests.
+Return ONLY compact JSON with exact shape:
+{"isValid": boolean, "reason": string}
+
+Rules:
+- isValid=true only if the input clearly requests a backend learning roadmap/path/plan.
+- Must include meaningful backend/domain signal (.NET, Java, Node.js, API, database, microservice, etc.).
+- Greetings, small talk, vague input, or unrelated requests are invalid.
+- If uncertain, return isValid=false.
+No markdown. No extra text.
+""";
+
+            var userPrompt = $"Validate this input for backend roadmap generation:\nINPUT: {question}";
+
+            var raw = await verifier.AskAsync(systemPrompt, userPrompt, ct);
+            raw = raw.Replace("```json", "", StringComparison.OrdinalIgnoreCase)
+                     .Replace("```", "", StringComparison.OrdinalIgnoreCase)
+                     .Trim();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                var root = doc.RootElement;
+                var isValid = root.TryGetProperty("isValid", out var isValidProp)
+                              && isValidProp.ValueKind is JsonValueKind.True or JsonValueKind.False
+                              && isValidProp.GetBoolean();
+
+                if (!isValid)
+                {
+                    var reason = root.TryGetProperty("reason", out var reasonProp)
+                        ? reasonProp.GetString()
+                        : null;
+                    throw new ValidationException(string.IsNullOrWhiteSpace(reason)
+                        ? "Roadmap request is unclear. Please provide backend technology and a concrete learning goal."
+                        : reason);
+                }
+            }
+            catch (JsonException)
+            {
+                throw new ValidationException("Roadmap request is unclear. Please provide backend technology and a concrete learning goal.");
+            }
+        }
+
+        private static bool ContainsAny(string input, IEnumerable<string> keywords)
+        {
+            foreach (var keyword in keywords)
+            {
+                if (input.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
         public async Task<string> BuildStudyPlanContextAsync(
             string userId,
             string studyPlanId,

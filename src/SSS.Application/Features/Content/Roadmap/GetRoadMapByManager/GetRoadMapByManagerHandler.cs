@@ -11,7 +11,9 @@ namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
     {
         public async Task<GetRoadMapByManagerResult> Handle(GetRoadMapByManagerQuery request, CancellationToken cancellationToken)
         {
-            var query = dbContext.Roadmaps.AsNoTracking();
+            var query = dbContext.Roadmaps
+                .Include(x => x.Subject)
+                .AsNoTracking();
 
             // Filter by manager who created the roadmap
             query = query.Where(x => x.CreateById == request.ManagerId);
@@ -56,6 +58,7 @@ namespace SSS.Application.Features.Content.Roadmap.GetRoadMapByManager
             {
                 Id = roadmap.Id,
                 SubjectId = roadmap.SubjectId,
+                SubjectName = roadmap.Subject.Name,
                 Title = roadmap.Title,
                 Description = roadmap.Description,
                 Version = roadmap.Version,
