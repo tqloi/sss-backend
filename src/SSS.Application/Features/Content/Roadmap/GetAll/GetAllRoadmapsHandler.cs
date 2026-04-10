@@ -14,6 +14,9 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
         {
             var query = dbContext.Roadmaps.AsNoTracking();
 
+            // Public roadmap listing should only expose active records.
+            query = query.Where(x => x.Status == RoadmapStatus.Active);
+
             // Filter by CategoryId if provided
             if (request.CategoryId.HasValue)
             {
@@ -44,12 +47,6 @@ namespace SSS.Application.Features.Content.Roadmap.GetAll
             if (request.IsLatest.HasValue)
             {
                 query = query.Where(x => x.IsLatest == request.IsLatest.Value);
-            }
-
-            // Filter by Status if provided
-            if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<RoadmapStatus>(request.Status, out var status))
-            {
-                query = query.Where(x => x.Status == status);
             }
 
             // Order by Id descending
