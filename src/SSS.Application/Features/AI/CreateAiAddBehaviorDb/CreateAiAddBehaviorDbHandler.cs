@@ -26,6 +26,7 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
 
             var module = await db.StudyPlanModules
                 .AsNoTracking()
+                .Include(m => m.RoadmapNode)
                 .Include(m => m.Tasks)
                 .FirstOrDefaultAsync(m => m.Id == moduleId, ct);
 
@@ -39,11 +40,54 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
                 throw new ArgumentException("StudyplanId does not match StudyplanmoduleId.");
             }
 
+            var scopedNodeIds = new List<long> { module.RoadmapNodeId };
+            var cursorNodeId = module.RoadmapNodeId;
+
+            for (var i = 0; i < 2; i++)
+            {
+                var previousNodeId = await db.RoadmapEdges
+                    .AsNoTracking()
+                    .Where(e => e.ToNodeId == cursorNodeId && e.EdgeType == EdgeType.Next)
+                    .OrderByDescending(e => e.OrderNo ?? int.MinValue)
+                    .ThenByDescending(e => e.Id)
+                    .Select(e => (long?)e.FromNodeId)
+                    .FirstOrDefaultAsync(ct);
+
+                if (!previousNodeId.HasValue || scopedNodeIds.Contains(previousNodeId.Value))
+                    break;
+
+                scopedNodeIds.Add(previousNodeId.Value);
+                cursorNodeId = previousNodeId.Value;
+            }
+
+            var nearbyModules = await db.StudyPlanModules
+                .AsNoTracking()
+                .Include(m => m.RoadmapNode)
+                .Include(m => m.Tasks)
+                .Where(m => m.StudyPlanId == module.StudyPlanId && scopedNodeIds.Contains(m.RoadmapNodeId))
+                .ToListAsync(ct);
+
+            nearbyModules = nearbyModules
+                .OrderBy(m =>
+                {
+                    var index = scopedNodeIds.IndexOf(m.RoadmapNodeId);
+                    return index < 0 ? int.MaxValue : index;
+                })
+                .ThenBy(m => m.Id)
+                .Take(3)
+                .ToList();
+
+            if (nearbyModules.Count == 0)
+                nearbyModules = [module];
+
+            var nearbyModuleIds = nearbyModules.Select(m => m.Id).ToHashSet();
+            var nearbyNodeIds = nearbyModules.Select(m => m.RoadmapNodeId).ToHashSet();
+
             var quizAttempts = await db.QuizAttempts
                 .AsNoTracking()
                 .Include(a => a.Quiz)
                 .Include(a => a.Answers)
-                .Where(a => a.UserId == req.UserId && a.Quiz.RoadmapNodeId == module.RoadmapNodeId)
+                .Where(a => a.UserId == req.UserId && nearbyNodeIds.Contains(a.Quiz.RoadmapNodeId))
                 .OrderByDescending(a => a.SubmittedAt ?? a.StartedAt)
                 .Take(20)
                 .ToListAsync(ct);
@@ -53,13 +97,15 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
                 .Include(s => s.SessionTasks)
                     .ThenInclude(st => st.TaskItem)
                 .Where(s => s.UserId == req.UserId &&
-                            (s.StudyPlanModuleId == moduleId ||
-                             s.SessionTasks.Any(st => st.TaskItem.StudyPlanModuleId == moduleId)))
+                            ((s.StudyPlanModuleId.HasValue && nearbyModuleIds.Contains(s.StudyPlanModuleId.Value)) ||
+                             s.SessionTasks.Any(st => nearbyModuleIds.Contains(st.TaskItem.StudyPlanModuleId))))
                 .OrderByDescending(s => s.EndAt ?? s.StartAt)
                 .Take(20)
                 .ToListAsync(ct);
 
-            var completedTaskCount = module.Tasks.Count(t => t.Status == SSS.Domain.Enums.TaskStatus.Completed || t.CompletedAt.HasValue);
+            var completedTaskCount = nearbyModules
+                .SelectMany(m => m.Tasks)
+                .Count(t => t.Status == SSS.Domain.Enums.TaskStatus.Completed || t.CompletedAt.HasValue);
             var completedQuizCount = quizAttempts.Count(a => a.Status != QuizAttemptStatus.InProgress || a.SubmittedAt.HasValue);
 
             if (completedTaskCount == 0 || completedQuizCount == 0)
@@ -72,17 +118,25 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
             }
 
             var moduleDto = mapper.Map<BehaviorModuleDto>(module);
+            var nearbyModuleDtos = mapper.Map<List<BehaviorModuleDto>>(nearbyModules);
             var sessionDtos = mapper.Map<List<BehaviorSessionDto>>(sessions);
             foreach (var sessionDto in sessionDtos)
             {
                 sessionDto.Tasks = sessionDto.Tasks
-                    .Where(t => t.StudyPlanModuleId == moduleId)
+                    .Where(t => nearbyModuleIds.Contains(t.StudyPlanModuleId))
                     .ToList();
             }
             var quizAttemptDtos = mapper.Map<List<BehaviorQuizAttemptDto>>(quizAttempts);
 
             var behaviorContext = new
             {
+                NodeScope = new
+                {
+                    CurrentModuleId = module.Id,
+                    ScopedNodeIds = scopedNodeIds,
+                    NearbyModuleIds = nearbyModuleIds,
+                    NearbyModules = nearbyModuleDtos
+                },
                 Module = moduleDto,
                 Sessions = sessionDtos,
                 QuizAttempts = quizAttemptDtos

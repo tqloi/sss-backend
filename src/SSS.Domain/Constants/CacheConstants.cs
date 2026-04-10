@@ -2,6 +2,8 @@
 {
     public static class CacheConstants
     {
+        public const string AdminDashboardOverviewKey = "admin:dashboard:overview";
+
         // Thời gian cho các dữ liệu thay đổi liên tục
         public const int DefaultExpirationInMinutes = 30;
 

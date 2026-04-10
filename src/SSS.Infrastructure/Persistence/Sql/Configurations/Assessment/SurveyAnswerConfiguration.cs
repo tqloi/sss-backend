@@ -45,7 +45,7 @@ public class SurveyAnswerConfiguration : IEntityTypeConfiguration<SurveyAnswer>
         builder.HasOne(e => e.Question)
             .WithMany(q => q.Answers)
             .HasForeignKey(e => e.QuestionId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.Option)
             .WithMany(o => o.Answers)

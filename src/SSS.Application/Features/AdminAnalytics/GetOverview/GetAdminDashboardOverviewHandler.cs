@@ -12,12 +12,17 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
     {
         public async Task<GetAdminDashboardOverviewResult> Handle(GetAdminDashboardOverviewQuery request, CancellationToken ct)
         {
-            const string cacheKey = "admin:dashboard:overview";
+            var cacheKey = CacheConstants.AdminDashboardOverviewKey;
 
             var cachedOverview = await cacheService.GetAsync<AdminDashboardOverviewDto>(cacheKey);
-            if (cachedOverview is not null)
+            if (cachedOverview is not null && HasValidRevenueInsights(cachedOverview))
             {
                 return new GetAdminDashboardOverviewResult(cachedOverview);
+            }
+
+            if (cachedOverview is not null)
+            {
+                await cacheService.RemoveAsync(cacheKey);
             }
 
             var totalUsers = await dbContext.Users
@@ -87,6 +92,39 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
                 .AsNoTracking()
                 .LongCountAsync(r => r.IsLatest && r.Status == RoadmapStatus.Active, ct);
 
+            var successfulPayments = await dbContext.UserPayments
+                .AsNoTracking()
+                .Where(x => x.Status == PaymentStatus.Success)
+                .Select(x => new
+                {
+                    x.Amount,
+                    x.PaymentDate
+                })
+                .ToListAsync(ct);
+
+            var utcNow = DateTime.UtcNow;
+            var currentYear = utcNow.Year;
+            var currentMonth = utcNow.Month;
+
+            var totalRevenue = successfulPayments.Sum(x => x.Amount);
+
+            var currentMonthRevenue = successfulPayments
+                .Where(x => x.PaymentDate.Year == currentYear && x.PaymentDate.Month == currentMonth)
+                .Sum(x => x.Amount);
+
+            var monthlyRevenueMap = successfulPayments
+                .Where(x => x.PaymentDate.Year == currentYear)
+                .GroupBy(x => x.PaymentDate.Month)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+            var monthlyRevenue = Enumerable.Range(1, 12)
+                .Select(month => new MonthlyRevenueItemDto
+                {
+                    Month = month,
+                    Revenue = monthlyRevenueMap.GetValueOrDefault(month, 0m)
+                })
+                .ToList();
+
             var knownStatusRoadmaps = draftRoadmaps + activeRoadmaps ;
             var unknownRoadmaps = Math.Max(0, totalLatestRoadmaps - knownStatusRoadmaps);
 
@@ -149,6 +187,13 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
                     Unknown = unknownRoadmaps,
                     Total = totalLatestRoadmaps,
                     ActiveRate = CalculateRate(activeRoadmaps, totalLatestRoadmaps)
+                },
+                RevenueInsights = new RevenueInsightsDto
+                {
+                    TotalRevenue = totalRevenue,
+                    CurrentMonthRevenue = currentMonthRevenue,
+                    Year = currentYear,
+                    MonthlyRevenue = monthlyRevenue
                 }
             };
 
@@ -170,6 +215,22 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
             }
 
             return (int)Math.Round((double)part / total * 100, MidpointRounding.AwayFromZero);
+        }
+
+        private static bool HasValidRevenueInsights(AdminDashboardOverviewDto overview)
+        {
+            var monthlyRevenue = overview.RevenueInsights.MonthlyRevenue;
+
+            if (overview.RevenueInsights.Year <= 0 || monthlyRevenue.Count != 12)
+            {
+                return false;
+            }
+
+            return monthlyRevenue
+                .Select(x => x.Month)
+                .Distinct()
+                .OrderBy(x => x)
+                .SequenceEqual(Enumerable.Range(1, 12));
         }
     }
 }

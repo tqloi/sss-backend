@@ -1,17 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.External.Communication.Email;
 using SSS.Application.Abstractions.External.Document.Pdf;
 using SSS.Application.Abstractions.External.Storage.Gcs;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
+using SSS.Domain.Constants;
 using SSS.Domain.Enums;
 
 namespace SSS.Infrastructure.Services
 {
     public class PaymentPostProcessService(
         IAppDbContext db,
+        ICacheService cacheService,
         IPdfService pdfService,
         IGcsStorageService gcsStorageService,
         IMailTemplateBuilder mailTemplateBuilder,
@@ -34,6 +37,15 @@ namespace SSS.Infrastructure.Services
             {
                 logger.LogInformation("[PaymentPostProcessService] Skip post-process because payment is not success. PaymentId={PaymentId}, Status={Status}", paymentId, payment.Status);
                 return;
+            }
+
+            try
+            {
+                await cacheService.RemoveAsync(CacheConstants.AdminDashboardOverviewKey);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[PaymentPostProcessService] Failed to invalidate admin dashboard cache after success payment. PaymentId={PaymentId}", paymentId);
             }
 
             var user = await db.Users
