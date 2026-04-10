@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SSS.Application.Features.Surveys.SurveyQuestions.EditSurveyQuestion
 {
-    public class EditSurveyQuestionHandler(IAppDbContext db) : IRequestHandler<EditSurveyQuestionCommand, EditSurveyQuestionResponse>
+    public class EditSurveyQuestionHandler(IAppDbContext db, ICacheService cacheService) : IRequestHandler<EditSurveyQuestionCommand, EditSurveyQuestionResponse>
     {
         public async Task<EditSurveyQuestionResponse> Handle(EditSurveyQuestionCommand request, CancellationToken cancellationToken)
         {
@@ -20,6 +21,8 @@ namespace SSS.Application.Features.Surveys.SurveyQuestions.EditSurveyQuestion
                     return new EditSurveyQuestionResponse(false, "Question not found.");
                 }
 
+                var oldSurveyId = entity.SurveyId;
+
 
                 entity.SurveyId = request.SurveyId;
                 entity.QuestionKey = request.QuestionKey;
@@ -30,6 +33,13 @@ namespace SSS.Application.Features.Surveys.SurveyQuestions.EditSurveyQuestion
                 entity.ScaleMax = request.ScaleMax;
                 entity.ScaleMin = request.ScaleMin;
                 await db.SaveChangesAsync(cancellationToken);
+
+                await cacheService.RemoveAsync($"survey:questions:{oldSurveyId}");
+                if (oldSurveyId != request.SurveyId)
+                {
+                    await cacheService.RemoveAsync($"survey:questions:{request.SurveyId}");
+                }
+
                 return new EditSurveyQuestionResponse(true, "Question updated successfully.");
             }
             catch (Exception ex)
