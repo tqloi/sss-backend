@@ -8,6 +8,7 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
         public List<RoleDistributionItemDto> RoleDistribution { get; set; } = new();
         public LearningCoverageDto LearningCoverage { get; set; } = new();
         public RoadmapStatusBreakdownDto RoadmapStatusBreakdown { get; set; } = new();
+        public RevenueInsightsDto RevenueInsights { get; set; } = new();
     }
 
     public sealed class AdminDashboardSummaryDto
@@ -49,5 +50,19 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
         public long Unknown { get; set; }
         public long Total { get; set; }
         public int ActiveRate { get; set; }
+    }
+
+    public sealed class RevenueInsightsDto
+    {
+        public decimal TotalRevenue { get; set; }
+        public decimal CurrentMonthRevenue { get; set; }
+        public int Year { get; set; }
+        public List<MonthlyRevenueItemDto> MonthlyRevenue { get; set; } = new();
+    }
+
+    public sealed class MonthlyRevenueItemDto
+    {
+        public int Month { get; set; }
+        public decimal Revenue { get; set; }
     }
 }
