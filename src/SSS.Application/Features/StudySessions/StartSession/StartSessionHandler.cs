@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Exceptions;
 using SSS.Application.Features.StudySessions.Common;
@@ -8,7 +9,7 @@ using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.StudySessions.StartSession
 {
-    public class StartSessionHandler(IAppDbContext context)
+    public class StartSessionHandler(IAppDbContext context, ICacheService cache)
         : IRequestHandler<StartSessionCommand, StartSessionResult>
     {
         public async Task<StartSessionResult> Handle(StartSessionCommand req, CancellationToken ct)
@@ -60,6 +61,32 @@ namespace SSS.Application.Features.StudySessions.StartSession
 
             context.StudySessions.Add(session);
             await context.SaveChangesAsync(ct);
+
+            // WRITE TO REDIS
+            var cacheDto = new ActiveSessionCacheDto
+            {
+                Id = session.Id,
+                UserId = session.UserId,
+                Status = session.Status,
+                StartAt = session.StartAt,
+                PausedAt = session.PausedAt,
+                PauseCount = session.PauseCount,
+                PauseSeconds = session.PauseSeconds,
+                StudyPlanId = session.StudyPlanId,
+                StudyPlanModuleId = session.StudyPlanModuleId,
+                PlannedDurationSeconds = session.PlannedDurationSeconds,
+                Timezone = session.Timezone,
+                Tasks = sessionTasks.Select(t => new ActiveSessionTaskCacheDto
+                {
+                    Id = t.Id,
+                    TaskId = t.TaskId,
+                    Status = t.Status,
+                    StartTimeUtc = t.StartTimeUtc,
+                    EndTimeUtc = t.EndTimeUtc
+                }).ToList()
+            };
+
+            await cache.SetAsync($"StudySession:Active:{req.UserId}", cacheDto, TimeSpan.FromHours(12));
 
             // Return response details
             SessionNodeDto? nodeDto = null;

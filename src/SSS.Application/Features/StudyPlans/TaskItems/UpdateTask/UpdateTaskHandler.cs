@@ -23,10 +23,10 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.UpdateTask
                 throw new NotFoundException($"Task with Id {req.TaskId} not found");
             }
 
-            if (req.Title != null)
+            if (!taskItem.IsGenerateByAI && req.Title != null)
                 taskItem.Title = req.Title;
 
-            if (req.Description != null)
+            if (!taskItem.IsGenerateByAI && req.Description != null)
                 taskItem.Description = req.Description;
 
             if (req.Status.HasValue)

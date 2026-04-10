@@ -32,6 +32,7 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.CreateTaskList
             var taskItems = req.Tasks.Select(t => new TaskItem
             {
                 StudyPlanModuleId = t.StudyPlanModuleId,
+                IsGenerateByAI = true,
                 Title = t.Title,
                 Description = t.Description,
                 Status = t.Status,

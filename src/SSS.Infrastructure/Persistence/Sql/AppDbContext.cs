@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Entities.Content;
@@ -130,6 +131,9 @@ namespace SSS.Infrastructure.Persistence.Sql
 
         public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default)
             => await Database.BeginTransactionAsync(ct);
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken ct = default)
+            => await Database.BeginTransactionAsync(isolationLevel, ct);
 
         public async Task CommitTransactionAsync(CancellationToken ct = default)
             => await Database.CommitTransactionAsync(ct);

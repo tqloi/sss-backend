@@ -25,6 +25,7 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.CreateTask
             var taskItem = new TaskItem
             {
                 StudyPlanModuleId = req.StudyPlanModuleId,
+                IsGenerateByAI = false,
                 Title = req.Title,
                 Description = req.Description,
                 Status = req.Status,

@@ -83,7 +83,10 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 You are an AI system that analyzes user learning behavior for vector retrieval.
 
 Input may include:
-- NodeScope (current node + recent linked nodes)
+- NodeScope:
+  - CurrentModuleId: target module for final judgment priority
+  - ScopedNodeIds: ordered node scope (current node first, then up to 2 previous nodes by incoming Next edges)
+  - NearbyModuleIds / NearbyModules: module metadata for scoped nodes
 - Module data
 - StudySession and SessionTask data
 - QuizAttempt data
@@ -106,11 +109,14 @@ Deadline adherence rules (mandatory):
 
 Quiz rules:
 - Use quiz attempts to describe completion consistency, score level/trend, and struggle signals.
+- Prioritize attempts linked to CurrentModuleId when concluding final discipline/performance.
+- Use previous scoped nodes only as short historical trend context.
 - If quiz evidence is sparse, explicitly state evidence is limited.
 
 Engagement rules:
 - Infer engagement only from observed frequency, recency, and distribution across event types/categories/content modes.
 - Treat Payload fields (e.g., contentId, contentTitle, contentType, nodeId, studyPlanId) as contextual interaction evidence.
+- If NodeScope is present, avoid over-generalizing from previous nodes; keep verdict centered on CurrentModuleId behavior.
 - If engagement evidence is sparse, explicitly state evidence is limited.
 
 Output rules:
@@ -650,6 +656,23 @@ LEVEL ALIGNMENT RULES (MANDATORY)
 - Calibrate task depth by combining: user level + target node difficulty.
 - Never output a plan that is purely beginner review when user level is Intermediate or above.
 
+LEVEL CONTRAST DISTRIBUTION (MANDATORY):
+- Beginner task mix:
+  - 70% fundamentals/guided recall
+  - 30% understanding/application
+  - 0% analysis/problem-solving
+- Intermediate task mix:
+  - 10% fundamentals/review
+  - 70% understanding/application
+  - 20% analysis/problem-solving
+- Advanced task mix:
+  - 0% fundamentals intro tasks
+  - 30% understanding/application
+  - 70% analysis/problem-solving
+- Convert percentages to integer task counts based on the generated task count.
+- After rounding, adjust counts so total equals generated task count.
+- Ensure each task clearly matches one of the three cognitive bands above.
+
 If user level is Beginner:
 - Focus on fundamentals, guided practice, and basic implementation.
 - Keep terminology simple and step-by-step.
@@ -657,6 +680,7 @@ If user level is Beginner:
 - Include at most 1 task that involves refactor/debug/optimization.
 - Keep cognitive load gradual: concept introduction -> guided practice -> small integration task.
 - Each task should have a clear, concrete outcome (e.g., write X snippet, complete Y mini exercise).
+- Typical duration per task: 900-2700 seconds unless behavior adaptation changes it.
 
 If user level is Intermediate:
 - Limit pure syntax/fundamental review to at most 1 task.
@@ -665,6 +689,7 @@ If user level is Intermediate:
 - Require at least 1 implementation task that combines multiple concepts from the same node.
 - Emphasize decision quality: code structure, readability, maintainability, and bug prevention.
 - Avoid beginner-style wording (e.g., "learn what X is", "introduction to").
+- Typical duration per task: 1800-5400 seconds unless behavior adaptation changes it.
 
 If user level is Advanced:
 - Stay strictly within TARGET NODE scope, but increase cognitive depth and rigor.
@@ -674,6 +699,7 @@ If user level is Advanced:
 - Limit beginner-style review to at most 1 brief refresher task.
 - Every advanced task should include a concrete deliverable such as decision notes, validation checklist, or refactor rationale.
 - Avoid introductory explanations.
+- Typical duration per task: 3600-9000 seconds unless behavior adaptation changes it.
 
 If level evidence is missing/ambiguous:
 - Use neutral intermediate-safe depth and explicitly avoid overly basic repetition.
@@ -706,7 +732,7 @@ OUTPUT SCHEMA (STRICT)
 TASK DESIGN RULES
 ======================
 
-- Generate 4-6 tasks ONLY for the given roadmap node
+- Generate 4-8 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
 - estimatedDurationSeconds MUST be a NUMBER (integer)
 - Range: More than 900 seconds (15 minutes)
@@ -730,11 +756,15 @@ BEHAVIOR-ADAPTIVE RULES
 ======================
 
 When behavior context indicates the learner is often late, inconsistent, or skips tasks:
-- Increase estimatedDurationSeconds per task by around 15-30% compared to normal expectation
+- Increase estimatedDurationSeconds per task by exactly 30% compared to normal expectation
 - Add more spacing between tasks (prefer gaps of at least 1 day)
 
-When behavior context indicates strong on-time and consistent completion:
-- You may generate 3-5 tasks
+When behavior context indicates the learner consistently completes tasks faster than expected:
+- Decrease estimatedDurationSeconds per task by exactly 20% compared to normal expectation
+- Keep schedule realistic and avoid over-compressing too many tasks into one day
+
+When behavior context indicates strong on-time and consistent completion without clear faster-than-expected signals:
+- You may generate 3-6 tasks
 - Keep estimatedDurationSeconds in normal range for node difficulty
 - Use moderate spacing (can be denser than late-profile scheduling)
 
@@ -783,6 +813,7 @@ Before finalizing, self-check:
 - Are later tasks deeper than earlier tasks?
 - For Beginner: are at least 3 tasks truly foundational and step-by-step?
 - For Intermediate: is there no more than 1 pure review task and at least 1 quality-validation task?
+- Does the final task set follow the required level contrast distribution percentages after integer allocation?
 """;
 
 
@@ -819,14 +850,18 @@ Scope rules (mandatory):
 - Use "Roadmap" only as lightweight background metadata (title/description).
 - If a topic is not clearly inferable from the target node, exclude it.
 
-Difficulty progression is mandatory:
-- Questions must become harder from first to last.
-- orderNo must represent ascending difficulty (lowest difficulty first).
-- The first questions should test fundamentals/recall.
-- Middle questions should test understanding/application.
-- Final questions should test analysis/problem-solving in realistic scenarios.
-- Do not mix a hard question before an easier one.
-- scoreWeight should be non-decreasing with orderNo.
+Difficulty alignment is mandatory:
+- All questions must stay consistent with the input target level.
+- Do NOT enforce increasing difficulty from first to last.
+- Do NOT create an easy-to-hard progression.
+- Keep cognitive complexity stable across questions for the selected level.
+- Apply level distribution strictly:
+  - Beginner: 70% fundamentals/recall, 20% understanding/application, 10% analysis/problem-solving in realistic scenarios.
+  - Intermediate: 70% understanding/application, 20% analysis/problem-solving in realistic scenarios, 10% fundamentals/recall.
+  - Advanced: 70% analysis/problem-solving in realistic scenarios, 30% understanding/application.
+- Convert the percentage mix to question counts based on questionCount.
+- Use nearest-integer allocation and ensure total allocated questions equals questionCount.
+- scoreWeight should stay appropriate for the selected level and remain non-decreasing with orderNo.
 
 Each questionKey must be unique within the response and must look random, not sequential.
 Use uppercase letters, digits, or underscores only.
@@ -875,7 +910,14 @@ Rules for questionKey:
 
 Rules for difficulty:
 - orderNo must start from 1 and increase continuously.
-- difficulty must increase with orderNo.
+- do NOT increase difficulty with orderNo.
+- all questions must be aligned to the same target level input.
+- apply this distribution strictly:
+  - Beginner => 70% fundamentals/recall, 20% understanding/application, 10% analysis/problem-solving in realistic scenarios
+  - Intermediate => 70% understanding/application, 20% analysis/problem-solving in realistic scenarios, 10% fundamentals/recall
+  - Advanced => 70% analysis/problem-solving in realistic scenarios, 30% understanding/application
+- convert percentages into integer question counts based on questionCount.
+- after rounding, adjust counts so total always equals questionCount.
 - keep scoreWeight non-decreasing from first to last question.
 - overall complexity must align with the target level.
 
