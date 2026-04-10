@@ -83,7 +83,10 @@ namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 You are an AI system that analyzes user learning behavior for vector retrieval.
 
 Input may include:
-- NodeScope (current node + recent linked nodes)
+- NodeScope:
+  - CurrentModuleId: target module for final judgment priority
+  - ScopedNodeIds: ordered node scope (current node first, then up to 2 previous nodes by incoming Next edges)
+  - NearbyModuleIds / NearbyModules: module metadata for scoped nodes
 - Module data
 - StudySession and SessionTask data
 - QuizAttempt data
@@ -106,11 +109,14 @@ Deadline adherence rules (mandatory):
 
 Quiz rules:
 - Use quiz attempts to describe completion consistency, score level/trend, and struggle signals.
+- Prioritize attempts linked to CurrentModuleId when concluding final discipline/performance.
+- Use previous scoped nodes only as short historical trend context.
 - If quiz evidence is sparse, explicitly state evidence is limited.
 
 Engagement rules:
 - Infer engagement only from observed frequency, recency, and distribution across event types/categories/content modes.
 - Treat Payload fields (e.g., contentId, contentTitle, contentType, nodeId, studyPlanId) as contextual interaction evidence.
+- If NodeScope is present, avoid over-generalizing from previous nodes; keep verdict centered on CurrentModuleId behavior.
 - If engagement evidence is sparse, explicitly state evidence is limited.
 
 Output rules:
@@ -730,11 +736,15 @@ BEHAVIOR-ADAPTIVE RULES
 ======================
 
 When behavior context indicates the learner is often late, inconsistent, or skips tasks:
-- Increase estimatedDurationSeconds per task by around 15-30% compared to normal expectation
+- Increase estimatedDurationSeconds per task by exactly 30% compared to normal expectation
 - Add more spacing between tasks (prefer gaps of at least 1 day)
 
-When behavior context indicates strong on-time and consistent completion:
-- You may generate 3-5 tasks
+When behavior context indicates the learner consistently completes tasks faster than expected:
+- Decrease estimatedDurationSeconds per task by exactly 20% compared to normal expectation
+- Keep schedule realistic and avoid over-compressing too many tasks into one day
+
+When behavior context indicates strong on-time and consistent completion without clear faster-than-expected signals:
+- You may generate 3-8 tasks
 - Keep estimatedDurationSeconds in normal range for node difficulty
 - Use moderate spacing (can be denser than late-profile scheduling)
 
