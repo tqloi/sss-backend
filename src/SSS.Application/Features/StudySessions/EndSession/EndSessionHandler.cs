@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SSS.Application.Abstractions.Caching;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Application.Common.Exceptions;
@@ -9,7 +10,7 @@ using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.StudySessions.EndSession
 {
-    public class EndSessionHandler(IAppDbContext context, IUserGamificationRealtimeService realtimeService)
+    public class EndSessionHandler(IAppDbContext context, IUserGamificationRealtimeService realtimeService, ICacheService cache)
         : IRequestHandler<EndSessionCommand, EndSessionResult>
     {
         public async Task<EndSessionResult> Handle(EndSessionCommand req, CancellationToken ct)
@@ -21,6 +22,16 @@ namespace SSS.Application.Features.StudySessions.EndSession
 
             if (session.Status == SessionStatus.Completed || session.Status == SessionStatus.Cancelled)
                 throw new ConflictException("Session has already ended.");
+
+            // Sync with Redis fast-state if available
+            var cacheKey = $"StudySession:Active:{req.UserId}";
+            var cachedSession = await cache.GetAsync<ActiveSessionCacheDto>(cacheKey);
+            if (cachedSession != null && cachedSession.Id == session.Id)
+            {
+                session.PauseCount = cachedSession.PauseCount;
+                session.PauseSeconds = cachedSession.PauseSeconds;
+                session.PausedAt = cachedSession.PausedAt;
+            }
 
             // Update session
             session.Status = SessionStatus.Completed;
@@ -95,8 +106,6 @@ namespace SSS.Application.Features.StudySessions.EndSession
             var gamification = await context.UserGamifications
                 .FirstOrDefaultAsync(g => g.UserId == req.UserId, ct);
 
-            var today = DateTime.UtcNow.Date;
-
             if (gamification == null)
             {
                 gamification = new Domain.Entities.Tracking.UserGamification
@@ -114,6 +123,9 @@ namespace SSS.Application.Features.StudySessions.EndSession
             }
 
             await context.SaveChangesAsync(ct);
+
+            // Clear cache
+            await cache.RemoveAsync(cacheKey);
 
             var commonDto = new UserGamificationDto
             {
