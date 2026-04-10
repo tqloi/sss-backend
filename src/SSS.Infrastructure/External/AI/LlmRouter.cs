@@ -29,7 +29,7 @@ namespace SSS.Infrastructure.External.AI
         {
             return task switch
             {
-                LlmTask.SurveyAnalysis => _providers[LlmProvider.Gemini],
+                LlmTask.SurveyAnalysis => _providers[LlmProvider.Gpt],
                 LlmTask.LearningProfile => _providers[LlmProvider.Gemini],
                 LlmTask.SimpleChat => _providers[LlmProvider.Gemini],
 
@@ -40,6 +40,7 @@ namespace SSS.Infrastructure.External.AI
                 LlmTask.GenerateResultsSummary => _providers[LlmProvider.Gpt],  
                 LlmTask.GenerateBehavioralAnalysis => _providers[LlmProvider.Gpt],
                 LlmTask.GenerateSurveyAnalysis => _providers[LlmProvider.Gpt],
+                LlmTask.VerifyMessageCreateRoadmap => _providers[LlmProvider.Gpt],
 
 
                 _ => _providers[LlmProvider.Gemini] // default
