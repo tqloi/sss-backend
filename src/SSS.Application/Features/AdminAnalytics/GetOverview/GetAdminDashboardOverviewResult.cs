@@ -46,7 +46,6 @@ namespace SSS.Application.Features.AdminAnalytics.GetOverview
     {
         public long Active { get; set; }
         public long Draft { get; set; }
-        public long Archived { get; set; }
         public long Unknown { get; set; }
         public long Total { get; set; }
         public int ActiveRate { get; set; }

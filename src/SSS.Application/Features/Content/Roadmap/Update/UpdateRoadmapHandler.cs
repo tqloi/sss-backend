@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Features.Content.Roadmap.Common;
+using SSS.Domain.Enums;
 
 namespace SSS.Application.Features.Content.Roadmap.Update
 {
@@ -36,6 +37,27 @@ namespace SSS.Application.Features.Content.Roadmap.Update
 
             if (request.Status.HasValue)
             {
+                if (entity.Status == RoadmapStatus.Active
+                    && request.Status.Value == RoadmapStatus.Disabled)
+                {
+                    var hasActiveLearners = await dbContext.StudyPlanModules
+                        .AsNoTracking()
+                        .AnyAsync(
+                            m => m.StudyPlan.RoadmapId == entity.Id
+                                 && m.Status == ModuleStatus.Active,
+                            cancellationToken);
+
+                    if (hasActiveLearners)
+                    {
+                        return new UpdateRoadmapResult
+                        {
+                            Success = false,
+                            Message = "Cannot disable roadmap because users are currently studying it.",
+                            Data = null
+                        };
+                    }
+                }
+
                 entity.Status = request.Status.Value;
             }
 

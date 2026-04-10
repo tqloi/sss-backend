@@ -23,7 +23,14 @@ namespace SSS.Web.Endpoints.Content.Roadmap.Update
 
             if (!result.Success)
             {
-                await SendNotFoundAsync(ct);
+                if (string.Equals(result.Message, "Roadmap not found.", StringComparison.OrdinalIgnoreCase))
+                {
+                    await SendNotFoundAsync(ct);
+                    return;
+                }
+
+                AddError(result.Message ?? "Roadmap update failed.");
+                await SendErrorsAsync(statusCode: 400, cancellation: ct);
                 return;
             }
 

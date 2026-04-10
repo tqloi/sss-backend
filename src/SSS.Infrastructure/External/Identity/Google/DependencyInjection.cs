@@ -27,6 +27,7 @@ namespace SSS.Infrastructure.External.Identity.Google
 
                 // Map the picture to a claim
                 options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
+
                 options.Events.OnRemoteFailure = context =>
                 {
                     context.Response.Redirect("/api/auth/google-callback?error=access_denied");
