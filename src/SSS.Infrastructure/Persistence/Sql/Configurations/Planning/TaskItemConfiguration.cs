@@ -20,6 +20,10 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .HasColumnType("bigint")
             .IsRequired();
 
+        builder.Property(e => e.IsGenerateByAI)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.Title)
             .HasMaxLength(400)
             .IsRequired();
