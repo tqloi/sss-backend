@@ -656,6 +656,23 @@ LEVEL ALIGNMENT RULES (MANDATORY)
 - Calibrate task depth by combining: user level + target node difficulty.
 - Never output a plan that is purely beginner review when user level is Intermediate or above.
 
+LEVEL CONTRAST DISTRIBUTION (MANDATORY):
+- Beginner task mix:
+  - 70% fundamentals/guided recall
+  - 30% understanding/application
+  - 0% analysis/problem-solving
+- Intermediate task mix:
+  - 10% fundamentals/review
+  - 70% understanding/application
+  - 20% analysis/problem-solving
+- Advanced task mix:
+  - 0% fundamentals intro tasks
+  - 30% understanding/application
+  - 70% analysis/problem-solving
+- Convert percentages to integer task counts based on the generated task count.
+- After rounding, adjust counts so total equals generated task count.
+- Ensure each task clearly matches one of the three cognitive bands above.
+
 If user level is Beginner:
 - Focus on fundamentals, guided practice, and basic implementation.
 - Keep terminology simple and step-by-step.
@@ -663,6 +680,7 @@ If user level is Beginner:
 - Include at most 1 task that involves refactor/debug/optimization.
 - Keep cognitive load gradual: concept introduction -> guided practice -> small integration task.
 - Each task should have a clear, concrete outcome (e.g., write X snippet, complete Y mini exercise).
+- Typical duration per task: 900-2700 seconds unless behavior adaptation changes it.
 
 If user level is Intermediate:
 - Limit pure syntax/fundamental review to at most 1 task.
@@ -671,6 +689,7 @@ If user level is Intermediate:
 - Require at least 1 implementation task that combines multiple concepts from the same node.
 - Emphasize decision quality: code structure, readability, maintainability, and bug prevention.
 - Avoid beginner-style wording (e.g., "learn what X is", "introduction to").
+- Typical duration per task: 1800-5400 seconds unless behavior adaptation changes it.
 
 If user level is Advanced:
 - Stay strictly within TARGET NODE scope, but increase cognitive depth and rigor.
@@ -680,6 +699,7 @@ If user level is Advanced:
 - Limit beginner-style review to at most 1 brief refresher task.
 - Every advanced task should include a concrete deliverable such as decision notes, validation checklist, or refactor rationale.
 - Avoid introductory explanations.
+- Typical duration per task: 3600-9000 seconds unless behavior adaptation changes it.
 
 If level evidence is missing/ambiguous:
 - Use neutral intermediate-safe depth and explicitly avoid overly basic repetition.
@@ -712,7 +732,7 @@ OUTPUT SCHEMA (STRICT)
 TASK DESIGN RULES
 ======================
 
-- Generate 4-6 tasks ONLY for the given roadmap node
+- Generate 4-8 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
 - estimatedDurationSeconds MUST be a NUMBER (integer)
 - Range: More than 900 seconds (15 minutes)
@@ -744,7 +764,7 @@ When behavior context indicates the learner consistently completes tasks faster 
 - Keep schedule realistic and avoid over-compressing too many tasks into one day
 
 When behavior context indicates strong on-time and consistent completion without clear faster-than-expected signals:
-- You may generate 3-8 tasks
+- You may generate 3-6 tasks
 - Keep estimatedDurationSeconds in normal range for node difficulty
 - Use moderate spacing (can be denser than late-profile scheduling)
 
@@ -793,6 +813,7 @@ Before finalizing, self-check:
 - Are later tasks deeper than earlier tasks?
 - For Beginner: are at least 3 tasks truly foundational and step-by-step?
 - For Intermediate: is there no more than 1 pure review task and at least 1 quality-validation task?
+- Does the final task set follow the required level contrast distribution percentages after integer allocation?
 """;
 
 
