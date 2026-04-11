@@ -31,7 +31,7 @@ namespace SSS.Infrastructure.External.AI
             {
                 LlmTask.SurveyAnalysis => _providers[LlmProvider.Gpt],
                 LlmTask.LearningProfile => _providers[LlmProvider.Gemini],
-                LlmTask.SimpleChat => _providers[LlmProvider.Gemini],
+                LlmTask.SimpleChat => _providers[LlmProvider.Gpt],
 
 
                 LlmTask.GenerateRoadmap => _providers[LlmProvider.Gpt],

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
+using SurveyTriggerTypeCodes = SSS.Domain.Constants.SurveyTriggerTypes;
 
 namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.GetPendingTriggerSurvey
 {
@@ -41,6 +42,18 @@ namespace SSS.Application.Features.Surveys.SurveyTriggerMappings.GetPendingTrigg
                 .ToListAsync(cancellationToken);
 
             var completedCount = completedResponses.Count;
+
+            // ON_REGISTER can only be taken once.
+            if (request.TriggerType == SurveyTriggerTypeCodes.OnRegister && completedCount > 0)
+            {
+                return new GetPendingTriggerSurveyResult
+                {
+                    HasPendingSurvey = false,
+                    TriggerType = request.TriggerType,
+                    CompletedAttempts = completedCount,
+                    BlockedReason = "AlreadyCompletedOnRegister"
+                };
+            }
 
             // 2a. Check MaxAttempts — not eligible if exhausted
             if (mapping.MaxAttempts.HasValue && completedCount >= mapping.MaxAttempts.Value)

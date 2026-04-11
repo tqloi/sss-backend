@@ -20,8 +20,8 @@ namespace SSS.Application.Features.UserGamifications.RecordDailyLogin
 
             UserGamification? gamification = await context.UserGamifications
                 .FromSqlInterpolated($@"
-                    SELECT * FROM UserGamifications WITH (UPDLOCK, HOLDLOCK)
-                    WHERE UserId = {req.UserId}")
+                    SELECT * FROM Tr_UserGamification 
+                    WHERE UserId = {req.UserId} FOR UPDATE")
                 .SingleOrDefaultAsync(ct);
 
             bool streakUpdatedToday = false;
@@ -52,8 +52,8 @@ namespace SSS.Application.Features.UserGamifications.RecordDailyLogin
                     // Request đồng thời đã tạo record trước đó
                     gamification = await context.UserGamifications
                         .FromSqlInterpolated($@"
-                            SELECT * FROM UserGamifications WITH (UPDLOCK, HOLDLOCK)
-                            WHERE UserId = {req.UserId}")
+                            SELECT * FROM Tr_UserGamification 
+                            WHERE UserId = {req.UserId} FOR UPDATE")
                         .SingleAsync(ct);
                 }
             }
@@ -123,7 +123,17 @@ namespace SSS.Application.Features.UserGamifications.RecordDailyLogin
             if (ex.InnerException == null) return false;
 
             var innerType = ex.InnerException.GetType();
-            if (innerType.Name == "SqlException")
+            
+            if (innerType.Name == "MySqlException")
+            {
+                var numberProperty = innerType.GetProperty("Number");
+                if (numberProperty != null)
+                {
+                    var number = (int?)numberProperty.GetValue(ex.InnerException);
+                    return number == 1062;
+                }
+            }
+            else if (innerType.Name == "SqlException")
             {
                 var numberProperty = innerType.GetProperty("Number");
                 if (numberProperty != null)
