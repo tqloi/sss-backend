@@ -751,6 +751,23 @@ TASK DESIGN RULES
 - Avoid near-duplicate tasks with only wording changes
 
 ======================
+TASK OUTPUT & DIFFICULTY RULES (MANDATORY)
+======================
+
+- For each task, description MUST be a multi-line string with EXACTLY 3 non-empty lines in this exact order:
+  Requirement: <clear action to perform>
+  Expected Output: <specific deliverable/evidence>
+  Difficulty: <Easy|Medium|Hard>
+- Use real newline separators between lines. Do NOT collapse into one line.
+- Do NOT add extra lines before or after the 3 required lines.
+- Requirement must be concrete, actionable, and scoped to the TARGET ROADMAP NODE only.
+- Expected Output must be concrete and verifiable (for example: file/class/function implemented, test result, API response proof, checklist, decision note).
+- Difficulty must be derived from actual task complexity/scope/cognitive load, not only from user level label.
+- Allowed difficulty values are exactly: Easy, Medium, Hard.
+- description MUST NOT be null and MUST include all 3 labels exactly as written: Requirement, Expected Output, Difficulty.
+- Keep each line concise but specific enough for completion verification.
+
+======================
 BEHAVIOR-ADAPTIVE RULES
 ======================
 
@@ -813,6 +830,9 @@ Before finalizing, self-check:
 - For Beginner: are at least 3 tasks truly foundational and step-by-step?
 - For Intermediate: is there no more than 1 pure review task and at least 1 quality-validation task?
 - Does the final task set follow the required level contrast distribution percentages after integer allocation?
+- Does every task description have exactly 3 lines with labels: Requirement / Expected Output / Difficulty?
+- Is Expected Output concrete and verifiable for completion?
+- Is task difficulty (Easy|Medium|Hard) assigned from actual task complexity?
 """;
 
 
