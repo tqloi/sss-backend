@@ -56,7 +56,7 @@ namespace SSS.Application.Features.StudySessions.GetSessionHistory
                     DurationSeconds = s.ActualDurationSeconds ?? 0,
                     TasksCompleted = s.TasksCompletedCount ?? 0,
                     TotalTasks = s.TotalTasks ?? 0,
-                    XpEarned = ((s.ActualDurationSeconds ?? 0) / 60) * 10 + (s.TasksCompletedCount ?? 0) * 25,
+                    XpEarned = s.XpEarned,
                     Rating = s.SelfRating,
                     Status = s.Status.ToString()
                 })
