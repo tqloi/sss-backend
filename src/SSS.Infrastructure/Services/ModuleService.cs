@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SSS.Application.Abstractions.Background;
@@ -74,6 +74,12 @@ namespace SSS.Infrastructure.Services
 
             // Cập nhật trạng thái module và mở khóa module tiếp theo nếu có
             module.Status = ModuleStatus.Completed;
+
+            // Đánh dấu tất cả task chưa completed thành Skipped
+            foreach (var task in module.Tasks.Where(t => t.Status != Domain.Enums.TaskStatus.Completed))
+            {
+                task.Status = Domain.Enums.TaskStatus.Skipped;
+            }
 
             var modules = await _context.StudyPlanModules
                 .Where(m => m.StudyPlanId == module.StudyPlanId)
