@@ -723,7 +723,8 @@ OUTPUT SCHEMA (STRICT)
     "description": string | null,
     "status": "Planned",
     "estimatedDurationSeconds": number,
-    "scheduledDate": "YYYY-MM-DDT01:00:00Z"
+    "scheduledDate": "YYYY-MM-DDT01:00:00Z",
+    "expectedOutput": string
   }
 ]
 
@@ -754,17 +755,24 @@ TASK DESIGN RULES
 TASK OUTPUT & DIFFICULTY RULES (MANDATORY)
 ======================
 
-- For each task, description MUST be a multi-line string with EXACTLY 3 non-empty lines in this exact order:
-  Requirement: <clear action to perform>
-  Expected Output: <specific deliverable/evidence>
-  Difficulty: <Easy|Medium|Hard>
-- Use real newline separators between lines. Do NOT collapse into one line.
-- Do NOT add extra lines before or after the 3 required lines.
+- For each task:
+  - description MUST be a detailed task explanation (2-4 sentences) covering objective, scope, and key actions.
+  - description is for "what to do" only, NOT for completion evidence.
+  - expectedOutput MUST be a single clear output requirement sentence (what artifact/result must be submitted).
+  - expectedOutput must be plain text only, no labels, no bullet points, no line breaks.
+  - expectedOutput MUST be longer and more specific, with at least 25 words.
+  - expectedOutput MUST follow this exact one-sentence format using semicolons:
+    Deliver a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints>.
+  - Fill each placeholder with concrete node-scoped details:
+    <artifact> = exact deliverable (code file/class/function/API/test/report/checklist)
+    <scope> = required behavior and boundaries for the target node task
+    <edge cases> = at least 2 realistic failure/invalid scenarios
+    <tests/evidence> = verifiable proof (test names/results, sample request/response, or execution output)
+    <quality constraints> = maintainability/readability/error-handling or performance constraints
 - Requirement must be concrete, actionable, and scoped to the TARGET ROADMAP NODE only.
-- Expected Output must be concrete and verifiable (for example: file/class/function implemented, test result, API response proof, checklist, decision note).
-- Difficulty must be derived from actual task complexity/scope/cognitive load, not only from user level label.
-- Allowed difficulty values are exactly: Easy, Medium, Hard.
-- description MUST NOT be null and MUST include all 3 labels exactly as written: Requirement, Expected Output, Difficulty.
+- expectedOutput must be concrete and verifiable (for example: file/class/function implemented, test result, API response proof, checklist, decision note).
+- description MUST NOT be null and MUST NOT contain output labels like: Deliverable, Evidence, Completion Criteria.
+- expectedOutput MUST NOT be null.
 - Keep each line concise but specific enough for completion verification.
 
 ======================
@@ -830,9 +838,10 @@ Before finalizing, self-check:
 - For Beginner: are at least 3 tasks truly foundational and step-by-step?
 - For Intermediate: is there no more than 1 pure review task and at least 1 quality-validation task?
 - Does the final task set follow the required level contrast distribution percentages after integer allocation?
-- Does every task description have exactly 3 lines with labels: Requirement / Expected Output / Difficulty?
-- Is Expected Output concrete and verifiable for completion?
-- Is task difficulty (Easy|Medium|Hard) assigned from actual task complexity?
+- Is description a detailed explanation of the task objective/scope (without output criteria)?
+- Is every expectedOutput a single clear output requirement sentence (no labels, no line breaks)?
+- Does every expectedOutput follow this exact structure: Deliver a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints>?
+- Is expectedOutput concrete and verifiable for completion?
 """;
 
 

@@ -16,10 +16,12 @@ namespace SSS.Web.Endpoints.StudyPlans.TaskItems.Common
             CreateMap<UpdateTaskRequest, UpdateTaskCommand>();
 
             // Entity to DTO
-            CreateMap<TaskItem, TaskItemDtos>();
+            CreateMap<TaskItem, TaskItemDtos>()
+                .ForMember(dest => dest.ExpectedOutput, opt => opt.MapFrom(src => src.ExpectOutput));
 
             // DTO to Entity
             CreateMap<TaskItemDtos, TaskItem>()
+                .ForMember(dest => dest.ExpectOutput, opt => opt.MapFrom(src => src.ExpectedOutput))
                 .ForMember(dest => dest.StudyPlanModule, opt => opt.Ignore())
                 .ForMember(dest => dest.SessionTasks, opt => opt.Ignore());
         }
