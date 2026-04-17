@@ -13,6 +13,7 @@ public class TaskItem
     public int EstimatedDurationSeconds { get; set; }
     public DateTime ScheduledDate { get; set; }
     public DateTime? CompletedAt { get; set; }
+    public string? ExpectOutput{ get; set; }
 
     // Navigation
     public virtual StudyPlanModule StudyPlanModule { get; set; } = null!;

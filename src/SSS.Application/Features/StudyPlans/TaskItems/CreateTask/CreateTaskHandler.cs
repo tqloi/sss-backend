@@ -28,6 +28,7 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.CreateTask
                 IsGenerateByAI = false,
                 Title = req.Title,
                 Description = req.Description,
+                ExpectOutput = req.ExpectedOutput,
                 Status = req.Status,
                 EstimatedDurationSeconds = req.EstimatedDurationSeconds,
                 ScheduledDate = req.ScheduledDate
