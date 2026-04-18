@@ -62,6 +62,10 @@ public class StudySessionConfiguration : IEntityTypeConfiguration<StudySession>
         builder.Property(e => e.SelfRating)
             .HasColumnType("int");
 
+        builder.Property(e => e.XpEarned)
+            .HasColumnType("int")
+            .HasDefaultValue(0);
+
         builder.Property(e => e.LocalTimeBlock)
             .HasMaxLength(20);
 
