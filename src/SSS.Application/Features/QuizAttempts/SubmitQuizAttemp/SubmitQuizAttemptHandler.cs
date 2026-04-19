@@ -1,6 +1,8 @@
 using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
 using SSS.Application.Features.QuizAttempts.Common;
@@ -10,7 +12,12 @@ using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 {
-    public class SubmitQuizAttemptHandler(IAppDbContext db, IMapper mapper, IModuleService moduleService)
+    public class SubmitQuizAttemptHandler(
+        IAppDbContext db,
+        IMapper mapper,
+        IModuleJobDispatcher moduleJobDispatcher,
+        INotificationService notificationService,
+        ILogger<SubmitQuizAttemptHandler> logger)
         : IRequestHandler<SubmitQuizAttemptCommand, SubmitQuizAttemptResult>
     {
         public async Task<SubmitQuizAttemptResult> Handle(SubmitQuizAttemptCommand req, CancellationToken ct)
@@ -21,23 +28,23 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                 .Distinct()
                 .ToList();
 
-            var quizAttempt = await db.QuizAttempts
-                .FirstOrDefaultAsync(qa => qa.Id == dto.Id, ct);
+            var attemptInfo = await db.QuizAttempts
+                .Where(qa => qa.Id == dto.Id)
+                .Select(qa => new
+                {
+                    QuizAttempt = qa,
+                    qa.UserId,
+                    PassingScore = qa.Quiz.PassingScore,
+                    RoadmapNodeId = qa.Quiz.RoadmapNodeId
+                })
+                .FirstOrDefaultAsync(ct);
 
-            if (quizAttempt is null)
+            if (attemptInfo is null)
             {
                 throw new KeyNotFoundException($"Quiz attempt with id {dto.Id} not found.");
             }
 
-            var quiz = await db.Quizzes
-                .AsNoTracking()
-                .Select(q => new { q.Id, q.PassingScore, q.RoadmapNodeId })
-                .FirstOrDefaultAsync(q => q.Id == quizAttempt.QuizId, ct);
-
-            if (quiz is null)   
-            {
-                throw new KeyNotFoundException($"Quiz with id {quizAttempt.QuizId} not found.");
-            }
+            var quizAttempt = attemptInfo.QuizAttempt;
 
             var attemptQuestions = await db.QuizQuestions
                 .AsNoTracking()
@@ -88,12 +95,24 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                         .ToList();
 
                     var selectedOptionIds = GetSelectedOptionIds(answerDto);
+                    var selectedOptionIdSet = selectedOptionIds.Count == 0
+                        ? null
+                        : selectedOptionIds.ToHashSet();
                     var selectedOptions = selectedOptionIds.Count == 0
                         ? new List<QuizQuestionOption>()
-                        : question.Options.Where(o => selectedOptionIds.Contains(o.Id)).ToList();
+                        : question.Options
+                            .Where(o => selectedOptionIdSet!.Contains(o.Id))
+                            .OrderBy(o => o.OrderNo)
+                            .ToList();
                     var persistedSelectedOptionIds = selectedOptions
                         .Select(option => option.Id)
                         .Distinct()
+                        .ToList();
+                    var selectedOptionTexts = selectedOptions
+                        .Select(o => o.DisplayText)
+                        .ToList();
+                    var correctOptionTexts = correctOptions
+                        .Select(o => o.DisplayText)
                         .ToList();
 
                     var selectedTextValue = answerDto?.TextValue?.Trim();
@@ -140,12 +159,18 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
                             ? persistedSelectedOptionIds.First()
                             : null,
                         SelectedOptionIds = persistedSelectedOptionIds,
+                        SelectedOptionTexts = selectedOptionTexts,
                         SelectedTextValue = selectedTextValue,
-                        SelectedOptionText = selectedOptions.FirstOrDefault()?.DisplayText,
+                        SelectedOptionText = selectedOptionTexts.Count == 0
+                            ? null
+                            : string.Join(" | ", selectedOptionTexts),
                         CorrectOptionId = correctOptions.FirstOrDefault()?.Id,
                         CorrectOptionIds = correctOptions.Select(o => o.Id).ToList(),
+                        CorrectOptionTexts = correctOptionTexts,
                         CorrectTextValue = correctTextValue,
-                        CorrectOptionText = correctOptions.FirstOrDefault()?.DisplayText,
+                        CorrectOptionText = correctOptionTexts.Count == 0
+                            ? null
+                            : string.Join(" | ", correctOptionTexts),
                         IsCorrect = isCorrect
                     });
                 }
@@ -157,7 +182,7 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 
                 quizAttempt.SubmittedAt = submittedAt;
                 quizAttempt.Score = totalScore;
-                quizAttempt.Status = totalScore >= quiz.PassingScore
+                quizAttempt.Status = totalScore >= attemptInfo.PassingScore
                     ? QuizAttemptStatus.Passed
                     : QuizAttemptStatus.Failed;
 
@@ -172,18 +197,56 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 
             if (quizAttempt.Status == QuizAttemptStatus.Passed)
             {
-                var studyPlanModuleId = await db.StudyPlanModules
+                var completedModuleInfo = await db.StudyPlanModules
                     .AsNoTracking()
                     .Where(m =>
-                        m.RoadmapNodeId == quiz.RoadmapNodeId
-                        && m.StudyPlan.UserId == quizAttempt.UserId)
+                        m.RoadmapNodeId == attemptInfo.RoadmapNodeId
+                        && m.StudyPlan.UserId == attemptInfo.UserId)
                     .OrderByDescending(m => m.Id)
-                    .Select(m => (long?)m.Id)
+                    .Select(m => new
+                    {
+                        ModuleId = (long?)m.Id,
+                        m.StudyPlanId,
+                        ModuleName = m.RoadmapNode.Title
+                    })
                     .FirstOrDefaultAsync(ct);
 
-                if (studyPlanModuleId.HasValue)
+                if (completedModuleInfo?.ModuleId is long moduleId)
                 {
-                    await moduleService.CompleteModuleAsync((int)studyPlanModuleId.Value, ct);
+                    try
+                    {
+                        moduleJobDispatcher.DispatchCompleteModule((int)moduleId);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(
+                            ex,
+                            "[SubmitQuizAttempt] Failed to enqueue CompleteModule job for moduleId={ModuleId}",
+                            moduleId);
+                    }
+
+                    try
+                    {
+                        await notificationService.CreateAndDispatchAsync(
+                            userId: attemptInfo.UserId,
+                            title: "Module completed",
+                            content: $"You have completed module '{completedModuleInfo.ModuleName}'. Great progress!",
+                            type: NotificationType.Achievement,
+                            relatedType: NotificationRelatedType.Module,
+                            relatedId: moduleId,
+                            status: ModuleStatus.Completed.ToString(),
+                            actionUrl: $"/study-plans/{completedModuleInfo.StudyPlanId}",
+                            dedupeKey: $"moduleCompleted:{completedModuleInfo.StudyPlanId}:{moduleId}",
+                            isPush: false,
+                            ct: ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(
+                            ex,
+                            "[SubmitQuizAttempt] Failed to dispatch immediate module-completed notification for moduleId={ModuleId}",
+                            moduleId);
+                    }
                 }
             }
 
@@ -234,8 +297,8 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 
                 QuizQuestionType.MultipleChoice =>
                     selectedOptions.Count > 0
-                    && selectedOptions.Select(option => option.Id).OrderBy(optionId => optionId)
-                        .SequenceEqual(correctOptions.Select(option => option.Id).OrderBy(optionId => optionId)),
+                    && selectedOptions.Select(option => option.Id).ToHashSet()
+                        .SetEquals(correctOptions.Select(option => option.Id)),
 
                 QuizQuestionType.ShortAnswer =>
                     !string.IsNullOrWhiteSpace(selectedTextValue)
