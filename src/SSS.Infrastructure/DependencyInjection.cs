@@ -68,11 +68,13 @@ namespace SSS.Infrastructure
             // Dispatcher (not auto-registered: suffix is not Service/Repository/Gateway/Router)
             services.AddScoped<ISurveyJobDispatcher, HangfireSurveyJobDispatcher>();
             services.AddScoped<IEmailJobDispatcher, HangfireEmailJobDispatcher>();
+            services.AddScoped<IModuleJobDispatcher, HangfireModuleJobDispatcher>();
 
             // Jobs must be resolvable by Hangfire's DI activator
             services.AddScoped<AnalyzeBehaviorJob>();
             services.AddScoped<AnalyzeTargetJob>();
             services.AddScoped<AnalyzeModuleBehaviorInsightJob>();
+            services.AddScoped<CompleteModuleJob>();
             services.AddScoped<SendEmailJob>();
             // ─────────────────────────────────────────────────────────────────────
             //services.AddPayOSService(config);

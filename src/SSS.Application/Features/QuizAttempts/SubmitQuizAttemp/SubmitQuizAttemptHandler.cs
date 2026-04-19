@@ -1,8 +1,9 @@
 using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Persistence.Sql;
-using SSS.Application.Abstractions.Services;
 using SSS.Application.Features.QuizAttempts.Common;
 using SSS.Domain.Entities.Assessment;
 using SSS.Domain.Enums;
@@ -10,7 +11,11 @@ using System.Text.Json;
 
 namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 {
-    public class SubmitQuizAttemptHandler(IAppDbContext db, IMapper mapper, IModuleService moduleService)
+    public class SubmitQuizAttemptHandler(
+        IAppDbContext db,
+        IMapper mapper,
+        IModuleJobDispatcher moduleJobDispatcher,
+        ILogger<SubmitQuizAttemptHandler> logger)
         : IRequestHandler<SubmitQuizAttemptCommand, SubmitQuizAttemptResult>
     {
         public async Task<SubmitQuizAttemptResult> Handle(SubmitQuizAttemptCommand req, CancellationToken ct)
@@ -183,7 +188,17 @@ namespace SSS.Application.Features.QuizAttempts.SubmitQuizAttemp
 
                 if (studyPlanModuleId.HasValue)
                 {
-                    await moduleService.CompleteModuleAsync((int)studyPlanModuleId.Value, ct);
+                    try
+                    {
+                        moduleJobDispatcher.DispatchCompleteModule((int)studyPlanModuleId.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(
+                            ex,
+                            "[SubmitQuizAttempt] Failed to enqueue CompleteModule job for moduleId={ModuleId}",
+                            studyPlanModuleId.Value);
+                    }
                 }
             }
 
