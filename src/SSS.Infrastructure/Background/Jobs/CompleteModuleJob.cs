@@ -3,17 +3,15 @@ using Microsoft.Extensions.Logging;
 using SSS.Application.Abstractions.Background;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Abstractions.Services;
-using SSS.Domain.Enums;
 
 namespace SSS.Infrastructure.Background.Jobs
 {
     /// <summary>
-    /// Background job: complete module workflow and notify frontend.
+    /// Background job: complete module workflow and continue analysis pipeline.
     /// </summary>
     public class CompleteModuleJob(
         IModuleService moduleService,
         IAppDbContext db,
-        INotificationService notificationService,
         ISurveyJobDispatcher surveyJobDispatcher,
         ILogger<CompleteModuleJob> logger)
     {
@@ -41,19 +39,6 @@ namespace SSS.Infrastructure.Background.Jobs
                 logger.LogWarning("[CompleteModuleJob] Module not found after completion. ModuleId={ModuleId}", moduleId);
                 return;
             }
-
-            await notificationService.CreateAndDispatchAsync(
-                userId: moduleInfo.UserId,
-                title: "Module completed",
-                content: $"You have completed module '{moduleInfo.ModuleName}'. Great progress!",
-                type: NotificationType.Achievement,
-                relatedType: NotificationRelatedType.Module,
-                relatedId: moduleInfo.Id,
-                status: ModuleStatus.Completed.ToString(),
-                actionUrl: $"/study-plans/{moduleInfo.StudyPlanId}",
-                dedupeKey: $"moduleCompleted:{moduleInfo.StudyPlanId}:{moduleInfo.Id}",
-                isPush: false,
-                ct: ct);
 
             surveyJobDispatcher.DispatchModuleBehaviorInsight(moduleInfo.StudyPlanId, checked((int)moduleInfo.Id), moduleInfo.UserId);
 
