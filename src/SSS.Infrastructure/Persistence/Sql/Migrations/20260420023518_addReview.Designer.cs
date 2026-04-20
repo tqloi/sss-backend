@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SSS.Infrastructure.Persistence.Sql;
 
 #nullable disable
 
-namespace SSS.Infrastructure.Migrations
+namespace SSS.Infrastructure.Persistence.Sql.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260420023518_addReview")]
+    partial class addReview
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1407,9 +1410,6 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<int>("EstimatedDurationSeconds")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExpectOutput")
-                        .HasColumnType("longtext");
-
                     b.Property<bool>("IsGenerateByAI")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -1540,11 +1540,6 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
-
-                    b.Property<int>("XpEarned")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 

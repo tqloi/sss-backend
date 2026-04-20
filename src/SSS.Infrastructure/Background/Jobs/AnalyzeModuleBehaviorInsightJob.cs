@@ -68,7 +68,7 @@ Context:
 
             await notificationService.CreateAndDispatchAsync(
                 userId: userId,
-                title: "Phan tich hoc tap moi da san sang",
+                title: "Your latest learning insight is ready",
                 content: insight,
                 type: NotificationType.AiRecommendation,
                 relatedType: NotificationRelatedType.Module,

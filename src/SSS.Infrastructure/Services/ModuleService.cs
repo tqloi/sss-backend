@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SSS.Application.Abstractions.Background;
@@ -26,6 +26,7 @@ namespace SSS.Infrastructure.Services
         private readonly IEmailJobDispatcher _emailJobDispatcher;
         private readonly IMailTemplateBuilder _mailTemplateBuilder;
         private readonly IConfiguration _configuration;
+        private readonly INotificationService _notificationService;
 
         public ModuleService(
             AppDbContext context,
@@ -35,7 +36,8 @@ namespace SSS.Infrastructure.Services
             IPipeLine pipeLine,
             IEmailJobDispatcher emailJobDispatcher,
             IMailTemplateBuilder mailTemplateBuilder,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            INotificationService notificationService)
         {
             _context = context;
             _cacheService = cacheService;
@@ -45,10 +47,12 @@ namespace SSS.Infrastructure.Services
             _emailJobDispatcher = emailJobDispatcher;
             _mailTemplateBuilder = mailTemplateBuilder;
             _configuration = configuration;
+            _notificationService = notificationService;
         }
 
         public async Task CompleteModuleAsync(int moduleId, CancellationToken ct)
         {
+            // 1 ============================================================
             // Lấy module
             var module = await _context.StudyPlanModules
                 .Include(x => x.RoadmapNode) // eager load để lấy title khi gửi email
@@ -75,6 +79,12 @@ namespace SSS.Infrastructure.Services
             // Cập nhật trạng thái module và mở khóa module tiếp theo nếu có
             module.Status = ModuleStatus.Completed;
 
+            // Đánh dấu tất cả task chưa completed thành Skipped
+            foreach (var task in module.Tasks.Where(t => t.Status != Domain.Enums.TaskStatus.Completed))
+            {
+                task.Status = Domain.Enums.TaskStatus.Skipped;
+            }
+
             var modules = await _context.StudyPlanModules
                 .Where(m => m.StudyPlanId == module.StudyPlanId)
                 .OrderBy(m => m.Id) // tạm dùng Id làm thứ tự
@@ -92,6 +102,34 @@ namespace SSS.Infrastructure.Services
                 }
             }
 
+            // ✅ Nếu tất cả modules Completed/Skipped → gửi notification nhắc đánh giá roadmap
+            var allModulesDone = modules.All(m =>
+                m.Status == ModuleStatus.Completed || m.Status == ModuleStatus.Skipped);
+
+            var shouldNotify = false;
+
+            if (plan!.Status != StudyPlanStatus.Completed && allModulesDone)
+            {
+                plan.Status = StudyPlanStatus.Completed;
+                shouldNotify = true;
+            }
+
+            await _context.SaveChangesAsync(ct);
+
+            if (shouldNotify)
+            {
+                await _notificationService.CreateAndDispatchAsync(
+                    userId: userId,
+                    title: "🎉 Bạn đã hoàn thành lộ trình!",
+                    content: $"Bạn vừa hoàn thành toàn bộ lộ trình '{plan.Roadmap.Title}'. Hãy để lại đánh giá để giúp cộng đồng nhé!",
+                    type: NotificationType.Achievement,
+                    relatedType: NotificationRelatedType.Roadmap,
+                    relatedId: plan.RoadmapId,
+                    //actionUrl: $"/roadmaps/{plan.RoadmapId}/review",
+                    dedupeKey: $"roadmap-complete-review-{plan.Id}",
+                    ct: ct);
+            }
+
             // 3️⃣ Invalidate cache toàn bộ study plan
             var cacheKey1 = $"studyplan:roadmap:{userId}:{roadmapId}";
             var cacheKey2 = $"studyplan:id:{module.StudyPlanId}";
@@ -99,8 +137,7 @@ namespace SSS.Infrastructure.Services
             await _cacheService.RemoveAsync(cacheKey1);
             await _cacheService.RemoveAsync(cacheKey2);
 
-            await _context.SaveChangesAsync(ct);
-
+            // 2 ==========================================================
             // Ready data for behavior generation
             var studyEvents = (await _studyEventRepository.GetByUserIdAsync(userId, moduleId.ToString()))
                 .OrderByDescending(e => e.EventTimestamp)

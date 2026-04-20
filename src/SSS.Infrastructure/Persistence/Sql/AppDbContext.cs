@@ -24,6 +24,7 @@ namespace SSS.Infrastructure.Persistence.Sql
         public DbSet<RoadmapEdge> RoadmapEdges => Set<RoadmapEdge>();
         public DbSet<NodeContent> NodeContents => Set<NodeContent>();
         public DbSet<ContentManagerSubject> ContentManagerSubjects => Set<ContentManagerSubject>();
+        public DbSet<Review> Reviews => Set<Review>();
 
         // Survey & Profile
         public DbSet<Survey> Surveys => Set<Survey>();
