@@ -24,7 +24,7 @@ namespace SSS.Application.Abstractions.Persistence.Sql
         DbSet<RoadmapEdge> RoadmapEdges { get; }
         DbSet<NodeContent> NodeContents { get; }
         DbSet<ContentManagerSubject> ContentManagerSubjects { get; }
-
+        DbSet<Review> Reviews { get; }
         // Survey & Profile
         DbSet<Survey> Surveys { get; }
         DbSet<SurveyQuestion> SurveyQuestions { get; }
