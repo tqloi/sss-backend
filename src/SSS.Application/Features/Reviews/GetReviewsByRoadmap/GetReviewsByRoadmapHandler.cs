@@ -1,6 +1,6 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using SSS.Application.Abstractions.Persistence.Sql;
 using SSS.Application.Common.Dtos;
 using SSS.Application.Features.Reviews.Common;
@@ -12,17 +12,14 @@ namespace SSS.Application.Features.Reviews.GetReviewsByRoadmap
     {
         public async Task<GetReviewsByRoadmapResult> Handle(GetReviewsByRoadmapQuery req, CancellationToken ct)
         {
+            // ProjectTo trực tiếp: EF tự sinh JOIN, CountAsync & Skip/Take hoạt động chuẩn
             var query = context.Reviews
-                .AsNoTracking()
                 .Where(r => r.RoadmapId == req.RoadmapId)
-                .Include(r => r.Roadmap)
-                .Include(r => r.Reviewer)
-                .OrderByDescending(r => r.CreatedAt);
+                .OrderByDescending(r => r.CreatedAt)
+                .ProjectTo<ReviewDto>(mapper.ConfigurationProvider);
 
-            var paginated = await PaginatedResponse<Domain.Entities.Content.Review>
+            var result = await PaginatedResponse<ReviewDto>
                 .CreateAsync(query, req.PageIndex, req.PageSize, ct);
-
-            var result = paginated.MapItems(r => mapper.Map<ReviewDto>(r));
 
             return new GetReviewsByRoadmapResult
             {
