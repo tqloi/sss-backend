@@ -40,7 +40,10 @@ namespace SSS.Application.Features.Dashboard.GetOverview
             var pendingTasks = await context.TaskItems
                 .Include(t => t.StudyPlanModule)
                 .ThenInclude(m => m.RoadmapNode)
-                .Where(t => t.StudyPlanModule.StudyPlanId == req.StudyPlanId && t.Status != Domain.Enums.TaskStatus.Completed)
+                .Where(t => t.StudyPlanModule.StudyPlanId == req.StudyPlanId
+                            && t.Status != Domain.Enums.TaskStatus.Completed
+                            && t.StudyPlanModule.Status != ModuleStatus.Completed
+                            && t.StudyPlanModule.Status != ModuleStatus.Skipped)
                 .OrderBy(t => t.StudyPlanModule.Id)
                 .ThenBy(t => t.Id)
                 .Take(4)
