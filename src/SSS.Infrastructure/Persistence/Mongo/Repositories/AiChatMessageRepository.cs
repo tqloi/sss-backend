@@ -26,5 +26,10 @@ namespace SSS.Infrastructure.Persistence.Mongo.Repositories
 
             return _mapper.Map<IEnumerable<AiChatMessage>>(docs);
         }
+
+        public async Task DeleteByConversationIdAsync(string conversationId)
+        {
+            await _collection.DeleteManyAsync(x => x.ConversationId == conversationId);
+        }
     }
 }
