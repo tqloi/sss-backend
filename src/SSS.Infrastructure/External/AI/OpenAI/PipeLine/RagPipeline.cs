@@ -89,6 +89,10 @@ Input may include:
   - NearbyModuleIds / NearbyModules: module metadata for scoped nodes
 - Module data
 - StudySession and SessionTask data
+- SessionAnalytics data (if present):
+  - CurrentModuleSessionCount
+  - CurrentModuleCompletedSessionCount
+  - CurrentModuleAverageCompletionSeconds
 - QuizAttempt data
 - StudyEvents (click/interaction logs with payload and timestamp)
 - StudyEventSummary (aggregated interaction counts)
@@ -101,6 +105,7 @@ Your task:
   2) Quiz performance consistency and completion quality
   3) Learning engagement from event activity
   4) Overall study discipline verdict
+  5) Average module completion time from sessions
 
 Deadline adherence rules (mandatory):
 - A task is on-time only if CompletedAt/EndTime <= ScheduledDate.
@@ -119,6 +124,10 @@ Engagement rules:
 - If NodeScope is present, avoid over-generalizing from previous nodes; keep verdict centered on CurrentModuleId behavior.
 - If engagement evidence is sparse, explicitly state evidence is limited.
 
+Average module completion time rules:
+- If SessionAnalytics.CurrentModuleAverageCompletionSeconds is present, you MUST state the average completion time in English (seconds/minutes/hours).
+- If SessionAnalytics is missing or average is null, explicitly state average completion time evidence is limited.
+
 Output rules:
 - Plain text only. No JSON, markdown, or bullet points.
 - Neutral, factual, compact, semantically rich.
@@ -136,6 +145,7 @@ Focus on:
 - Quiz behavior quality and consistency
 - Learning engagement from StudyEvents and StudyEventSummary
 - Completion vs skip/incomplete balance
+- Average module completion time from sessions
 - Overall study discipline (good / average / needs improvement based on evidence)
 """;
 
@@ -615,6 +625,7 @@ CRITICAL RULES (MUST FOLLOW)
 7. Decisions MUST be driven by the user's survey context
 8. If behavior signals are present in context, adapt plan pacing and duration accordingly
 9. Tasks MUST stay strictly aligned with the target node title/description/difficulty and node-level content cues
+10. Time-related values MUST use English-compatible formatting only (ISO-8601 for dates, numeric seconds for durations)
 
 ======================
 INPUT GUARANTEES
@@ -679,7 +690,8 @@ If user level is Beginner:
 - Include at most 1 task that involves refactor/debug/optimization.
 - Keep cognitive load gradual: concept introduction -> guided practice -> small integration task.
 - Each task should have a clear, concrete outcome (e.g., write X snippet, complete Y mini exercise).
-- Typical duration per task: 900-2700 seconds unless behavior adaptation changes it.
+- Base duration band: 900-2700 seconds.
+- HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 900-3510.
 
 If user level is Intermediate:
 - Limit pure syntax/fundamental review to at most 1 task.
@@ -688,7 +700,8 @@ If user level is Intermediate:
 - Require at least 1 implementation task that combines multiple concepts from the same node.
 - Emphasize decision quality: code structure, readability, maintainability, and bug prevention.
 - Avoid beginner-style wording (e.g., "learn what X is", "introduction to").
-- Typical duration per task: 1800-5400 seconds unless behavior adaptation changes it.
+- Base duration band: 1800-5400 seconds.
+- HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 1800-7020.
 
 If user level is Advanced:
 - Stay strictly within TARGET NODE scope, but increase cognitive depth and rigor.
@@ -698,7 +711,8 @@ If user level is Advanced:
 - Limit beginner-style review to at most 1 brief refresher task.
 - Every advanced task should include a concrete deliverable such as decision notes, validation checklist, or refactor rationale.
 - Avoid introductory explanations.
-- Typical duration per task: 3600-9000 seconds unless behavior adaptation changes it.
+- Base duration band: 3600-9000 seconds.
+- HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 3600-11700.
 
 If level evidence is missing/ambiguous:
 - Use neutral intermediate-safe depth and explicitly avoid overly basic repetition.
@@ -735,7 +749,7 @@ TASK DESIGN RULES
 - Generate 4-8 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
 - estimatedDurationSeconds MUST be a NUMBER (integer)
-- Range: More than 900 seconds (15 minutes)
+- GLOBAL HARD RANGE: estimatedDurationSeconds MUST be between 900 and 11700 (inclusive)
 - Duration MUST be estimated dynamically based on:
 - Complexity of the task
 - Type of task (analysis, coding, testing, etc.)
@@ -747,6 +761,7 @@ TASK DESIGN RULES
 - scheduledDate MUST be based on CURRENT DATETIME above, but the time part must always be 01:00:00Z
 - scheduledDate MUST be >= current datetime
 - scheduledDate MUST increase progressively
+- scheduledDate MUST be ISO-8601 UTC format only (YYYY-MM-DDTHH:mm:ssZ), never localized text
 - Avoid same timestamp for all tasks; spread tasks realistically
 - Task sequence must increase in cognitive depth from earlier to later tasks
 - Avoid near-duplicate tasks with only wording changes
@@ -784,7 +799,8 @@ When behavior context indicates the learner is often late, inconsistent, or skip
 - Add more spacing between tasks (prefer gaps of at least 1 day)
 
 When behavior context indicates the learner consistently completes tasks faster than expected:
-- Decrease estimatedDurationSeconds per task by exactly 20% compared to normal expectation
+- Do NOT decrease estimatedDurationSeconds
+- Keep estimatedDurationSeconds at normal expectation (no reduction)
 - Keep schedule realistic and avoid over-compressing too many tasks into one day
 
 When behavior context indicates strong on-time and consistent completion without clear faster-than-expected signals:
@@ -795,6 +811,11 @@ When behavior context indicates strong on-time and consistent completion without
 When behavior evidence is weak or unavailable:
 - Use neutral pacing (3-4 tasks) with balanced spacing
 - Do not overfit assumptions
+
+Behavior-duration clamping (MANDATORY):
+- After applying behavior adjustment (+30% for late/inconsistent behavior), clamp each task duration to the level-specific HARD CAP range above.
+- For on-time/fast behavior, keep normal expectation durations (no reduction).
+- Never output any estimatedDurationSeconds outside both the level-specific HARD CAP and the global 900-11700 range.
 
 ======================
 TIME DISTRIBUTION RULES
@@ -842,6 +863,8 @@ Before finalizing, self-check:
 - Is every expectedOutput a single clear output requirement sentence (no labels, no line breaks)?
 - Does every expectedOutput follow this exact structure: Deliver a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints>?
 - Is expectedOutput concrete and verifiable for completion?
+- Are all time-related fields English-compatible (ISO-8601 scheduledDate and numeric estimatedDurationSeconds without localized words)?
+- Are all durations inside level-specific HARD CAP and global 900-11700 hard range?
 """;
 
 
