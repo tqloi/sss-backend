@@ -6,5 +6,6 @@ namespace SSS.Application.Abstractions.Persistence.Mongo.Interfaces
         : IMongoRepository<AiChatMessage>
     {
         Task<IEnumerable<AiChatMessage>> GetByConversationIdAsync(string conversationId);
+        Task DeleteByConversationIdAsync(string conversationId);
     }
 }

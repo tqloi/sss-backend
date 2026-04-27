@@ -40,7 +40,8 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                     s.StartAt,
                     s.ActualDurationSeconds,
                     s.SelfRating,
-                    s.TasksCompletedCount
+                    s.TasksCompletedCount,
+                    s.XpEarned
                 })
                 .ToListAsync(ct);
 
@@ -72,8 +73,8 @@ namespace SSS.Application.Features.StudySessions.GetSessionStatistics
                 ? ratedSessions.Average(s => s.SelfRating!.Value)
                 : 0;
 
-            // Total XP
-            var totalXp = completedSessions.Sum(s => ((s.ActualDurationSeconds ?? 0) / 60) * 10);
+            // Total XP — read persisted value, not recompute
+            var totalXp = completedSessions.Sum(s => s.XpEarned);
 
             return new GetSessionStatisticsResult
             {

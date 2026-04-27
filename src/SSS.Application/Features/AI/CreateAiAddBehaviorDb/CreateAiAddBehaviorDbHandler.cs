@@ -128,6 +128,26 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
             }
             var quizAttemptDtos = mapper.Map<List<BehaviorQuizAttemptDto>>(quizAttempts);
 
+            var moduleSessions = sessions
+                .Where(s =>
+                    (s.StudyPlanModuleId.HasValue && s.StudyPlanModuleId.Value == module.Id) ||
+                    s.SessionTasks.Any(st => st.TaskItem.StudyPlanModuleId == module.Id))
+                .ToList();
+
+            var completedModuleSessionDurations = moduleSessions
+                .Where(s => s.EndAt.HasValue)
+                .Select(s =>
+                    s.ActualDurationSeconds.HasValue && s.ActualDurationSeconds.Value > 0
+                        ? s.ActualDurationSeconds.Value
+                        : (int?)Math.Max(0, (int)(s.EndAt!.Value - s.StartAt).TotalSeconds))
+                .Where(seconds => seconds.HasValue && seconds.Value > 0)
+                .Select(seconds => seconds!.Value)
+                .ToList();
+
+            int? averageModuleCompletionSeconds = completedModuleSessionDurations.Count > 0
+                ? (int)Math.Round(completedModuleSessionDurations.Average())
+                : null;
+
             var behaviorContext = new
             {
                 NodeScope = new
@@ -139,7 +159,13 @@ namespace SSS.Application.Features.AI.CreateAiAddBehaviorDb
                 },
                 Module = moduleDto,
                 Sessions = sessionDtos,
-                QuizAttempts = quizAttemptDtos
+                QuizAttempts = quizAttemptDtos,
+                SessionAnalytics = new
+                {
+                    CurrentModuleSessionCount = moduleSessions.Count,
+                    CurrentModuleCompletedSessionCount = completedModuleSessionDurations.Count,
+                    CurrentModuleAverageCompletionSeconds = averageModuleCompletionSeconds
+                }
             };
 
             var behaviorContextJson = JsonSerializer.Serialize(behaviorContext);

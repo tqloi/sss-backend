@@ -22,7 +22,7 @@ namespace SSS.Web.Endpoints.AI.CreateAiQuizQuestions
                 .MaximumLength(50).WithMessage("Level cannot exceed 50 characters.");
 
             RuleFor(x => x.QuestionCount)
-                .InclusiveBetween(1, 20).WithMessage("QuestionCount must be between 1 and 20.");
+                .InclusiveBetween(1, 10).WithMessage("QuestionCount must be between 1 and 20.");
         }
     }
 }

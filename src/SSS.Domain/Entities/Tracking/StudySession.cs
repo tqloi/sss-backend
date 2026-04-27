@@ -22,6 +22,7 @@ public class StudySession
     public int PauseCount { get; set; }
     public int PauseSeconds { get; set; }
     public int? SelfRating { get; set; }
+    public int XpEarned { get; set; }
     public LocalTimeBlock? LocalTimeBlock { get; set; }
     public string? Timezone { get; set; }
     public DateTime? CreatedAt { get; set; } = DateTime.MinValue;

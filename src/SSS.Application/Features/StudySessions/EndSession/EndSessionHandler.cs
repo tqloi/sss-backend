@@ -101,6 +101,7 @@ namespace SSS.Application.Features.StudySessions.EndSession
             // Calculate XP: floor(seconds/60) * 10 + tasksCompleted * 25
             var activeMinutes = (session.ActualDurationSeconds ?? 0) / 60;
             var xpEarned = activeMinutes * 10 + tasksCompletedCount * 25;
+            session.XpEarned = xpEarned;
 
             // Update User Gamification
             var gamification = await context.UserGamifications

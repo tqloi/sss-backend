@@ -755,6 +755,42 @@ namespace SSS.Infrastructure.Migrations
                     b.ToTable("Ct_NodeContents", (string)null);
                 });
 
+            modelBuilder.Entity("SSS.Domain.Entities.Content.Review", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReviewerId")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<long>("RoadmapId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.HasIndex("RoadmapId", "ReviewerId")
+                        .IsUnique();
+
+                    b.ToTable("Ct_Reviews", (string)null);
+                });
+
             modelBuilder.Entity("SSS.Domain.Entities.Content.Roadmap", b =>
                 {
                     b.Property<long>("Id")
@@ -1371,6 +1407,9 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<int>("EstimatedDurationSeconds")
                         .HasColumnType("int");
 
+                    b.Property<string>("ExpectOutput")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("IsGenerateByAI")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -1501,6 +1540,11 @@ namespace SSS.Infrastructure.Migrations
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
+
+                    b.Property<int>("XpEarned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -1887,6 +1931,24 @@ namespace SSS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Node");
+                });
+
+            modelBuilder.Entity("SSS.Domain.Entities.Content.Review", b =>
+                {
+                    b.HasOne("SSS.Domain.Entities.Identity.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SSS.Domain.Entities.Content.Roadmap", "Roadmap")
+                        .WithMany()
+                        .HasForeignKey("RoadmapId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reviewer");
+
+                    b.Navigation("Roadmap");
                 });
 
             modelBuilder.Entity("SSS.Domain.Entities.Content.Roadmap", b =>

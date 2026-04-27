@@ -5,29 +5,12 @@ using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Application.Features.AI.Common;
 using SSS.Domain.Entities.Planning;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
     public class RagPipeline : IPipeLine
     {
-        private static readonly HashSet<string> GenericRoadmapInputs = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "alo", "hello", "hi", "hey", "yo", "ok", "oke", "test", "chao", "xin chao"
-        };
-
-        private static readonly string[] RoadmapIntentKeywords =
-        {
-            "roadmap", "learning path", "study plan", "plan", "lộ trình", "lo trinh", "kế hoạch", "ke hoach", "learn", "học", "hoc"
-        };
-
-        private static readonly string[] BackendTechKeywords =
-        {
-            ".net", "dotnet", "asp.net", "c#", "java", "spring", "node", "nodejs", "nestjs", "express",
-            "python", "django", "flask", "golang", "go", "php", "laravel", "backend", "api", "microservice", "database", "sql", "nosql"
-        };
-
         private readonly ILlmRouter _llmRouter;
         private readonly IEmbeddingProvider _emp;
         private readonly IQdrantClient _vec;
@@ -89,6 +72,10 @@ Input may include:
   - NearbyModuleIds / NearbyModules: module metadata for scoped nodes
 - Module data
 - StudySession and SessionTask data
+- SessionAnalytics data (if present):
+  - CurrentModuleSessionCount
+  - CurrentModuleCompletedSessionCount
+  - CurrentModuleAverageCompletionSeconds
 - QuizAttempt data
 - StudyEvents (click/interaction logs with payload and timestamp)
 - StudyEventSummary (aggregated interaction counts)
@@ -101,6 +88,7 @@ Your task:
   2) Quiz performance consistency and completion quality
   3) Learning engagement from event activity
   4) Overall study discipline verdict
+  5) Average module completion time from sessions
 
 Deadline adherence rules (mandatory):
 - A task is on-time only if CompletedAt/EndTime <= ScheduledDate.
@@ -119,6 +107,10 @@ Engagement rules:
 - If NodeScope is present, avoid over-generalizing from previous nodes; keep verdict centered on CurrentModuleId behavior.
 - If engagement evidence is sparse, explicitly state evidence is limited.
 
+Average module completion time rules:
+- If SessionAnalytics.CurrentModuleAverageCompletionSeconds is present, you MUST state the average completion time in English (seconds/minutes/hours).
+- If SessionAnalytics is missing or average is null, explicitly state average completion time evidence is limited.
+
 Output rules:
 - Plain text only. No JSON, markdown, or bullet points.
 - Neutral, factual, compact, semantically rich.
@@ -136,6 +128,7 @@ Focus on:
 - Quiz behavior quality and consistency
 - Learning engagement from StudyEvents and StudyEventSummary
 - Completion vs skip/incomplete balance
+- Average module completion time from sessions
 - Overall study discipline (good / average / needs improvement based on evidence)
 """;
 
@@ -166,9 +159,8 @@ Evaluation rules (choose exactly one):
 Output format rules (strict):
 - Plain text only.
 - Exactly 3 short lines, in this exact order:
-  1) Total study time spent: <value or No data>
-  2) Quiz score/result: <value or No data>
-  3) Basic evaluation: <Good|Average|Need improvement>
+  1) Quiz score/result: <value or No data>
+  2) Basic evaluation: <Good|Average|Need improvement>
 - Do not include any extra text.
 - Do not include technical terms.
 
@@ -224,9 +216,6 @@ UserLearningBehavior:
         }
         public async Task<string> GenerateRoadmapAsync(string question, string subjectid, CancellationToken ct = default)
         {
-            ValidateRoadmapQuestion(question);
-            await VerifyRoadmapQuestionWithAiAsync(question, ct);
-
             var systemPrompt = """
 You are an AI that generates detailed learning roadmaps in JSON strictly for a backend technology specified by the user.
 
@@ -453,91 +442,6 @@ REQUIRED JSON SHAPE
             return response;
         }
 
-        private static void ValidateRoadmapQuestion(string question)
-        {
-            if (string.IsNullOrWhiteSpace(question))
-                throw new ValidationException("Roadmap request cannot be empty.");
-
-            var normalized = question.Trim();
-            var compact = new string(normalized.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
-
-            if (GenericRoadmapInputs.Contains(normalized) || GenericRoadmapInputs.Contains(compact))
-                throw new ValidationException("Roadmap request is too generic. Please provide backend technology and learning goal.");
-
-            var lower = normalized.ToLowerInvariant();
-            var tokens = lower.Split(new[] { ' ', '\t', '\r', '\n', ',', '.', ';', ':', '!', '?', '-', '_', '/', '\\', '|', '(', ')', '[', ']', '{', '}', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (tokens.Length < 2 || compact.Length < 6)
-                throw new ValidationException("Roadmap request is too short. Please describe your target backend technology and objective.");
-
-            var score = 0;
-            if (ContainsAny(lower, RoadmapIntentKeywords)) score++;
-            if (ContainsAny(lower, BackendTechKeywords)) score++;
-            if (tokens.Length >= 4) score++;
-
-            if (score < 2)
-                throw new ValidationException("Roadmap request is unclear. Include backend technology (e.g., .NET, Java, Node.js) and a concrete goal.");
-        }
-
-        private async Task VerifyRoadmapQuestionWithAiAsync(string question, CancellationToken ct)
-        {
-            var verifier = _llmRouter.Resolve(LlmTask.VerifyMessageCreateRoadmap);
-
-            const string systemPrompt = """
-You are a strict validator for backend roadmap requests.
-Return ONLY compact JSON with exact shape:
-{"isValid": boolean, "reason": string}
-
-Rules:
-- isValid=true only if the input clearly requests a backend learning roadmap/path/plan.
-- Must include meaningful backend/domain signal (.NET, Java, Node.js, API, database, microservice, etc.).
-- Greetings, small talk, vague input, or unrelated requests are invalid.
-- If uncertain, return isValid=false.
-No markdown. No extra text.
-""";
-
-            var userPrompt = $"Validate this input for backend roadmap generation:\nINPUT: {question}";
-
-            var raw = await verifier.AskAsync(systemPrompt, userPrompt, ct);
-            raw = raw.Replace("```json", "", StringComparison.OrdinalIgnoreCase)
-                     .Replace("```", "", StringComparison.OrdinalIgnoreCase)
-                     .Trim();
-
-            try
-            {
-                using var doc = JsonDocument.Parse(raw);
-                var root = doc.RootElement;
-                var isValid = root.TryGetProperty("isValid", out var isValidProp)
-                              && isValidProp.ValueKind is JsonValueKind.True or JsonValueKind.False
-                              && isValidProp.GetBoolean();
-
-                if (!isValid)
-                {
-                    var reason = root.TryGetProperty("reason", out var reasonProp)
-                        ? reasonProp.GetString()
-                        : null;
-                    throw new ValidationException(string.IsNullOrWhiteSpace(reason)
-                        ? "Roadmap request is unclear. Please provide backend technology and a concrete learning goal."
-                        : reason);
-                }
-            }
-            catch (JsonException)
-            {
-                throw new ValidationException("Roadmap request is unclear. Please provide backend technology and a concrete learning goal.");
-            }
-        }
-
-        private static bool ContainsAny(string input, IEnumerable<string> keywords)
-        {
-            foreach (var keyword in keywords)
-            {
-                if (input.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
-        }
-
         public async Task<string> BuildStudyPlanContextAsync(
             string userId,
             string studyPlanId,
@@ -616,6 +520,7 @@ CRITICAL RULES (MUST FOLLOW)
 7. Decisions MUST be driven by the user's survey context
 8. If behavior signals are present in context, adapt plan pacing and duration accordingly
 9. Tasks MUST stay strictly aligned with the target node title/description/difficulty and node-level content cues
+10. Time-related values MUST use English-compatible formatting only (ISO-8601 for dates, numeric seconds for durations)
 
 ======================
 INPUT GUARANTEES
@@ -680,7 +585,8 @@ If user level is Beginner:
 - Include at most 1 task that involves refactor/debug/optimization.
 - Keep cognitive load gradual: concept introduction -> guided practice -> small integration task.
 - Each task should have a clear, concrete outcome (e.g., write X snippet, complete Y mini exercise).
-- Typical duration per task: 900-2700 seconds unless behavior adaptation changes it.
+- Base duration band: 900-2700 seconds.
+- HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 900-3510.
 
 If user level is Intermediate:
 - Limit pure syntax/fundamental review to at most 1 task.
@@ -689,7 +595,8 @@ If user level is Intermediate:
 - Require at least 1 implementation task that combines multiple concepts from the same node.
 - Emphasize decision quality: code structure, readability, maintainability, and bug prevention.
 - Avoid beginner-style wording (e.g., "learn what X is", "introduction to").
-- Typical duration per task: 1800-5400 seconds unless behavior adaptation changes it.
+- Base duration band: 1800-5400 seconds.
+- HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 1800-7020.
 
 If user level is Advanced:
 - Stay strictly within TARGET NODE scope, but increase cognitive depth and rigor.
@@ -698,8 +605,10 @@ If user level is Advanced:
 - Require at least 2 tasks focused on hardening: defensive coding, null-safety, robustness, and refactoring rationale.
 - Limit beginner-style review to at most 1 brief refresher task.
 - Every advanced task should include a concrete deliverable such as decision notes, validation checklist, or refactor rationale.
+- Every advanced task should include a concrete self-check artifact such as decision notes, validation checklist, or refactor rationale.
 - Avoid introductory explanations.
-- Typical duration per task: 3600-9000 seconds unless behavior adaptation changes it.
+- Base duration band: 3600-9000 seconds.
+- HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 3600-11700.
 
 If level evidence is missing/ambiguous:
 - Use neutral intermediate-safe depth and explicitly avoid overly basic repetition.
@@ -724,7 +633,8 @@ OUTPUT SCHEMA (STRICT)
     "description": string | null,
     "status": "Planned",
     "estimatedDurationSeconds": number,
-    "scheduledDate": "YYYY-MM-DDT01:00:00Z"
+    "scheduledDate": "YYYY-MM-DDT01:00:00Z",
+    "expectedOutput": string
   }
 ]
 
@@ -735,7 +645,7 @@ TASK DESIGN RULES
 - Generate 4-8 tasks ONLY for the given roadmap node
 - Tasks must be concrete and actionable
 - estimatedDurationSeconds MUST be a NUMBER (integer)
-- Range: More than 900 seconds (15 minutes)
+- GLOBAL HARD RANGE: estimatedDurationSeconds MUST be between 900 and 11700 (inclusive)
 - Duration MUST be estimated dynamically based on:
 - Complexity of the task
 - Type of task (analysis, coding, testing, etc.)
@@ -747,9 +657,34 @@ TASK DESIGN RULES
 - scheduledDate MUST be based on CURRENT DATETIME above, but the time part must always be 01:00:00Z
 - scheduledDate MUST be >= current datetime
 - scheduledDate MUST increase progressively
+- scheduledDate MUST be ISO-8601 UTC format only (YYYY-MM-DDTHH:mm:ssZ), never localized text
 - Avoid same timestamp for all tasks; spread tasks realistically
 - Task sequence must increase in cognitive depth from earlier to later tasks
 - Avoid near-duplicate tasks with only wording changes
+
+======================
+TASK OUTPUT & DIFFICULTY RULES (MANDATORY)
+======================
+
+- For each task:
+  - description MUST be a detailed task explanation (2-4 sentences) covering objective, scope, and key actions.
+  - description is for "what to do" only, NOT for completion evidence.
+  - expectedOutput MUST be a single clear self-check outcome sentence (what artifact/result the learner should produce for self-review).
+  - expectedOutput must be plain text only, no labels, no bullet points, no line breaks.
+  - expectedOutput MUST be longer and more specific, with at least 25 words.
+  - expectedOutput MUST follow this exact one-sentence format using semicolons:
+    Complete a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints> for self-check.
+  - Fill each placeholder with concrete node-scoped details:
+    <artifact> = exact self-check artifact (code file/class/function/API/test/report/checklist)
+    <scope> = required behavior and boundaries for the target node task
+    <edge cases> = at least 2 realistic failure/invalid scenarios
+    <tests/evidence> = verifiable proof (test names/results, sample request/response, or execution output)
+    <quality constraints> = maintainability/readability/error-handling or performance constraints
+- Requirement must be concrete, actionable, and scoped to the TARGET ROADMAP NODE only.
+- expectedOutput must be concrete and verifiable (for example: file/class/function implemented, test result, API response proof, checklist, decision note).
+- description MUST NOT be null and MUST NOT contain output labels like: Deliverable, Evidence, Completion Criteria.
+- expectedOutput MUST NOT be null.
+- Keep each line concise but specific enough for completion verification.
 
 ======================
 BEHAVIOR-ADAPTIVE RULES
@@ -760,7 +695,8 @@ When behavior context indicates the learner is often late, inconsistent, or skip
 - Add more spacing between tasks (prefer gaps of at least 1 day)
 
 When behavior context indicates the learner consistently completes tasks faster than expected:
-- Decrease estimatedDurationSeconds per task by exactly 20% compared to normal expectation
+- Do NOT decrease estimatedDurationSeconds
+- Keep estimatedDurationSeconds at normal expectation (no reduction)
 - Keep schedule realistic and avoid over-compressing too many tasks into one day
 
 When behavior context indicates strong on-time and consistent completion without clear faster-than-expected signals:
@@ -771,6 +707,11 @@ When behavior context indicates strong on-time and consistent completion without
 When behavior evidence is weak or unavailable:
 - Use neutral pacing (3-4 tasks) with balanced spacing
 - Do not overfit assumptions
+
+Behavior-duration clamping (MANDATORY):
+- After applying behavior adjustment (+30% for late/inconsistent behavior), clamp each task duration to the level-specific HARD CAP range above.
+- For on-time/fast behavior, keep normal expectation durations (no reduction).
+- Never output any estimatedDurationSeconds outside both the level-specific HARD CAP and the global 900-11700 range.
 
 ======================
 TIME DISTRIBUTION RULES
@@ -814,6 +755,12 @@ Before finalizing, self-check:
 - For Beginner: are at least 3 tasks truly foundational and step-by-step?
 - For Intermediate: is there no more than 1 pure review task and at least 1 quality-validation task?
 - Does the final task set follow the required level contrast distribution percentages after integer allocation?
+- Is description a detailed explanation of the task objective/scope (without output criteria)?
+- Is every expectedOutput a single clear output requirement sentence (no labels, no line breaks)?
+- Does every expectedOutput follow this exact structure: Complete a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints> for self-check?
+- Is expectedOutput concrete and verifiable for completion?
+- Are all time-related fields English-compatible (ISO-8601 scheduledDate and numeric estimatedDurationSeconds without localized words)?
+- Are all durations inside level-specific HARD CAP and global 900-11700 hard range?
 """;
 
 

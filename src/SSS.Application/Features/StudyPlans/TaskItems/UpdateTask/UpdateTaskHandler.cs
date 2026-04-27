@@ -29,6 +29,9 @@ namespace SSS.Application.Features.StudyPlans.TaskItems.UpdateTask
             if (!taskItem.IsGenerateByAI && req.Description != null)
                 taskItem.Description = req.Description;
 
+            if (!taskItem.IsGenerateByAI && req.ExpectedOutput != null)
+                taskItem.ExpectOutput = req.ExpectedOutput;
+
             if (req.Status.HasValue)
                 taskItem.Status = req.Status.Value;
 
