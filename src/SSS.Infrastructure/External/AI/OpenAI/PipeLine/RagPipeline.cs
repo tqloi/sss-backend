@@ -5,29 +5,12 @@ using SSS.Application.Abstractions.External.AI.PipeLine;
 using SSS.Application.Abstractions.External.AI.Vector;
 using SSS.Application.Features.AI.Common;
 using SSS.Domain.Entities.Planning;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace SSS.Infrastructure.External.AI.OpenAI.PipeLine
 {
     public class RagPipeline : IPipeLine
     {
-        private static readonly HashSet<string> GenericRoadmapInputs = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "alo", "hello", "hi", "hey", "yo", "ok", "oke", "test", "chao", "xin chao"
-        };
-
-        private static readonly string[] RoadmapIntentKeywords =
-        {
-            "roadmap", "learning path", "study plan", "plan", "lộ trình", "lo trinh", "kế hoạch", "ke hoach", "learn", "học", "hoc"
-        };
-
-        private static readonly string[] BackendTechKeywords =
-        {
-            ".net", "dotnet", "asp.net", "c#", "java", "spring", "node", "nodejs", "nestjs", "express",
-            "python", "django", "flask", "golang", "go", "php", "laravel", "backend", "api", "microservice", "database", "sql", "nosql"
-        };
-
         private readonly ILlmRouter _llmRouter;
         private readonly IEmbeddingProvider _emp;
         private readonly IQdrantClient _vec;
@@ -233,9 +216,6 @@ UserLearningBehavior:
         }
         public async Task<string> GenerateRoadmapAsync(string question, string subjectid, CancellationToken ct = default)
         {
-            ValidateRoadmapQuestion(question);
-            await VerifyRoadmapQuestionWithAiAsync(question, ct);
-
             var systemPrompt = """
 You are an AI that generates detailed learning roadmaps in JSON strictly for a backend technology specified by the user.
 
@@ -462,91 +442,6 @@ REQUIRED JSON SHAPE
             return response;
         }
 
-        private static void ValidateRoadmapQuestion(string question)
-        {
-            if (string.IsNullOrWhiteSpace(question))
-                throw new ValidationException("Roadmap request cannot be empty.");
-
-            var normalized = question.Trim();
-            var compact = new string(normalized.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
-
-            if (GenericRoadmapInputs.Contains(normalized) || GenericRoadmapInputs.Contains(compact))
-                throw new ValidationException("Roadmap request is too generic. Please provide backend technology and learning goal.");
-
-            var lower = normalized.ToLowerInvariant();
-            var tokens = lower.Split(new[] { ' ', '\t', '\r', '\n', ',', '.', ';', ':', '!', '?', '-', '_', '/', '\\', '|', '(', ')', '[', ']', '{', '}', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (tokens.Length < 2 || compact.Length < 6)
-                throw new ValidationException("Roadmap request is too short. Please describe your target backend technology and objective.");
-
-            var score = 0;
-            if (ContainsAny(lower, RoadmapIntentKeywords)) score++;
-            if (ContainsAny(lower, BackendTechKeywords)) score++;
-            if (tokens.Length >= 4) score++;
-
-            if (score < 2)
-                throw new ValidationException("Roadmap request is unclear. Include backend technology (e.g., .NET, Java, Node.js) and a concrete goal.");
-        }
-
-        private async Task VerifyRoadmapQuestionWithAiAsync(string question, CancellationToken ct)
-        {
-            var verifier = _llmRouter.Resolve(LlmTask.VerifyMessageCreateRoadmap);
-
-            const string systemPrompt = """
-You are a strict validator for backend roadmap requests.
-Return ONLY compact JSON with exact shape:
-{"isValid": boolean, "reason": string}
-
-Rules:
-- isValid=true only if the input clearly requests a backend learning roadmap/path/plan.
-- Must include meaningful backend/domain signal (.NET, Java, Node.js, API, database, microservice, etc.).
-- Greetings, small talk, vague input, or unrelated requests are invalid.
-- If uncertain, return isValid=false.
-No markdown. No extra text.
-""";
-
-            var userPrompt = $"Validate this input for backend roadmap generation:\nINPUT: {question}";
-
-            var raw = await verifier.AskAsync(systemPrompt, userPrompt, ct);
-            raw = raw.Replace("```json", "", StringComparison.OrdinalIgnoreCase)
-                     .Replace("```", "", StringComparison.OrdinalIgnoreCase)
-                     .Trim();
-
-            try
-            {
-                using var doc = JsonDocument.Parse(raw);
-                var root = doc.RootElement;
-                var isValid = root.TryGetProperty("isValid", out var isValidProp)
-                              && isValidProp.ValueKind is JsonValueKind.True or JsonValueKind.False
-                              && isValidProp.GetBoolean();
-
-                if (!isValid)
-                {
-                    var reason = root.TryGetProperty("reason", out var reasonProp)
-                        ? reasonProp.GetString()
-                        : null;
-                    throw new ValidationException(string.IsNullOrWhiteSpace(reason)
-                        ? "Roadmap request is unclear. Please provide backend technology and a concrete learning goal."
-                        : reason);
-                }
-            }
-            catch (JsonException)
-            {
-                throw new ValidationException("Roadmap request is unclear. Please provide backend technology and a concrete learning goal.");
-            }
-        }
-
-        private static bool ContainsAny(string input, IEnumerable<string> keywords)
-        {
-            foreach (var keyword in keywords)
-            {
-                if (input.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
-        }
-
         public async Task<string> BuildStudyPlanContextAsync(
             string userId,
             string studyPlanId,
@@ -710,6 +605,7 @@ If user level is Advanced:
 - Require at least 2 tasks focused on hardening: defensive coding, null-safety, robustness, and refactoring rationale.
 - Limit beginner-style review to at most 1 brief refresher task.
 - Every advanced task should include a concrete deliverable such as decision notes, validation checklist, or refactor rationale.
+- Every advanced task should include a concrete self-check artifact such as decision notes, validation checklist, or refactor rationale.
 - Avoid introductory explanations.
 - Base duration band: 3600-9000 seconds.
 - HARD CAP after any behavior adjustment: estimatedDurationSeconds MUST stay within 3600-11700.
@@ -773,13 +669,13 @@ TASK OUTPUT & DIFFICULTY RULES (MANDATORY)
 - For each task:
   - description MUST be a detailed task explanation (2-4 sentences) covering objective, scope, and key actions.
   - description is for "what to do" only, NOT for completion evidence.
-  - expectedOutput MUST be a single clear output requirement sentence (what artifact/result must be submitted).
+  - expectedOutput MUST be a single clear self-check outcome sentence (what artifact/result the learner should produce for self-review).
   - expectedOutput must be plain text only, no labels, no bullet points, no line breaks.
   - expectedOutput MUST be longer and more specific, with at least 25 words.
   - expectedOutput MUST follow this exact one-sentence format using semicolons:
-    Deliver a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints>.
+    Complete a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints> for self-check.
   - Fill each placeholder with concrete node-scoped details:
-    <artifact> = exact deliverable (code file/class/function/API/test/report/checklist)
+    <artifact> = exact self-check artifact (code file/class/function/API/test/report/checklist)
     <scope> = required behavior and boundaries for the target node task
     <edge cases> = at least 2 realistic failure/invalid scenarios
     <tests/evidence> = verifiable proof (test names/results, sample request/response, or execution output)
@@ -861,7 +757,7 @@ Before finalizing, self-check:
 - Does the final task set follow the required level contrast distribution percentages after integer allocation?
 - Is description a detailed explanation of the task objective/scope (without output criteria)?
 - Is every expectedOutput a single clear output requirement sentence (no labels, no line breaks)?
-- Does every expectedOutput follow this exact structure: Deliver a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints>?
+- Does every expectedOutput follow this exact structure: Complete a <artifact> that implements <scope>; covers <edge cases>; includes <tests/evidence>; and satisfies <quality constraints> for self-check?
 - Is expectedOutput concrete and verifiable for completion?
 - Are all time-related fields English-compatible (ISO-8601 scheduledDate and numeric estimatedDurationSeconds without localized words)?
 - Are all durations inside level-specific HARD CAP and global 900-11700 hard range?
