@@ -331,8 +331,8 @@ Survey Data:
 
 [evaluates = ""current_skill_level""]
   ""beginner""     → ""Beginner""
-  ""basic""        → ""Basic""
   ""intermediate"" → ""Intermediate""
+  ""advanced""        → ""Advanced""
 
 [evaluates = ""target_deadline_months""]
   ""3_6""    → 6   (represents 3–6 months, use the upper bound)
