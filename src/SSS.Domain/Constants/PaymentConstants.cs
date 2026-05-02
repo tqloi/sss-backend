@@ -11,8 +11,8 @@ public static class PaymentConstants
 
     private static readonly Dictionary<(SSS.Domain.Enums.SubscriptionType Plan, int DurationMonths), decimal> SubscriptionPrices = new()
     {
-        {(SSS.Domain.Enums.SubscriptionType.Premium, SubscriptionDuration.OneMonth), 9999m},
-        {(SSS.Domain.Enums.SubscriptionType.Premium, SubscriptionDuration.SixMonths), 49999m},
+        {(SSS.Domain.Enums.SubscriptionType.Premium, SubscriptionDuration.OneMonth), 19999m},
+        {(SSS.Domain.Enums.SubscriptionType.Premium, SubscriptionDuration.SixMonths), 99999m},
     };
 
     public static decimal GetSubscriptionAmount(SSS.Domain.Enums.SubscriptionType plan, int durationMonths)
