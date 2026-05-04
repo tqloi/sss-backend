@@ -70,6 +70,7 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                 var validationErrors = new List<string>();
                 var processedCount = 0;
 
+                var handledQuestions = new HashSet<long>();
                 foreach (var answerInput in request.Answers)
                 {
                     // Validate question exists in survey
@@ -78,6 +79,21 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     {
                         validationErrors.Add($"Question {answerInput.QuestionId} not found in survey");
                         continue;
+                    }
+
+                    // For each question in the request, clear its previous answers in the DB once.
+                    // This ensures that MultipleChoice selections are correctly synced (added/removed).
+                    if (!handledQuestions.Contains(answerInput.QuestionId))
+                    {
+                        var oldAnswers = await db.SurveyAnswers
+                            .Where(a => a.ResponseId == response.Id && a.QuestionId == answerInput.QuestionId)
+                            .ToListAsync(cancellationToken);
+                        
+                        if (oldAnswers.Any())
+                        {
+                            db.SurveyAnswers.RemoveRange(oldAnswers);
+                        }
+                        handledQuestions.Add(answerInput.QuestionId);
                     }
 
                     // Validate option if provided
@@ -96,35 +112,17 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                         }
                     }
 
-                    // Find or create answer
-                    var existingAnswer = await db.SurveyAnswers
-                        .FirstOrDefaultAsync(a => 
-                            a.ResponseId == response.Id && 
-                            a.QuestionId == answerInput.QuestionId, 
-                            cancellationToken);
-
-                    if (existingAnswer != null)
+                    // Always create new answer record since we cleared old ones for this question.
+                    var newAnswer = new SurveyAnswer
                     {
-                        // Update existing answer
-                        existingAnswer.OptionId = answerInput.OptionId;
-                        existingAnswer.NumberValue = answerInput.NumberValue;
-                        existingAnswer.TextValue = answerInput.TextValue;
-                        existingAnswer.AnsweredAt = answerInput.AnsweredAt;
-                    }
-                    else
-                    {
-                        // Create new answer
-                        var newAnswer = new SurveyAnswer
-                        {
-                            ResponseId = response.Id,
-                            QuestionId = answerInput.QuestionId,
-                            OptionId = answerInput.OptionId,
-                            NumberValue = answerInput.NumberValue,
-                            TextValue = answerInput.TextValue,
-                            AnsweredAt = answerInput.AnsweredAt
-                        };
-                        await db.SurveyAnswers.AddAsync(newAnswer, cancellationToken);
-                    }
+                        ResponseId = response.Id,
+                        QuestionId = answerInput.QuestionId,
+                        OptionId = answerInput.OptionId,
+                        NumberValue = answerInput.NumberValue,
+                        TextValue = answerInput.TextValue,
+                        AnsweredAt = answerInput.AnsweredAt
+                    };
+                    await db.SurveyAnswers.AddAsync(newAnswer, cancellationToken);
 
                     processedCount++;
                 }
