@@ -57,7 +57,6 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                         TriggerReason = request.TriggerReason
                     };
                     await db.SurveyResponses.AddAsync(response, cancellationToken);
-                    await db.SaveChangesAsync(cancellationToken);
                 }
                 else
                 {
@@ -71,11 +70,11 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                 var processedCount = 0;
 
                 var handledQuestions = new HashSet<long>();
+
                 foreach (var answerInput in request.Answers)
                 {
                     // Validate question exists in survey
-                    var question = survey.Questions.FirstOrDefault(q => q.Id == answerInput.QuestionId);
-                    if (question == null)
+                    if (!questionsById.ContainsKey(answerInput.QuestionId))
                     {
                         validationErrors.Add($"Question {answerInput.QuestionId} not found in survey");
                         continue;
@@ -99,13 +98,8 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     // Validate option if provided
                     if (answerInput.OptionId.HasValue)
                     {
-                        var optionExists = await db.SurveyQuestionOptions
-                            .AnyAsync(o => 
-                                o.Id == answerInput.OptionId.Value && 
-                                o.QuestionId == answerInput.QuestionId, 
-                                cancellationToken);
-
-                        if (!optionExists)
+                        if (!optionQuestionIdByOptionId.TryGetValue(answerInput.OptionId.Value, out var optionQuestionId)
+                            || optionQuestionId != answerInput.QuestionId)
                         {
                             validationErrors.Add($"Option {answerInput.OptionId} not found for question {answerInput.QuestionId}");
                             continue;
@@ -138,10 +132,7 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
 
                     // Validate required questions
                     var requiredQuestions = survey.Questions.Where(q => q.IsRequired).ToList();
-                    var answeredQuestionIds = await db.SurveyAnswers
-                        .Where(a => a.ResponseId == response.Id)
-                        .Select(a => a.QuestionId)
-                        .ToListAsync(cancellationToken);
+                    var answeredQuestionIds = answersByQuestionId.Keys.ToHashSet();
 
                     var missingRequired = requiredQuestions
                         .Where(q => !answeredQuestionIds.Contains(q.Id))
@@ -167,8 +158,7 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     }
 
                     // Generate snapshot
-                    var allAnswers = await db.SurveyAnswers
-                        .Where(a => a.ResponseId == response.Id)
+                    var allAnswers = answersByQuestionId.Values
                         .Select(a => new
                         {
                             a.Id,
@@ -179,7 +169,7 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                             a.TextValue,
                             a.AnsweredAt
                         })
-                        .ToListAsync(cancellationToken);
+                        .ToList();
 
                     var snapshotJson = JsonSerializer.Serialize(allAnswers, new JsonSerializerOptions
                     {
