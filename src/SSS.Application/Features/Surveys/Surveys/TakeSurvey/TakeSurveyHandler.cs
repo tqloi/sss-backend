@@ -95,6 +95,13 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     .GroupBy(a => a.QuestionId)
                     .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.AnsweredAt).First());
 
+                var answersByQuestionOption = existingAnswers
+                    .Where(a => a.OptionId.HasValue)
+                    .GroupBy(a => new { a.QuestionId, OptionId = a.OptionId!.Value })
+                    .ToDictionary(
+                        g => (g.Key.QuestionId, g.Key.OptionId),
+                        g => g.OrderByDescending(a => a.AnsweredAt).First());
+
                 foreach (var answerInput in request.Answers)
                 {
                     // Validate question exists in survey
@@ -115,29 +122,64 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                         }
                     }
 
-                    // Find or create answer
-                    if (answersByQuestionId.TryGetValue(answerInput.QuestionId, out var existingAnswer))
+                    var question = questionsById[answerInput.QuestionId];
+
+                    if (question.Type == SurveyQuestionType.MultipleChoice)
                     {
-                        // Update existing answer
-                        existingAnswer.OptionId = answerInput.OptionId;
-                        existingAnswer.NumberValue = answerInput.NumberValue;
-                        existingAnswer.TextValue = answerInput.TextValue;
-                        existingAnswer.AnsweredAt = answerInput.AnsweredAt;
+                        if (!answerInput.OptionId.HasValue)
+                        {
+                            validationErrors.Add(
+                                $"Option is required for multiple choice question {answerInput.QuestionId}");
+                            continue;
+                        }
+
+                        var optionKey = (answerInput.QuestionId, answerInput.OptionId.Value);
+                        if (answersByQuestionOption.TryGetValue(optionKey, out var existingAnswer))
+                        {
+                            existingAnswer.NumberValue = answerInput.NumberValue;
+                            existingAnswer.TextValue = answerInput.TextValue;
+                            existingAnswer.AnsweredAt = answerInput.AnsweredAt;
+                        }
+                        else
+                        {
+                            var newAnswer = new SurveyAnswer
+                            {
+                                Response = response,
+                                QuestionId = answerInput.QuestionId,
+                                OptionId = answerInput.OptionId,
+                                NumberValue = answerInput.NumberValue,
+                                TextValue = answerInput.TextValue,
+                                AnsweredAt = answerInput.AnsweredAt
+                            };
+                            await db.SurveyAnswers.AddAsync(newAnswer, cancellationToken);
+                            existingAnswers.Add(newAnswer);
+                            answersByQuestionOption[optionKey] = newAnswer;
+                        }
                     }
                     else
                     {
-                        // Create new answer
-                        var newAnswer = new SurveyAnswer
+                        if (answersByQuestionId.TryGetValue(answerInput.QuestionId, out var existingAnswer))
                         {
-                            Response = response,
-                            QuestionId = answerInput.QuestionId,
-                            OptionId = answerInput.OptionId,
-                            NumberValue = answerInput.NumberValue,
-                            TextValue = answerInput.TextValue,
-                            AnsweredAt = answerInput.AnsweredAt
-                        };
-                        await db.SurveyAnswers.AddAsync(newAnswer, cancellationToken);
-                        answersByQuestionId[answerInput.QuestionId] = newAnswer;
+                            existingAnswer.OptionId = answerInput.OptionId;
+                            existingAnswer.NumberValue = answerInput.NumberValue;
+                            existingAnswer.TextValue = answerInput.TextValue;
+                            existingAnswer.AnsweredAt = answerInput.AnsweredAt;
+                        }
+                        else
+                        {
+                            var newAnswer = new SurveyAnswer
+                            {
+                                Response = response,
+                                QuestionId = answerInput.QuestionId,
+                                OptionId = answerInput.OptionId,
+                                NumberValue = answerInput.NumberValue,
+                                TextValue = answerInput.TextValue,
+                                AnsweredAt = answerInput.AnsweredAt
+                            };
+                            await db.SurveyAnswers.AddAsync(newAnswer, cancellationToken);
+                            existingAnswers.Add(newAnswer);
+                            answersByQuestionId[answerInput.QuestionId] = newAnswer;
+                        }
                     }
 
                     processedCount++;
@@ -154,7 +196,9 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
 
                     // Validate required questions
                     var requiredQuestions = survey.Questions.Where(q => q.IsRequired).ToList();
-                    var answeredQuestionIds = answersByQuestionId.Keys.ToHashSet();
+                    var answeredQuestionIds = existingAnswers
+                        .Select(a => a.QuestionId)
+                        .ToHashSet();
 
                     var missingRequired = requiredQuestions
                         .Where(q => !answeredQuestionIds.Contains(q.Id))
@@ -180,7 +224,7 @@ namespace SSS.Application.Features.Surveys.Surveys.TakeSurvey
                     }
 
                     // Generate snapshot
-                    var allAnswers = answersByQuestionId.Values
+                    var allAnswers = existingAnswers
                         .Select(a => new
                         {
                             a.Id,
